@@ -1,0 +1,16 @@
+{
+  "name": "UTICoMed • Monitor & Ventilador Mecânico",
+  "short_name": "UTICoMed",
+  "description": "Simulador interativo de UTI (SRI, Modos Ventilatórios, Mindray iMEC 15 e HAMILTON-T1) pronto para uso offline.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fbf6ee",
+  "theme_color": "#ea580c",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

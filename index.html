@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTICoMed • Monitor Multiparamétrico &amp; Ventilador Mecânico Interativo</title>
+  <meta name="description" content="UTICoMed: Simulador clínico interativo de UTI com apresentação de SRI, Monitor Multiparamétrico Mindray iMEC 15 e Ventilador Mecânico HAMILTON-T1." />
+  <meta name="theme-color" content="#ea580c" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="UTICoMed" />
+  <link rel="icon" type="image/svg+xml" href="logo.svg?v=cleanui2" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="theme-light">
+  <!-- Fundo Claro em Cores Quentes com Paralaxe Multicamas -->
+  <div class="parallax-backdrop" id="parallaxBackdrop" aria-hidden="true">
+    <div class="px-layer px-layer-1" data-depth="0.18">
+      <div class="px-orb px-orb-sun"></div>
+      <div class="px-orb px-orb-peach"></div>
+    </div>
+    <div class="px-layer px-layer-2" data-depth="0.38">
+      <svg class="px-geo-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
+        <circle cx="220" cy="180" r="140" stroke="rgba(234, 88, 12, 0.11)" stroke-width="2" />
+        <circle cx="220" cy="180" r="190" stroke="rgba(245, 158, 11, 0.08)" stroke-width="1.5" stroke-dasharray="10 10" />
+        <circle cx="1220" cy="680" r="210" stroke="rgba(217, 119, 6, 0.11)" stroke-width="2" />
+        <path d="M-40 620 Q 360 480 760 610 T 1500 540" stroke="rgba(234, 88, 12, 0.09)" stroke-width="2.5" />
+      </svg>
+    </div>
+    <div class="px-layer px-layer-3" data-depth="0.62">
+      <svg class="px-pulse-svg" viewBox="0 0 1440 300" preserveAspectRatio="none" fill="none">
+        <path d="M0 170 H320 L345 125 L372 225 L398 95 L425 190 L448 170 H920 L945 130 L970 215 L995 105 L1020 185 L1042 170 H1440" stroke="rgba(217, 119, 6, 0.10)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+  </div>
+  <!-- ========================================================= -->
+  <!-- TELA INICIAL: APRESENTAÇÃO INTERATIVA (SRI & VENTILAÇÃO)  -->
+  <!-- ========================================================= -->
+  <section id="presentationApp" class="pres-shell" aria-label="Apresentação Interativa sobre Sequência Rápida de Intubação e Modos Ventilatórios">
+    <header class="pres-topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <img src="logo.svg" alt="UTICoMed" class="uticomed-logo" />
+        </div>
+        <div>
+          <h1>UTICoMed <span class="badge-live" id="presModuleBadge">BLOCO I • SRI</span></h1>
+          <p class="subtitle">Sequência Rápida de Intubação &amp; Modos Ventilatórios na Prática</p>
+        </div>
+      </div>
+
+      <div class="pres-progress-wrap">
+        <span class="pres-counter mono" id="presCounter">Slide 1 / 10</span>
+        <div class="pres-progress-track">
+          <div class="pres-progress-fill" id="presProgressFill" style="width: 10%"></div>
+        </div>
+      </div>
+
+      <div class="pres-top-actions">
+        <button class="ctrl-btn theme-toggle-btn" id="btnThemePres" title="Alternar entre Modo Claro e Modo Escuro">🌙 Modo Escuro</button>
+        <button class="ctrl-btn accent" id="btnLaunchSimulatorTop" title="Abrir Monitor Multiparamétrico e Ventilador Mecânico">⚡ Ir para o Simulador</button>
+      </div>
+    </header>
+
+    <!-- Navegação Rápida por Slides -->
+    <nav class="pres-nav-pills" id="presNavPills" aria-label="Índice dos slides"></nav>
+
+    <!-- Palco Principal do Slide -->
+    <main class="pres-stage" id="slideStage"></main>
+
+    <!-- Rodapé de Navegação -->
+    <footer class="pres-footer">
+      <button class="pres-nav-btn" id="btnPrevSlide">← Anterior</button>
+      <div class="pres-key-hint">Dica: use as setas <kbd>←</kbd> <kbd>→</kbd> do teclado para avançar • Interaja com os widgets em cada slide</div>
+      <button class="pres-nav-btn primary" id="btnNextSlide">Próximo →</button>
+    </footer>
+  </section>
+
+  <!-- ========================================================= -->
+  <!-- SIMULADOR AO VIVO (OCULTO ATÉ O USUÁRIO ENTRAR NELE)      -->
+  <!-- ========================================================= -->
+  <div id="simulatorApp" class="hidden">
+  <!-- Cabeçalho Compacto UTICoMed -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <img src="logo.svg" alt="UTICoMed" class="uticomed-logo" />
+      </div>
+      <div>
+        <h1>UTICoMed</h1>
+        <p class="subtitle">Monitor Mindray iMEC 15 &amp; Ventilador HAMILTON-T1</p>
+      </div>
+    </div>
+
+    <!-- Controles Globais -->
+    <div class="topbar-controls">
+      <button class="ctrl-btn accent" id="btnToggleSidebar" aria-pressed="true" aria-label="Menu Clínico" title="Mostrar / Ocultar menu lateral esquerdo">☰</button>
+      <button class="ctrl-btn accent" id="btnBackToSlides" aria-label="Slides" title="Voltar para a apresentação de slides">📑</button>
+      <button class="ctrl-btn" id="btnFreeze" aria-pressed="false" aria-label="Congelar traçados" title="Congelar traçados para inspeção">❄</button>
+      <button class="ctrl-btn" id="btnSilenceAlarm" aria-pressed="false" aria-label="Som dos alarmes" title="Silenciar alarmes por 2 minutos">🔔</button>
+      <button class="ctrl-btn" id="btnQrsBeep" aria-pressed="false" aria-label="Bip QRS" title="Ativar/Desativar bip cardíaco do monitor">💓</button>
+      <button class="ctrl-btn" id="btnAuscultation" aria-pressed="false" aria-label="Ausculta pulmonar" title="Abrir estetoscópio e mapa de focos da ausculta pulmonar">🩺</button>
+      <button class="ctrl-btn" id="btnLungSoundsToggle" aria-pressed="false" aria-label="Sons pulmonares" title="Ligar ou desligar sons da ausculta pulmonar">🫁</button>
+      <button class="ctrl-btn accent" id="btnAbgModal" aria-label="Gasometria Arterial" title="Coletar Gasometria Arterial atual">🧪</button>
+      <button class="ctrl-btn accent active" id="btnPumpIcatu" aria-label="Bomba Icatu 4.0" title="Exibir / Ocultar Bomba de Infusão Samtronic Icatu 4.0">💉</button>
+      <button class="ctrl-btn accent active" id="btnCardioverter" aria-label="Cardioversor Vivo Gold" title="Exibir / Ocultar Cardioversor Bifásico Vivo Gold">⚡</button>
+      <button class="ctrl-btn accent active" id="btnGasSg1" aria-label="Analisador de Gases Seamaty SG1" title="Exibir / Ocultar Analisador de Gases Sanguíneos Seamaty SG1">🩸</button>
+      <button class="ctrl-btn accent" id="btnEcgAtlas" aria-label="Ritmos ECG" title="Selecionar e estudar ritmos e traçados eletrocardiográficos (BAV, BRD/BRE, FA, Flutter, PCR, Supra ST)">📈</button>
+      <button class="ctrl-btn accent" id="btnProtectiveGuide" aria-label="Guia de Ventilação Protetora" title="Guia de Ventilação Mecânica Protetora e Indicações por Patologia">📘</button>
+      <button class="ctrl-btn theme-toggle-btn" id="btnThemeSim" aria-label="Alternar Modo Claro e Escuro" title="Alternar entre Modo Claro e Modo Escuro">🌙</button>
+      <button class="ctrl-btn ghost" id="btnResetScenario" aria-label="Reiniciar cenário" title="Reiniciar cenário atual">↺</button>
+    </div>
+  </header>
+
+  <!-- Workspace Principal: Sidebar Esquerda (Menus) + Área Direita (Equipamentos) -->
+  <div class="sim-workspace" id="simWorkspace">
+    <!-- ====================================================== -->
+    <!-- MENU CLÍNICO LATERAL: CENÁRIOS, INTERVENÇÕES & PACIENTE -->
+    <!-- ====================================================== -->
+    <aside class="sim-sidebar" id="simSidebar" aria-label="Menu Clínico">
+      <div class="sim-sidebar-title">
+        <h2>☰ Menu Clínico</h2>
+        <span class="sim-sidebar-sub">Controle Clínico</span>
+      </div>
+      <!-- Bloco 2: Intervenções Rápidas & Fármacos Recomendados -->
+      <section class="side-section" id="sideSectionInterventions">
+        <div class="side-section-head">
+          <h3>Intervenções &amp; Fármacos</h3>
+        </div>
+        <div class="side-interventions-grid">
+          <button class="action-btn fluid" id="btnFluidBolus" title="Infundir 500 mL de Cristalóide EV">💧 Bolus SF 500mL <span class="action-badge" id="fluidCount">0</span></button>
+          <div class="vaso-control side-vaso" title="Titular Noradrenalina EV contínua">
+            <span>💉 Nora:</span>
+            <div class="vaso-stepper">
+              <button class="mini-step" id="btnNoraDown" aria-label="Diminuir noradrenalina">−</button>
+              <strong class="mono" id="noraValue">0.00</strong>
+              <span class="unit">µg/kg/m</span>
+              <button class="mini-step" id="btnNoraUp" aria-label="Aumentar noradrenalina">+</button>
+            </div>
+          </div>
+          <button class="action-btn broncho" id="btnBronchodilator" title="Administrar Broncodilatador (reduz resistência)">💨 Broncodilatador</button>
+          <button class="action-btn recruit" id="btnSuctionRecruit" title="Aspiração de TOT e Manobra de Recrutamento">🫁 Recrutar / Aspirar</button>
+          <button class="action-btn critical hidden" id="btnDecompress" title="Toracocentese de alívio + Drenagem torácica">🚨 Descomprimir Tórax</button>
+          <button class="action-btn critical hidden" id="btnDefib" title="Aplicar choque desfibrilatório bifásico 200J">⚡ Desfibrilar 200J</button>
+          <button class="action-btn cpr hidden" id="btnCprToggle" aria-pressed="false" title="Iniciar/Pausar compressões torácicas (RCP)">👐 RCP</button>
+        </div>
+      </section>
+
+      <!-- Bloco 3: Parâmetros dos Pacientes + Calculadora de Peso Predito -->
+      <section class="side-section" id="sideSectionPatient">
+        <div class="side-section-head">
+          <h3>Parâmetros do Paciente</h3>
+          <span class="side-pbw-tag mono" id="metaPatient">Adulto • 70 kg</span>
+        </div>
+
+        <!-- Calculadora de Peso Predito (Homem / Mulher - ARDSNet) -->
+        <div class="pbw-calc-box" aria-label="Calculadora de Peso Predito (PBW)">
+          <div class="pbw-calc-title">
+            <span>Calculadora Peso Predito (PBW)</span>
+            <div class="pbw-sex-group" role="group" aria-label="Sexo biológico para cálculo PBW">
+              <button type="button" class="pbw-sex-btn active" id="pbwSexMale" data-sex="M" aria-pressed="true">♂ Homem</button>
+              <button type="button" class="pbw-sex-btn" id="pbwSexFemale" data-sex="F" aria-pressed="false">♀ Mulher</button>
+            </div>
+          </div>
+          <div class="pbw-height-row">
+            <label for="pbwHeightInput">Altura (cm):</label>
+            <input type="range" id="pbwHeightRange" min="140" max="210" step="1" value="175" class="pbw-height-slider" aria-label="Altura em centímetros" />
+            <input type="number" id="pbwHeightInput" min="140" max="210" step="1" value="175" class="pbw-height-num mono" />
+          </div>
+          <div class="pbw-results-row">
+            <div>PBW: <strong id="pbwResultVal" class="mono">70.6 kg</strong></div>
+            <div>Vt 6mL/kg: <strong id="pbwVtTargetVal" class="mono">424 mL</strong></div>
+          </div>
+          <div class="pbw-range-hint mono" id="pbwVtRangeVal">Faixa protetora (4–8 mL/kg): 282–565 mL</div>
+          <button type="button" class="action-btn pbw-apply-btn" id="btnApplyPbw" title="Aplicar Peso Predito ao paciente e ajustar Vt protetor (6 mL/kg)">
+            ✓ Aplicar PBW &amp; Vt 6 mL/kg
+          </button>
+        </div>
+
+        <div class="phys-knobs-grid side-phys" role="group" aria-label="Knobs de ajuste dos parâmetros do paciente">
+          <div class="phys-knob-card">
+            <span class="phys-knob-lbl">Peso (PBW)</span>
+            <div class="phys-knob-ctrl">
+              <div class="phys-knob-dial" id="physWeight" role="slider" tabindex="0" aria-label="Peso Predito (PBW)" aria-valuemin="34" aria-valuemax="115" aria-valuenow="70" data-min="34" data-max="115" data-step="1" data-value="70" data-unit=" kg">
+                <svg class="phys-knob-svg" viewBox="0 0 64 64" aria-hidden="true">
+                  <circle class="phys-knob-track" cx="32" cy="32" r="25" stroke-dasharray="117.81 157.08" transform="rotate(135 32 32)" />
+                  <circle class="phys-knob-arc" cx="32" cy="32" r="25" stroke-dasharray="52.00 157.08" transform="rotate(135 32 32)" />
+                </svg>
+                <div class="phys-knob-cap"><span class="phys-knob-notch"></span></div>
+              </div>
+            </div>
+            <strong id="physWeightVal" class="phys-knob-val mono">70 kg</strong>
+          </div>
+
+          <div class="phys-knob-card">
+            <span class="phys-knob-lbl">Complacência</span>
+            <div class="phys-knob-ctrl">
+              <div class="phys-knob-dial" id="physComp" role="slider" tabindex="0" aria-label="Complacência (Crs)" aria-valuemin="12" aria-valuemax="90" aria-valuenow="60" data-min="12" data-max="90" data-step="1" data-value="60" data-unit=" mL/cmH₂O">
+                <svg class="phys-knob-svg" viewBox="0 0 64 64" aria-hidden="true">
+                  <circle class="phys-knob-track" cx="32" cy="32" r="25" stroke-dasharray="117.81 157.08" transform="rotate(135 32 32)" />
+                  <circle class="phys-knob-arc" cx="32" cy="32" r="25" stroke-dasharray="72.50 157.08" transform="rotate(135 32 32)" />
+                </svg>
+                <div class="phys-knob-cap"><span class="phys-knob-notch"></span></div>
+              </div>
+            </div>
+            <strong id="physCompVal" class="phys-knob-val mono">60 mL/cmH₂O</strong>
+          </div>
+
+          <div class="phys-knob-card">
+            <span class="phys-knob-lbl">Resistência (Raw)</span>
+            <div class="phys-knob-ctrl">
+              <div class="phys-knob-dial" id="physRes" role="slider" tabindex="0" aria-label="Resistência (Raw)" aria-valuemin="3" aria-valuemax="35" aria-valuenow="6" data-min="3" data-max="35" data-step="1" data-value="6" data-unit=" cmH₂O/L/s">
+                <svg class="phys-knob-svg" viewBox="0 0 64 64" aria-hidden="true">
+                  <circle class="phys-knob-track" cx="32" cy="32" r="25" stroke-dasharray="117.81 157.08" transform="rotate(135 32 32)" />
+                  <circle class="phys-knob-arc" cx="32" cy="32" r="25" stroke-dasharray="11.00 157.08" transform="rotate(135 32 32)" />
+                </svg>
+                <div class="phys-knob-cap"><span class="phys-knob-notch"></span></div>
+              </div>
+            </div>
+            <strong id="physResVal" class="phys-knob-val mono">6 cmH₂O/L/s</strong>
+          </div>
+
+          <div class="phys-knob-card">
+            <span class="phys-knob-lbl">Shunt Pulm.</span>
+            <div class="phys-knob-ctrl">
+              <div class="phys-knob-dial" id="physShunt" role="slider" tabindex="0" aria-label="Shunt Pulmonar" aria-valuemin="2" aria-valuemax="60" aria-valuenow="4" data-min="2" data-max="60" data-step="1" data-value="4" data-unit="%">
+                <svg class="phys-knob-svg" viewBox="0 0 64 64" aria-hidden="true">
+                  <circle class="phys-knob-track" cx="32" cy="32" r="25" stroke-dasharray="117.81 157.08" transform="rotate(135 32 32)" />
+                  <circle class="phys-knob-arc" cx="32" cy="32" r="25" stroke-dasharray="4.06 157.08" transform="rotate(135 32 32)" />
+                </svg>
+                <div class="phys-knob-cap"><span class="phys-knob-notch"></span></div>
+              </div>
+            </div>
+            <strong id="physShuntVal" class="phys-knob-val mono">4%</strong>
+          </div>
+
+          <div class="phys-knob-card">
+            <span class="phys-knob-lbl">Drive Resp.</span>
+            <div class="phys-knob-ctrl">
+              <div class="phys-knob-dial" id="physDrive" role="slider" tabindex="0" aria-label="Drive Respiratório" aria-valuemin="0" aria-valuemax="34" aria-valuenow="14" data-min="0" data-max="34" data-step="1" data-value="14" data-unit=" irpm">
+                <svg class="phys-knob-svg" viewBox="0 0 64 64" aria-hidden="true">
+                  <circle class="phys-knob-track" cx="32" cy="32" r="25" stroke-dasharray="117.81 157.08" transform="rotate(135 32 32)" />
+                  <circle class="phys-knob-arc" cx="32" cy="32" r="25" stroke-dasharray="48.51 157.08" transform="rotate(135 32 32)" />
+                </svg>
+                <div class="phys-knob-cap"><span class="phys-knob-notch"></span></div>
+              </div>
+            </div>
+            <strong id="physDriveVal" class="phys-knob-val mono">14 irpm</strong>
+          </div>
+
+          <div class="phys-knob-card">
+            <span class="phys-knob-lbl">Excesso Base</span>
+            <div class="phys-knob-ctrl">
+              <div class="phys-knob-dial" id="physBe" role="slider" tabindex="0" aria-label="Excesso de Base (BE)" aria-valuemin="-18" aria-valuemax="12" aria-valuenow="0" data-min="-18" data-max="12" data-step="1" data-value="0" data-unit=" mEq/L">
+                <svg class="phys-knob-svg" viewBox="0 0 64 64" aria-hidden="true">
+                  <circle class="phys-knob-track" cx="32" cy="32" r="25" stroke-dasharray="117.81 157.08" transform="rotate(135 32 32)" />
+                  <circle class="phys-knob-arc" cx="32" cy="32" r="25" stroke-dasharray="70.69 157.08" transform="rotate(135 32 32)" />
+                </svg>
+                <div class="phys-knob-cap"><span class="phys-knob-notch"></span></div>
+              </div>
+            </div>
+            <strong id="physBeVal" class="phys-knob-val mono">0 mEq/L</strong>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ====================================================== -->
+    <!-- ÁREA PRINCIPAL DIREITA: ALARMES + EQUIPAMENTOS         -->
+    <!-- ====================================================== -->
+    <div class="sim-main-area">
+      <!-- Faixa Compacta: Alarmes + Metas + Botões Rápidos de Status -->
+      <section class="alarm-strip" id="alarmStrip" aria-live="polite">
+        <div class="alarm-strip-top">
+          <div class="alarm-status ok" id="alarmBox">
+            <span class="alarm-led" id="alarmLed"></span>
+            <span class="alarm-status-icon" id="alarmStatusIcon" aria-hidden="true"></span>
+            <span class="alarm-text" id="alarmText">Parâmetros dentro da faixa alvo — Monitorização e ventilação estáveis</span>
+          </div>
+          <div class="patient-strip-meta">
+            <span class="pat-meta-chip status-ok" id="metaChipVtKg" title="Volume Corrente por kg de Peso Predito">
+              <svg class="pat-meta-icon" viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v5"/><path d="M10 8c-1.5 0-2.5 1.2-3.5 2.4C5.4 11.7 4.5 13.1 4.5 15a2 2 0 0 0 2 2H8.5c.6 0 .9-.3.9-1V8"/><path d="M10 8c1.5 0 2.5 1.2 3.5 2.4 1.1 1.3 2 2.7 2 4.6a2 2 0 0 1-2 2H11.5c-.6 0-.9-.3-.9-1V8"/></svg>
+              <span>Vt/kg: <strong id="metaVtKg" class="mono">6.4 mL/kg</strong></span>
+            </span>
+            <span class="pat-meta-chip status-ok" id="metaChipPF" title="Relação PaO₂/FiO₂ (Oxigenação)">
+              <svg class="pat-meta-icon" viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="11.5" r="4"/><path d="M11.5 8.5l4.5-4.5"/><path d="M13 4h3v3"/><circle cx="15" cy="13.5" r="2.2"/></svg>
+              <span>P/F: <strong id="metaPF" class="mono">450</strong></span>
+            </span>
+            <span class="pat-meta-chip status-ok" id="metaChipPH" title="Equilíbrio Ácido-Básico Arterial (pH)">
+              <svg class="pat-meta-icon" viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3c-2.5 3.4-4.5 6-4.5 8.8a4.5 4.5 0 0 0 9 0C14.5 9 12.5 6.4 10 3z"/><path d="M8.5 12.5h3"/></svg>
+              <span>pH: <strong id="metaPH" class="mono">7.40</strong></span>
+            </span>
+          </div>
+        </div>
+        <div class="patient-status-btns" id="patientStatusBtns" role="group" aria-label="Botões rápidos de status do paciente"></div>
+      </section>
+
+      <!-- Área Principal dos Equipamentos UTI: Monitor Multiparamétrico, Ventilador Mecânico, Bomba de Infusão e Cardioversor -->
+      <main class="icu-grid" id="icuGrid">
+    <!-- ====================================================== -->
+    <!-- PAINEL 1: MONITOR MULTIPARAMÉTRICO MINDRAY iMEC 15     -->
+    <!-- ====================================================== -->
+    <section class="device-panel mindray-chassis" aria-label="Monitor Multiparamétrico Mindray iMEC 15">
+      <!-- Moldura superior branca Mindray -->
+      <div class="mr-top-brand">
+        <span class="mr-logo">mindray</span>
+        <div class="mr-handle-bump mr-alarm-lamp" id="mrAlarmLamp" title="Barra indicadora luminosa Mindray iMEC 15" aria-hidden="true"></div>
+        <span class="mr-model">iMEC 15</span>
+      </div>
+
+      <div class="mr-body-row">
+        <!-- Moldura azul-ardósia ao redor da tela -->
+        <div class="mr-screen-bezel">
+          <div class="mr-screen" id="mrScreen">
+            <!-- Overlay de Standby (ativado pelo botão Power físico) -->
+            <div class="device-standby-overlay hidden" id="mrStandbyOverlay">
+              <div class="standby-badge">MINDRAY iMEC 15 • STANDBY</div>
+              <p>Monitor em espera. Pressione ⏻ Power para retomar monitorização.</p>
+              <button class="ctrl-btn accent" id="mrWakeBtn">⏻ Ligar Monitor</button>
+            </div>
+            <!-- Barra superior da tela Mindray -->
+            <div class="mr-screen-top">
+              <div class="mr-top-left">
+                <span class="mr-live-dot live" id="mrLiveDot" title="Monitorização ativa em tempo real" aria-hidden="true"></span>
+                <span class="mr-adu-pill">Adu</span>
+                <span class="mr-clock mono" id="mindrayClock">2026-11-18 07:06:00</span>
+                <button type="button" class="rhythm-tag rhythm-btn" id="rhythmLabel" title="Clique para abrir Atlas / Trocar Ritmo ECG">Ritmo Sinusal Normal</button>
+              </div>
+              <div class="mr-top-right">
+                <select id="ecgLeadSelect" class="mr-compact-select" aria-label="Derivação ECG" title="Trocar derivação ECG">
+                  <option value="II">Lead: II</option>
+                  <option value="V5">Lead: V5</option>
+                  <option value="I">Lead: I</option>
+                </select>
+                <span class="mr-lead-badge" id="ecgLeadTag">DII • 25 mm/s</span>
+              </div>
+            </div>
+
+            <!-- Canais pareados (Esquerda: Curva | Direita: Bloco Numérico Mindray) -->
+            <div class="mr-channels-grid">
+              <!-- Canal 1: ECG -->
+              <div class="mr-wave-cell">
+                <div class="wave-overlay-label">
+                  <span class="ch-tag green" id="ecgWaveLeadTag">II &nbsp; X1 &nbsp; Diagnostic</span>
+                  <span class="sub-tag mono" id="mrEcgGain">1mV</span>
+                </div>
+                <canvas id="canvasECG" class="wave-canvas"></canvas>
+              </div>
+              <div class="mr-num-cell green" id="cardHR">
+                <div class="mr-num-head">
+                  <span class="mr-num-title"><span class="mr-hr-pulse-dot" id="mrHrPulseDot" aria-hidden="true"></span> ECG</span>
+                  <span class="mr-limits mono" id="limHR">50–130</span>
+                </div>
+                <div class="mr-num-center">
+                  <span class="mr-big-val mono" id="valHR">78</span>
+                  <div class="mr-side-meta">
+                    <span class="heart-beat-icon" id="heartIcon">♥</span>
+                    <span id="valST" class="mono">ST: 0.0 mm</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Canal 2: SpO2 Pleth -->
+              <div class="mr-wave-cell">
+                <div class="wave-overlay-label">
+                  <span class="ch-tag cyan">Pleth</span>
+                  <span class="sub-tag" id="perfusionLabel">Perfusão Boa</span>
+                </div>
+                <canvas id="canvasSpO2" class="wave-canvas"></canvas>
+              </div>
+              <div class="mr-num-cell cyan" id="cardSpO2">
+                <div class="mr-num-head">
+                  <span class="mr-num-title">SpO2</span>
+                  <span class="mr-limits mono" id="limSpO2">&gt; 90%</span>
+                </div>
+                <div class="mr-num-center">
+                  <span class="mr-big-val mono" id="valSpO2">98</span>
+                  <div class="mr-spo2-bar" id="mrSpo2Bar" title="Pulso de perfusão pletismográfico em tempo real" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="mr-side-meta">
+                    <span class="mono">PI <strong id="valPI">3.4%</strong></span>
+                    <span id="valPulseRate" class="mono">PR: 78</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Canal 3: Art (PAI) -->
+              <div class="mr-wave-cell">
+                <div class="wave-overlay-label">
+                  <span class="ch-tag red">Art</span>
+                  <span class="sub-tag mono" id="ibpScaleTag">0–160 mmHg</span>
+                </div>
+                <canvas id="canvasIBP" class="wave-canvas"></canvas>
+              </div>
+              <div class="mr-num-cell red" id="cardIBP">
+                <div class="mr-num-head">
+                  <span class="mr-num-title">Art</span>
+                  <span class="mr-limits mono" id="limMAP">PAM &gt; 65</span>
+                </div>
+                <div class="mr-num-center bp">
+                  <span class="mr-bp-val mono" id="valBP">120/78</span>
+                  <span class="mr-map-val mono" id="valMAP">(92)</span>
+                </div>
+              </div>
+
+              <!-- Canal 4: CO2 (EtCO2) -->
+              <div class="mr-wave-cell">
+                <div class="wave-overlay-label">
+                  <span class="ch-tag yellow">CO2 &nbsp; Side</span>
+                  <span class="sub-tag" id="co2ShapeLabel">Platô Normal</span>
+                </div>
+                <canvas id="canvasEtCO2" class="wave-canvas"></canvas>
+              </div>
+              <div class="mr-num-cell yellow" id="cardEtCO2">
+                <div class="mr-num-head">
+                  <span class="mr-num-title">CO2 <small>mmHg</small></span>
+                  <span class="mr-limits mono" id="limEtCO2">32–48</span>
+                </div>
+                <div class="mr-num-center">
+                  <span class="mr-big-val mono" id="valEtCO2">38</span>
+                  <div class="mr-side-meta">
+                    <span class="mono">awRR <strong id="valRRMon">14</strong></span>
+                    <span class="mono">FiCO₂ 0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rodapé interno da tela Mindray: Temp, NIBP, Soft-keys -->
+            <div class="mr-screen-bottom">
+              <div class="mr-bottom-block">
+                <span class="mr-b-lbl">Temp</span>
+                <strong class="mono mr-b-val" id="valTemp">36.7°C</strong>
+              </div>
+              <div class="mr-bottom-block">
+                <span class="mr-b-lbl">NIBP</span>
+                <strong class="mono mr-b-val" id="valNIBP">PNI: 118/76</strong>
+                <span class="mr-nibp-busy hidden" id="mrNibpBusy">● Insuflando...</span>
+              </div>
+              <div class="mr-softkeys">
+                <button class="mr-softkey" id="btnNibpMeasure" title="Aferir Pressão Não Invasiva agora">NIBP</button>
+                <button class="mr-softkey" id="btnAlarmLimits" title="Configurar limites de alarme">Alarm Setup</button>
+                <button class="mr-softkey primary" id="mrBtnMainMenu" title="Fisiologia do Paciente">Main Menu</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Painel físico lateral direito do Mindray iMEC 15 -->
+        <div class="mr-hw-strip">
+          <button class="mr-hw-btn silence" id="mrHwSilence" title="Silenciar alarmes">Silence</button>
+          <button class="mr-hw-btn pause" id="mrHwPause" title="Pausa de alarme (2 min)">Alarm<br/>Pause</button>
+          <button class="mr-hw-btn" id="mrHwFreeze" title="Congelar traçados">Freeze</button>
+
+          <!-- Botão Rotativo Branco Mindray (Trim Knob) -->
+          <div class="mr-knob-bulge" title="Clique ou role para alternar derivação ECG">
+            <button class="mr-trim-knob" id="mrTrimKnob" aria-label="Alternar derivação ECG">
+              <span class="mr-knob-notch"></span>
+            </button>
+          </div>
+
+          <button class="mr-hw-btn" id="mrHwMenu" title="Abrir menu de fisiologia">Menu</button>
+          <button class="mr-hw-btn" id="mrHwRecord" title="Coletar Gasometria Arterial">Record</button>
+          <button class="mr-hw-btn" id="mrHwNibp" title="Aferir PNI agora">NIBP</button>
+        </div>
+      </div>
+
+      <!-- Moldura inferior branca Mindray: Botão Power verde + LEDs -->
+      <div class="mr-bottom-bezel">
+        <button class="mr-power-btn" id="mrPowerBtn" title="Monitor Mindray iMEC 15 Ligado">⏻</button>
+        <span class="mr-led green" title="Energia AC conectada"></span>
+        <span class="mr-led amber" title="Bateria carregada"></span>
+      </div>
+      <div class="device-resize-handle" id="mrResizeHandle" data-resize-target="mon" title="Arraste para redimensionar o Monitor Mindray iMEC 15" role="separator" aria-label="Redimensionar Monitor"></div>
+    </section>
+
+    <div class="icu-splitter" id="icuSplitter" title="Arraste para redimensionar a largura entre Monitor e Ventilador" role="separator" aria-orientation="vertical"></div>
+
+    <!-- ====================================================== -->
+    <!-- PAINEL 2: VENTILADOR MECÂNICO HAMILTON-T1              -->
+    <!-- ====================================================== -->
+    <section class="device-panel ham-chassis" id="hamChassis" aria-label="Ventilador Mecânico Hamilton-T1">
+      <div class="ham-alarm-lamp" id="hamAlarmLamp" title="Barra luminosa de estado e alarme HAMILTON-T1" aria-hidden="true"></div>
+      <div class="ham-bezel">
+        <!-- Lado Esquerdo: Tela Touchscreen Hamilton-T1 -->
+        <div class="ham-screen-column">
+          <div class="ham-screen" id="hamScreen">
+            <!-- Overlay de Standby (ativado pelo botão Power físico) -->
+            <div class="device-standby-overlay hidden" id="hamStandbyOverlay">
+              <div class="standby-badge">HAMILTON·T1 • STANDBY</div>
+              <p>Ventilador em Standby. Pressione ⏻ Power para ventilar.</p>
+              <button class="ctrl-btn accent" id="hamWakeBtn">⏻ Iniciar Ventilação</button>
+            </div>
+            <!-- Overlay: Paciente fora da VM (Menu de Vias Aéreas no Visor do Ventilador) -->
+            <div class="device-disconnected-overlay" id="hamDisconnectedOverlay">
+              <div class="ham-disc-head">
+                <div class="ham-disc-title">
+                  <h3>Vias Aéreas</h3>
+                  <span class="airway-pill off" id="hamAirwayStatusBadge">SEM VM • FORA DA VM</span>
+                </div>
+                <button type="button" class="ctrl-btn accent ham-connect-cta" id="hamVentConnectBtn">🔌 Intubar &amp; Acoplar à VM</button>
+              </div>
+              <div class="o2-therapy-box ham-o2-therapy-box" id="hamO2TherapyBox">
+                <div class="o2-head-row">
+                  <div class="o2-active-lead">
+                    <span class="o2-active-icon" id="hamO2ActiveIcon" aria-hidden="true"></span>
+                    <span>Via de Oferta de O₂:</span>
+                  </div>
+                  <strong class="mono o2-fio2-chip" id="hamO2EffectiveFio2">FiO₂ 21%</strong>
+                </div>
+                <div class="o2-device-grid ham-o2-device-grid" id="hamO2DeviceGrid" role="group" aria-label="Selecionar via de oferta de oxigênio no visor do ventilador"></div>
+                <div class="o2-flow-row hidden" id="hamO2FlowRow">
+                  <div class="o2-flow-lbl">
+                    <span>Fluxo / Ajuste O₂:</span>
+                    <strong class="mono" id="hamO2FlowVal">3 L/min</strong>
+                  </div>
+                  <input type="range" id="hamO2FlowRange" min="1" max="6" step="1" value="3" />
+                </div>
+                <p class="side-guidance-text o2-hint-lg" id="hamO2DeviceHint">Sem suplementação de O₂ (FiO₂ 21%)</p>
+              </div>
+            </div>
+            <!-- Barra Superior da Tela -->
+            <div class="ham-screen-top">
+              <div class="ham-mode-indicator">
+                <span class="ham-insp-led" id="hamInspLed" title="Indicador de ciclo inspiratório"></span>
+                <span class="ham-mini-lung" id="hamMiniLung" title="Expansão pulmonar sincronizada ao ciclo" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v7"/><path d="M12 10c-1.8 0-2.8 1.4-4 2.8C6.6 14.3 5.5 16 5.5 18.2A2.3 2.3 0 0 0 7.8 20.5H10c.7 0 1-.4 1-1.1V10"/><path d="M12 10c1.8 0 2.8 1.4 4 2.8 1.4 1.5 2.5 3.2 2.5 5.4a2.3 2.3 0 0 1-2.3 2.3H14c-.7 0-1-.4-1-1.1V10"/></svg>
+                </span>
+                <span class="ham-patient-icon" aria-hidden="true">👤</span>
+                <button class="ham-mode-title" id="hamModeTitleBtn" title="Clique para alternar modo ventilatório">(S)CMV+</button>
+                <span class="breath-badge mand" id="breathTypeBadge">MANDATÓRIA</span>
+                <span class="breath-phase" id="breathPhaseLabel">Expiração</span>
+                <div class="ham-paw-live-bar" title="Pressão de via aérea instantânea (Paw)" aria-hidden="true">
+                  <span id="hamPawLiveFill"></span>
+                </div>
+              </div>
+              <div class="ham-top-right">
+                <div class="ham-clock mono" id="hamClock">2026-11-18<br/>06:56:00</div>
+                <button class="ham-icon-top" id="hamFreezeBtn" title="Congelar curvas / Alternar Curvas e Loops">▶|◀</button>
+              </div>
+            </div>
+
+            <!-- Corpo da Tela (Esquerda: 4 Números | Centro: 3 Curvas ou Overlays | Direita: Dials Circulares) -->
+            <div class="ham-screen-main">
+              <!-- Coluna Esquerda: 4 Leituras Principais Hamilton-T1 -->
+              <div class="ham-left-metrics">
+                <div class="ham-metric-box">
+                  <div class="ham-metric-val mono" id="roPpeak">18</div>
+                  <div class="ham-metric-meta">
+                    <span class="ham-metric-name">Ppeak</span>
+                    <span class="ham-metric-unit">cmH2O</span>
+                  </div>
+                </div>
+
+                <div class="ham-metric-box">
+                  <div class="ham-metric-val mono" id="roVe">6.3</div>
+                  <div class="ham-metric-meta">
+                    <span class="ham-metric-name">ExpMinVol</span>
+                    <span class="ham-metric-unit">l/Min</span>
+                  </div>
+                </div>
+
+                <div class="ham-metric-box">
+                  <div class="ham-metric-val mono" id="roVte">450</div>
+                  <div class="ham-metric-meta">
+                    <span class="ham-metric-name">VTE</span>
+                    <span class="ham-metric-unit">ml</span>
+                  </div>
+                </div>
+
+                <div class="ham-metric-box">
+                  <div class="ham-metric-val mono" id="roRRTot">14.0</div>
+                  <div class="ham-metric-meta">
+                    <span class="ham-metric-name">fTotal</span>
+                    <span class="ham-metric-unit">b/min</span>
+                  </div>
+                </div>
+
+                <!-- Sub-barra compacta de segurança pulmonar (Pplatô, ΔP, AutoPEEP) -->
+                <div class="ham-sub-mechanics" id="roDpBox">
+                  <span>Pplat: <strong id="roPplat" class="mono">13</strong></span>
+                  <span>ΔP: <strong id="roDP" class="mono">8</strong></span>
+                  <span>PEEPt: <strong id="roPeepTot" class="mono">5.0</strong></span>
+                </div>
+              </div>
+
+              <!-- Centro da Tela: Curvas / Loops / Painéis de Aba -->
+              <div class="ham-center-stage">
+                <!-- Curvas P / F / V (Padrão Hamilton: Paw Amarelo, Flow Roxo, Volume Verde) -->
+                <div class="ham-waves" id="ventWavesContainer">
+                  <div class="ham-wave-row">
+                    <div class="ham-wave-tag">
+                      <span class="ham-lbl">Paw</span>
+                      <span class="ham-unit" id="pawRangeTag">cmH2O</span>
+                    </div>
+                    <canvas id="canvasPaw" class="wave-canvas"></canvas>
+                  </div>
+
+                  <div class="ham-wave-row">
+                    <div class="ham-wave-tag">
+                      <span class="ham-lbl">Flow</span>
+                      <span class="ham-unit">l/min</span>
+                    </div>
+                    <canvas id="canvasFlow" class="wave-canvas"></canvas>
+                  </div>
+
+                  <div class="ham-wave-row">
+                    <div class="ham-wave-tag">
+                      <span class="ham-lbl">V</span>
+                      <span class="ham-unit">ml</span>
+                    </div>
+                    <canvas id="canvasVol" class="wave-canvas"></canvas>
+                  </div>
+                </div>
+
+                <!-- Loops P-V / F-V + Pulmão Animado (Aba Monitoring / Loops) -->
+                <div class="vent-loops ham-loops-panel hidden" id="ventLoopsContainer">
+                  <div class="loop-card">
+                    <div class="loop-title">Loop P × V</div>
+                    <canvas id="canvasLoopPV" class="loop-canvas"></canvas>
+                  </div>
+                  <div class="loop-card">
+                    <div class="loop-title">Loop F × V</div>
+                    <canvas id="canvasLoopFV" class="loop-canvas"></canvas>
+                  </div>
+                  <div class="loop-card lung-card">
+                    <div class="lung-head-row">
+                      <div class="loop-title">Dynamic Lung</div>
+                      <span class="lung-phase-chip exp mono" id="lungPhaseChip">EXP</span>
+                    </div>
+                    <div class="lung-viz">
+                      <svg viewBox="0 0 200 165" class="lung-svg" id="lungSvg" aria-hidden="true">
+                        <!-- Contorno de Referência da Caixa Torácica (Complacência Alvo) -->
+                        <path id="lungComplianceCage" d="M78 44 C46 46, 22 76, 20 118 C19 138, 36 146, 72 142 M122 44 C154 46, 178 76, 180 118 C181 138, 164 146, 128 142" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+                        <!-- Espaço Pleural Pneumotórax (oculto em condições normais) -->
+                        <path id="pneumoPocket" class="hidden" d="M76 46 C48 48, 26 76, 24 116 C23 136, 40 142, 68 136 C56 122, 54 88, 76 46 Z" fill="rgba(239, 68, 68, 0.22)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3 2"/>
+
+                        <!-- Pulmão Direito -->
+                        <g id="rightLungGroup">
+                          <path id="rightLungPath" d="M84 48 C58 50, 32 78, 30 116 C29 132, 44 139, 68 134 C80 131, 86 120, 86 96 Z" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="2.4"/>
+                          <path d="M40 94 C54 96, 72 95, 84 92" fill="none" stroke="rgba(186, 230, 253, 0.35)" stroke-width="1.1"/>
+                          <g id="rightAlveoli" fill="rgba(56, 189, 248, 0.24)" stroke="#7dd3fc" stroke-width="0.9">
+                            <circle cx="56" cy="82" r="5"/>
+                            <circle cx="68" cy="74" r="4"/>
+                            <circle cx="48" cy="108" r="6"/>
+                            <circle cx="64" cy="112" r="5.5"/>
+                            <circle cx="75" cy="96" r="4.5"/>
+                          </g>
+                        </g>
+
+                        <!-- Pulmão Esquerdo -->
+                        <g id="leftLungGroup">
+                          <path id="leftLungPath" d="M116 48 C142 50, 168 78, 170 116 C171 132, 156 139, 132 134 C120 131, 114 120, 114 96 Z" fill="rgba(56, 189, 248, 0.25)" stroke="#38bdf8" stroke-width="2.4"/>
+                          <path d="M160 94 C146 96, 128 95, 116 92" fill="none" stroke="rgba(186, 230, 253, 0.35)" stroke-width="1.1"/>
+                          <g id="leftAlveoli" fill="rgba(56, 189, 248, 0.24)" stroke="#7dd3fc" stroke-width="0.9">
+                            <circle cx="144" cy="82" r="5"/>
+                            <circle cx="132" cy="74" r="4"/>
+                            <circle cx="152" cy="108" r="6"/>
+                            <circle cx="136" cy="112" r="5.5"/>
+                            <circle cx="125" cy="96" r="4.5"/>
+                          </g>
+                        </g>
+
+                        <!-- Árvore Traqueobrônquica (Representa Resistência Rva) -->
+                        <g id="lungAirwayTree" fill="none" stroke="#94a3b8" stroke-linecap="round" stroke-linejoin="round">
+                          <path id="lungTracheaWall" d="M94 8 L94 46 M106 8 L106 46" stroke-width="2.2"/>
+                          <path d="M95 16 H105 M95 24 H105 M95 32 H105" stroke="#64748b" stroke-width="1.2"/>
+                          <path id="lungBronchi" d="M100 42 L72 68 M100 42 L128 68 M78 62 L58 76 M72 68 L62 88 M122 62 L142 76 M128 68 L138 88" stroke-width="3.4"/>
+                        </g>
+
+                        <!-- Partículas de Fluxo Aéreo (Insp / Exp) -->
+                        <g id="lungFlowDots" fill="#4ade80">
+                          <circle cx="100" cy="16" r="2.2"/>
+                          <circle cx="100" cy="28" r="2.2"/>
+                          <circle cx="88" cy="54" r="2.0"/>
+                          <circle cx="72" cy="68" r="1.9"/>
+                          <circle cx="112" cy="54" r="2.0"/>
+                          <circle cx="128" cy="68" r="1.9"/>
+                        </g>
+
+                        <!-- Coração Pulsante na Incisura Cardíaca -->
+                        <g id="lungHeart">
+                          <path d="M100 116 C93 110, 90 101, 95 96 C98 93, 100 97, 100 98 C100 97, 102 93, 105 96 C110 101, 107 110, 100 116 Z" fill="#ef4444" stroke="#fca5a5" stroke-width="1.1"/>
+                        </g>
+
+                        <!-- Halo de Disparo Espontâneo do Paciente -->
+                        <circle id="lungTriggerHalo" cx="100" cy="46" r="10" fill="none" stroke="#4ade80" stroke-width="2" opacity="0"/>
+
+                        <!-- Diafragma Móvel (Sobe na Exp / Desce e retifica na Insp) -->
+                        <path id="lungDiaphragm" d="M 28 143 Q 100 130 172 143" fill="none" stroke="#38bdf8" stroke-width="3.2" stroke-linecap="round"/>
+                      </svg>
+                      <div class="lung-metrics-mini">
+                        <div>Cstat: <strong id="lungCompVal" class="mono">60</strong> <small>ml/cmH₂O</small></div>
+                        <div>Rinsp: <strong id="lungResVal" class="mono">6</strong> <small>cmH₂O/L/s</small></div>
+                        <div>ΔP: <strong id="lungDpVal" class="mono">8</strong> <small>cmH₂O</small></div>
+                        <div id="roAutoPeepHint">Auto-PEEP: 0.0</div>
+                        <div id="roIE">I:E 1:2.4</div>
+                        <div id="roMechanics" class="hidden">60 / 6</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Overlay: Seletor de Modos (Modes) -->
+                <div class="ham-overlay hidden" id="hamModesOverlay">
+                  <div class="ham-overlay-head">
+                    <strong>Selecionar Modo Ventilatório</strong>
+                    <button class="ham-close-overlay" data-close-overlay="hamModesOverlay">✕</button>
+                  </div>
+                  <div class="ham-modes-grid">
+                    <button class="mode-tab active" data-mode="VCV" role="tab" aria-selected="true">
+                      <strong>(S)CMV+</strong>
+                      <span>Volume Controlado (VCV)</span>
+                    </button>
+                    <button class="mode-tab" data-mode="PCV" role="tab" aria-selected="false">
+                      <strong>PCV+</strong>
+                      <span>Pressão Controlada (PCV)</span>
+                    </button>
+                    <button class="mode-tab" data-mode="PSV" role="tab" aria-selected="false">
+                      <strong>SPONT</strong>
+                      <span>Pressão de Suporte (PSV)</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Overlay: Controles Avançados (Controls) -->
+                <div class="ham-overlay hidden" id="hamControlsOverlay">
+                  <div class="ham-overlay-head">
+                    <strong>Ajustes Completos do Ventilador</strong>
+                    <button class="ham-close-overlay" data-close-overlay="hamControlsOverlay">✕</button>
+                  </div>
+                  <div class="vent-controls-grid" id="ventControlsGrid">
+                    <div class="knob-card primary" id="ctrlPrimaryCard">
+                      <div class="knob-header">
+                        <span class="knob-name" id="lblPrimaryParam">Vt (Volume Corrente)</span>
+                        <span class="knob-unit" id="unitPrimaryParam">ml</span>
+                      </div>
+                      <div class="knob-value-row">
+                        <button class="step-btn" data-param="primary" data-dir="-1" aria-label="Diminuir parâmetro principal">−</button>
+                        <span class="knob-val mono" id="valPrimaryParam">450</span>
+                        <button class="step-btn" data-param="primary" data-dir="1" aria-label="Aumentar parâmetro principal">+</button>
+                      </div>
+                      <input type="range" id="rangePrimaryParam" min="200" max="800" step="10" value="450" class="knob-slider" />
+                      <div class="knob-hint" id="hintPrimaryParam">Alvo protetor: 420 mL</div>
+                    </div>
+
+                    <div class="knob-card" id="ctrlSecondaryCard">
+                      <div class="knob-header">
+                        <span class="knob-name" id="lblSecondaryParam">FR (Rate)</span>
+                        <span class="knob-unit" id="unitSecondaryParam">b/min</span>
+                      </div>
+                      <div class="knob-value-row">
+                        <button class="step-btn" data-param="secondary" data-dir="-1" aria-label="Diminuir frequência ou sensibilidade">−</button>
+                        <span class="knob-val mono" id="valSecondaryParam">14</span>
+                        <button class="step-btn" data-param="secondary" data-dir="1" aria-label="Aumentar frequência ou sensibilidade">+</button>
+                      </div>
+                      <input type="range" id="rangeSecondaryParam" min="6" max="40" step="1" value="14" class="knob-slider" />
+                      <div class="knob-hint" id="hintSecondaryParam">Controla lavagem de CO₂</div>
+                    </div>
+
+                    <div class="knob-card" id="ctrlTimingCard">
+                      <div class="knob-header">
+                        <span class="knob-name" id="lblTimingParam">Fluxo Insp.</span>
+                        <span class="knob-unit" id="unitTimingParam">l/min</span>
+                      </div>
+                      <div class="knob-value-row">
+                        <button class="step-btn" data-param="timing" data-dir="-1" aria-label="Diminuir fluxo ou tempo inspiratório">−</button>
+                        <span class="knob-val mono" id="valTimingParam">45</span>
+                        <button class="step-btn" data-param="timing" data-dir="1" aria-label="Aumentar fluxo ou tempo inspiratório">+</button>
+                      </div>
+                      <input type="range" id="rangeTimingParam" min="20" max="80" step="5" value="45" class="knob-slider" />
+                      <div class="knob-hint" id="hintTimingParam">Maior fluxo = menor Ti</div>
+                    </div>
+
+                    <div class="knob-card">
+                      <div class="knob-header">
+                        <span class="knob-name">PEEP/CPAP</span>
+                        <span class="knob-unit">cmH2O</span>
+                      </div>
+                      <div class="knob-value-row">
+                        <button class="step-btn" data-param="peep" data-dir="-1" aria-label="Diminuir PEEP">−</button>
+                        <span class="knob-val mono" id="valPeep">5</span>
+                        <button class="step-btn" data-param="peep" data-dir="1" aria-label="Aumentar PEEP">+</button>
+                      </div>
+                      <input type="range" id="rangePeep" min="0" max="24" step="1" value="5" class="knob-slider" />
+                      <div class="knob-hint">Recruta alvéolos • Cuidado PAI</div>
+                    </div>
+
+                    <div class="knob-card">
+                      <div class="knob-header">
+                        <span class="knob-name">Oxygen (FiO₂)</span>
+                        <span class="knob-unit">%</span>
+                      </div>
+                      <div class="knob-value-row">
+                        <button class="step-btn" data-param="fio2" data-dir="-1" aria-label="Diminuir FiO2">−</button>
+                        <span class="knob-val mono" id="valFio2">30</span>
+                        <button class="step-btn" data-param="fio2" data-dir="1" aria-label="Aumentar FiO2">+</button>
+                      </div>
+                      <input type="range" id="rangeFio2" min="21" max="100" step="1" value="30" class="knob-slider" />
+                      <div class="knob-hint">Alvo SpO₂: 92–96%</div>
+                    </div>
+
+                    <div class="knob-card" id="ctrlExtraCard">
+                      <div class="knob-header">
+                        <span class="knob-name" id="lblExtraParam">Pausa Insp.</span>
+                        <span class="knob-unit" id="unitExtraParam">%</span>
+                      </div>
+                      <div class="knob-value-row">
+                        <button class="step-btn" data-param="extra" data-dir="-1" aria-label="Diminuir pausa ou suporte">−</button>
+                        <span class="knob-val mono" id="valExtraParam">10</span>
+                        <button class="step-btn" data-param="extra" data-dir="1" aria-label="Aumentar pausa ou suporte">+</button>
+                      </div>
+                      <input type="range" id="rangeExtraParam" min="0" max="30" step="5" value="10" class="knob-slider" />
+                      <div class="knob-hint" id="hintExtraParam">Mostra Pplatô a cada ciclo</div>
+                    </div>
+
+                    <div class="knob-card ie-card" id="ctrlIeCard">
+                      <div class="knob-header">
+                        <span class="knob-name" id="lblIeRatio">Relação I:E (Insp/Exp)</span>
+                        <span class="knob-unit" id="unitIeRatio">razão</span>
+                      </div>
+                      <div class="knob-value-row">
+                        <button class="step-btn" data-param="ie" data-dir="-1" aria-label="Diminuir relação expiratória (mais I)">−</button>
+                        <span class="knob-val mono" id="valIeRatio">1:2.4</span>
+                        <button class="step-btn" data-param="ie" data-dir="1" aria-label="Aumentar relação expiratória (mais E)">+</button>
+                      </div>
+                      <input type="range" id="rangeIeRatio" min="0.5" max="5.0" step="0.1" value="2.4" class="knob-slider" />
+                      <div class="knob-hint" id="hintIeRatio">Ti: 1.00s • Te: 2.40s (Ajusta Fluxo/Ti)</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Overlay: Ferramentas / Manobras (Tools) -->
+                <div class="ham-overlay hidden" id="hamToolsOverlay">
+                  <div class="ham-overlay-head">
+                    <strong>Ferramentas &amp; Manobras Respiratórias</strong>
+                    <button class="ham-close-overlay" data-close-overlay="hamToolsOverlay">✕</button>
+                  </div>
+                  <div class="ham-tools-actions">
+                    <button class="ham-tool-btn" id="btnHoldInsp" title="Manter pausa inspiratória de 2s para medir Pressão de Platô">⏸ Pausa Inspiratória (Pplatô)</button>
+                    <button class="ham-tool-btn" id="btnHoldExp" title="Manter pausa expiratória de 2s para medir Auto-PEEP">⏸ Pausa Expiratória (Auto-PEEP)</button>
+                    <button class="ham-tool-btn" id="btnO2Flush" title="Fornecer O2 a 100% por 2 minutos">↑ O₂ 100% (Enrichment 2m)</button>
+                    <button class="ham-tool-btn" id="btnToggleLoopsTool">◎ Alternar Curvas / Loops + Lung</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Coluna Direita da Tela: Modes, 3 Dials Circulares, Controls, Alarms -->
+              <div class="ham-right-controls">
+                <button class="ham-side-btn" id="hamBtnModes">Modes</button>
+
+                <button class="ham-dial-btn selected" data-dial="primary" title="Selecionar parâmetro principal para girar no botão verde">
+                  <span class="ham-ring">
+                    <strong class="mono" id="hamDialPrimaryVal">450</strong>
+                    <small id="hamDialPrimaryUnit">ml</small>
+                  </span>
+                  <span class="ham-dial-lbl" id="hamDialPrimaryLbl">Vt</span>
+                </button>
+
+                <button class="ham-dial-btn" data-dial="peep" title="Selecionar PEEP/CPAP para girar no botão verde">
+                  <span class="ham-ring">
+                    <strong class="mono" id="hamDialPeepVal">5</strong>
+                    <small>cmH2O</small>
+                  </span>
+                  <span class="ham-dial-lbl">PEEP/CPAP</span>
+                </button>
+
+                <button class="ham-dial-btn" data-dial="fio2" title="Selecionar Oxygen (FiO2) para girar no botão verde">
+                  <span class="ham-ring">
+                    <strong class="mono" id="hamDialFio2Val">30</strong>
+                    <small>%</small>
+                  </span>
+                  <span class="ham-dial-lbl">Oxygen</span>
+                </button>
+
+                <button class="ham-side-btn" id="hamBtnControls">Controls</button>
+                <button class="ham-side-btn" id="hamBtnAlarms">Alarms</button>
+              </div>
+            </div>
+
+            <!-- Barra Inferior da Tela Hamilton-T1 -->
+            <div class="ham-screen-bottom">
+              <button class="ham-bottom-tab active" data-ham-tab="waves">Monitoring</button>
+              <button class="ham-bottom-tab" data-ham-tab="loops">Loops / Lung</button>
+              <button class="ham-bottom-tab" data-ham-tab="tools">Tools</button>
+              <button class="ham-bottom-tab" data-ham-tab="controls">System</button>
+              <div class="ham-status-icons" aria-hidden="true">
+                <span>💧</span>
+                <span>ᛒ</span>
+                <span class="ham-bat">▮</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Marca HAMILTON-T1 no chassi inferior esquerdo -->
+          <div class="ham-brand-strip">
+            <span class="ham-logo">HAMILTON·T1</span>
+            <span class="ham-turbine-badge" id="hamTurbineBadge"><svg class="ham-turbine-fan" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M8 2v4M8 10v4M2 8h4M10 8h4M3.8 3.8l2.8 2.8M9.4 9.4l2.8 2.8M12.2 3.8L9.4 6.6M6.6 9.4L3.8 12.2"/></svg>TURBINA</span>
+            <span class="ham-lock-badge hidden" id="hamLockBadge">🔒 TELA BLOQUEADA</span>
+          </div>
+        </div>
+
+        <!-- Lado Direito do Chassi: Botões Físicos & Botão Rotativo Verde -->
+        <div class="ham-hardware-panel">
+          <button class="ham-hw-power" id="hamHwPower" title="Status Ligado (Simulador Ativo)">⏻</button>
+          <div class="ham-bat-leds"><span>🔋2</span><span>🔋1</span></div>
+
+          <div class="ham-hw-grid">
+            <button class="ham-hw-btn" id="hamHwDayNight" title="Alternar brilho da tela">◐</button>
+            <button class="ham-hw-btn" id="hamHwLock" title="Bloquear / Desbloquear touchscreen">🔓</button>
+            <button class="ham-hw-btn" id="hamHwManualHold" title="Pausa Inspiratória / Ciclo Manual">🫁</button>
+            <button class="ham-hw-btn" id="hamHwO2" title="O₂ 100% (Enrichment)">↑O₂</button>
+            <button class="ham-hw-btn" id="hamHwExpHold" title="Pausa Expiratória (Auto-PEEP)">⏸E</button>
+            <button class="ham-hw-btn" id="hamHwNeb" title="Nebulizador / Broncodilatador">💨</button>
+          </div>
+
+          <button class="ham-hw-silence" id="hamHwSilence" title="Silenciar alarmes por 2 minutos">
+            <span class="ham-bell-tri">⚠</span>
+            <span>2 MIN.</span>
+          </button>
+
+          <!-- Botão Rotativo Press & Turn (P&T Knob) com anel verde -->
+          <div class="ham-rotary-wrap" title="Gire ou clique − / + para ajustar o parâmetro selecionado na tela">
+            <div class="ham-rotary-ring" id="hamRotaryKnob">
+              <button class="ham-rot-btn minus" id="hamKnobMinus" aria-label="Girar botão para esquerda (diminuir)">−</button>
+              <div class="ham-rot-core" id="hamRotaryCore">
+                <span class="ham-knob-notch"></span>
+              </div>
+              <button class="ham-rot-btn plus" id="hamKnobPlus" aria-label="Girar botão para direita (aumentar)">+</button>
+            </div>
+            <span class="ham-rot-target mono" id="hamKnobTarget">Vt</span>
+          </div>
+        </div>
+      </div>
+      <div class="device-resize-handle" id="hamResizeHandle" data-resize-target="vent" title="Arraste para redimensionar o Ventilador HAMILTON-T1" role="separator" aria-label="Redimensionar Ventilador"></div>
+    </section>
+
+    <!-- ====================================================== -->
+    <!-- PAINEL 3: BOMBA DE INFUSÃO SAMTRONIC ICATU 4.0         -->
+    <!-- ====================================================== -->
+    <section class="device-panel icatu-chassis" id="icatuChassis" data-role="chassis" aria-label="Bomba de Infusão Samtronic Icatu 4.0">
+      <!-- Acessórios Superiores: Tomada Esquerda & Manípulo Laranja-Vermelho Direito -->
+      <div class="icatu-top-plug" aria-hidden="true"><span></span><span></span><span></span></div>
+      <button type="button" class="icatu-red-clamp" data-icatu-action="clamp" aria-label="Manípulo de fixação de suporte Samtronic" title="Manípulo de fixação de suporte Samtronic"></button>
+
+      <!-- Ombros Arredondados & Corpo Superior -->
+      <div class="icatu-upper-body">
+        <!-- Asa Esquerda -->
+        <div class="icatu-wing left">
+          <div class="icatu-led-pair" title="Alertas / Oclusão">
+            <span class="icatu-warn-tri">⚠</span>
+            <span class="icatu-occ-led" id="icatuOccLed">●</span>
+          </div>
+          <button type="button" class="icatu-circle-btn" data-icatu-action="silence" title="Silenciar alarme / desobstruir linha">⊘</button>
+          <button type="button" class="icatu-circle-btn mf" data-icatu-action="toggleMenu" title="MF: Menus de Infusão (TCI, PCA, Rampa, Sequencial)">MF</button>
+          <button type="button" class="icatu-soft-dot" data-icatu-action="softLeft" title="Zerar Volume / Voltar">●</button>
+          <div class="icatu-badge-wing left">
+            <span class="icatu-wifi">📶</span>
+            <div class="icatu-pw-leds">
+              <span class="icatu-led green on"></span>
+              <span class="icatu-led amber on"></span>
+            </div>
+            <span class="icatu-intelli">intelli</span>
+          </div>
+        </div>
+
+        <!-- Tela LCD Central Colorida -->
+        <div class="icatu-lcd-bezel">
+          <div class="icatu-lcd" id="icatuLcd">
+            <div class="icatu-lcd-banner">
+              <div class="icatu-b-left">
+                <button type="button" class="icatu-mode-tag icatu-banner-btn mono" id="icatuModeTag" data-icatu-menu="open" data-icatu-val="modes" title="Selecionar Modo de Infusão">DP</button>
+                <button type="button" class="icatu-banner-drug-btn" id="icatuDrugBtn" data-icatu-menu="open" data-icatu-val="ders" title="Selecionar Fármaco DERS"><strong id="icatuDrugTitle">Fentanil</strong></button>
+              </div>
+              <div class="icatu-b-right">
+                <button type="button" class="icatu-lock-pill hidden" id="icatuLockPill" data-icatu-menu="toggleLock" title="Teclado bloqueado — Clique para destravar">🔒</button>
+                <span class="icatu-ders-chip">DERS</span>
+                <span class="icatu-clock mono" id="icatuClock">13:42</span>
+                <span aria-hidden="true">🔋</span>
+                <span class="icatu-sector-pill" id="icatuSectorTag">UTI</span>
+              </div>
+            </div>
+
+            <!-- Tela Principal (Home) -->
+            <div class="icatu-lcd-home" id="icatuLcdHome">
+              <div class="icatu-lcd-sub">
+                <span class="mono" id="icatuConcSub">50 mcg/mL</span>
+                <button type="button" class="icatu-sub-proto-btn mono" id="icatuModeSummaryChip" data-icatu-menu="open" data-icatu-val="modes" title="Selecionar Modo de Infusão">Dose / Peso</button>
+                <button type="button" class="icatu-bolus-btn" data-icatu-action="bolus" title="Bolus Rápido">Bolus &gt;</button>
+              </div>
+
+              <div class="icatu-lcd-main">
+                <div class="icatu-kpa-col" title="Pressão da linha venosa (kPa)">
+                  <span class="icatu-kpa-lbl">kPa</span>
+                  <div class="icatu-kpa-bars" id="icatuKpaBars">
+                    <span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                  <span class="icatu-kpa-val mono" id="icatuKpaVal">0</span>
+                </div>
+
+                <div class="icatu-readout-col">
+                  <div class="icatu-big-row">
+                    <span class="icatu-big-val mono" id="icatuMainVal">1.50</span>
+                    <span class="icatu-big-unit" id="icatuMainUnit">mcg/kg/h</span>
+                  </div>
+                  <div class="icatu-status-row">
+                    <span class="icatu-status-pill paused" id="icatuStatusPill">PAUSADO</span>
+                    <span class="icatu-hint mono" id="icatuHintText">Passo: 0.50</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="icatu-flow-track" aria-hidden="true">
+                <span class="icatu-flow-bead"></span>
+                <span class="icatu-flow-bead r2"></span>
+                <span class="icatu-flow-bead r3"></span>
+                <span class="icatu-flow-bead r4"></span>
+                <span class="icatu-flow-bead r5"></span>
+              </div>
+
+              <!-- Barra Rápida Contextual de Ação do Modo (TCI / PCA / Sequencial / Rampa / Pausa) -->
+              <div class="icatu-context-bar" id="icatuContextBar"></div>
+
+              <div class="icatu-lcd-metrics">
+                <div class="icatu-m-col">
+                  <span class="icatu-m-lbl">VOL INF</span>
+                  <strong class="mono" id="icatuVolInf">0.0 mL</strong>
+                  <small class="mono" id="icatuMetaLeft">0.0 mcg/kg</small>
+                </div>
+                <div class="icatu-m-col">
+                  <span class="icatu-m-lbl">TEMPO</span>
+                  <strong class="mono" id="icatuElapsed">0:00:00</strong>
+                  <small class="mono" id="icatuMetaMid">Contínuo</small>
+                </div>
+                <div class="icatu-m-col">
+                  <span class="icatu-m-lbl">mL/h</span>
+                  <div class="icatu-flow-num">
+                    <strong class="mono" id="icatuFlowMlh">0.0</strong>
+                    <span class="icatu-drip-chamber" id="icatuDropAnim" aria-hidden="true">
+                      <svg viewBox="0 0 22 30" width="22" height="30">
+                        <rect x="4" y="2" width="14" height="26" rx="4" fill="#0b1522" stroke="#38bdf8" stroke-width="1.3" stroke-opacity="0.75"/>
+                        <path d="M11 2V7" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round"/>
+                        <ellipse class="icatu-chamber-pool" cx="11" cy="24" rx="5.5" ry="2.3" fill="#0284c7" fill-opacity="0.65"/>
+                        <ellipse class="icatu-chamber-ripple" cx="11" cy="24" rx="2.5" ry="1.0" fill="none" stroke="#4ade80" stroke-width="1.1"/>
+                        <ellipse class="icatu-chamber-ripple r2" cx="11" cy="24" rx="2.0" ry="0.8" fill="none" stroke="#38bdf8" stroke-width="0.9"/>
+                        <path class="icatu-chamber-drop" d="M11 7.5C11 7.5 8.2 11.4 8.2 13.3a2.8 2.8 0 0 0 5.6 0C13.8 11.4 11 7.5 11 7.5Z" fill="#38bdf8" stroke="#bae6fd" stroke-width="0.9"/>
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tela de Menus & Protocolos Icatu 4.0 -->
+            <div class="icatu-lcd-menu hidden" id="icatuLcdMenu"></div>
+
+            <!-- Softkeys Inferiores do LCD -->
+            <div class="icatu-lcd-softkeys">
+              <button type="button" class="icatu-sk" id="icatuSkLeft" data-icatu-action="softLeft">ZERAR VOL.</button>
+              <button type="button" class="icatu-sk menu" id="icatuSkMid" data-icatu-action="toggleMenu">MENUS (12)</button>
+              <button type="button" class="icatu-sk" id="icatuSkRight" data-icatu-action="details">DETALHES</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Asa Direita -->
+        <div class="icatu-wing right">
+          <div class="icatu-led-pair" title="Status de infusão">
+            <span class="icatu-run-led" id="icatuRunLed">●</span>
+            <span class="icatu-warn-tri">⚠</span>
+          </div>
+          <button type="button" class="icatu-circle-btn" data-icatu-action="bolus" title="Bolus / Purga rápida">◀◀</button>
+          <button type="button" class="icatu-circle-btn startstop" data-icatu-action="toggleRun" title="Iniciar ou Pausar Infusão">
+            <span class="icatu-ss-green">▶</span>
+            <span class="icatu-ss-pink">■</span>
+          </button>
+          <button type="button" class="icatu-soft-dot" data-icatu-action="details" title="Alternar detalhes">●</button>
+          <div class="icatu-badge-wing right">
+            <span class="icatu-ver-pill">4.0</span>
+            <div class="icatu-logo-text">icatu<span>S</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D-Pad Direcional Azul 4 Vias + Botão Central Verde OK -->
+      <div class="icatu-dpad-row">
+        <div class="icatu-dpad-wheel" role="group" aria-label="Navegação Samtronic Icatu 4.0">
+          <button type="button" class="icatu-dnav up" data-icatu-action="up" aria-label="Aumentar taxa/alvo">▲</button>
+          <button type="button" class="icatu-dnav left" data-icatu-action="step" aria-label="Ajustar passo">◀</button>
+          <button type="button" class="icatu-dok" data-icatu-action="toggleRun" aria-label="Confirmar / Iniciar-Pausar">⏎</button>
+          <button type="button" class="icatu-dnav right" data-icatu-action="nextProtocol" aria-label="Próximo protocolo ou etapa">▶</button>
+          <button type="button" class="icatu-dnav down" data-icatu-action="down" aria-label="Diminuir taxa/alvo">▼</button>
+        </div>
+      </div>
+
+      <!-- Porta Inferior Azul Aço Samtronic + Rotor Peristáltico -->
+      <div class="icatu-bottom-door">
+        <div class="icatu-rotor-window" aria-hidden="true">
+          <span class="icatu-rotor-wheel">
+            <svg class="icatu-rotor-spokes" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="10" cy="10" r="7.5" stroke-opacity="0.45"/>
+              <path d="M10 3v14M3 10h14"/>
+              <circle cx="10" cy="10" r="2.2" fill="currentColor" stroke="none"/>
+            </svg>
+          </span>
+          <span class="icatu-peri-dots"><span></span><span></span><span></span><span></span><span></span><span></span></span>
+        </div>
+        <span class="icatu-wordmark">Samtronic</span>
+        <div class="icatu-door-hint mono" id="icatuDoorModeTag">ICATU 4.0</div>
+      </div>
+
+      <!-- Sensor Óptico Lateral Azul ICATU 3ED 4.0 + Cabo Espiralado -->
+      <div class="icatu-sensor-assembly">
+        <button type="button" class="icatu-sensor-btn" id="icatuSensorBtn" data-icatu-action="occlusion" title="Sensor ICATU 3ED 4.0 — Clique para testar/limpar Oclusão">
+          <span class="icatu-sensor-pin"><span class="icatu-sensor-tube" aria-hidden="true"></span></span>
+          <span class="icatu-sensor-body">ICATU <span class="icatu-sensor-led" aria-hidden="true"></span><span class="icatu-sensor-beam" aria-hidden="true"></span><small>3ED 4.0</small></span>
+          <span class="icatu-sensor-pin"><span class="icatu-sensor-tube" aria-hidden="true"></span><span class="icatu-sensor-drop" aria-hidden="true"></span></span>
+        </button>
+        <div class="icatu-coil-cord" aria-hidden="true"></div>
+      </div>
+
+      <div class="device-resize-handle icatu" id="icatuResizeHandle" data-resize-target="pump" title="Arraste para redimensionar a Bomba Icatu 4.0 #1" role="separator" aria-label="Redimensionar Bomba de Infusão 1"></div>
+    </section>
+
+    <!-- PAINEL 3B: Bomba #2 montada dinamicamente via SamtronicIcatuPump.mountClone() -->
+
+    <!-- ====================================================== -->
+    <!-- PAINEL 4: CARDIOVERSOR BIFÁSICO VIVO GOLD (CMOS DRAKE) -->
+    <!-- ====================================================== -->
+    <section class="device-panel vg-chassis" id="vgChassis" aria-label="Cardioversor Bifásico Vivo Gold CMOS Drake">
+          <!-- Cabos Espiralados Laterais das Pás -->
+          <div class="vg-coil vg-coil-left" aria-hidden="true"></div>
+          <div class="vg-coil vg-coil-right" aria-hidden="true"></div>
+
+          <!-- Berço Superior das Pás (STERNUM & APEX) -->
+          <div class="vg-paddles-bay" aria-hidden="true">
+            <div class="vg-paddle left">
+              <div class="vg-paddle-handle"><span class="vg-paddle-led" aria-hidden="true"></span><span class="vg-paddle-lbl mono">STERNUM</span></div>
+              <div class="vg-paddle-base"></div>
+            </div>
+            <div class="vg-paddles-center-badge mono">
+              <span class="vg-shock-counter" id="vgPaddleStatus">PÁS EXTERNAS ADULTO • 52 Ω</span>
+            </div>
+            <div class="vg-paddle right">
+              <div class="vg-paddle-handle"><span class="vg-paddle-lbl mono">APEX</span><span class="vg-paddle-led" aria-hidden="true"></span></div>
+              <div class="vg-paddle-base"></div>
+            </div>
+          </div>
+
+          <!-- Moldura Preta Principal + Cabeçalho da Marca -->
+          <div class="vg-bezel">
+            <div class="vg-bezel-brand">
+              <div class="vg-brand-title">Cardioversor <strong>Vivo Gold</strong></div>
+              <div class="vg-brand-right">
+                <span class="vg-touch-spec mono">TOUCHSCREEN 7″</span>
+                <span class="vg-cmos-badge">CMOS DRAKE</span>
+              </div>
+            </div>
+
+            <div class="vg-panel-row">
+              <!-- Coluna Lateral Esquerda de Botões Táteis & Dial Giratório -->
+              <div class="vg-left-strip">
+                <div class="vg-optical-port" aria-hidden="true"><span></span></div>
+                <button type="button" class="vg-key-round" data-vg-action="toggleLeads" title="Alternar conjunto de 3 derivações ECG (DI/DII/DIII ou DII/V1/V5)">⚙</button>
+                <button type="button" class="vg-key-pill" data-vg-action="cycleGain" title="Ganho ECG (x0.5 / x1 / x2)">VVV<small>100</small></button>
+                <button type="button" class="vg-key-pill" data-vg-action="togglePacer" title="Modo Marcapasso Transcutâneo (PULSAR)">PULSAR</button>
+                <button type="button" class="vg-key-round" id="vgHwMuteBtn" data-vg-action="mute" title="Silenciar alertas do cardioversor">🔕</button>
+                <button type="button" class="vg-key-pill emerg" data-vg-action="emerg" title="Emergência: Carregar 200J imediatamente">EMERGÊNCIA</button>
+
+                <div class="vg-status-leds" aria-hidden="true">
+                  <span class="vg-led ac" title="Rede AC"></span>
+                  <span class="vg-led bat" title="Bateria"></span>
+                  <span class="vg-led chg" title="Carga de Alta Tensão"></span>
+                </div>
+
+                <div class="vg-rotary-well" title="Clique para avançar energia ou use a roda do mouse">
+                  <button type="button" class="vg-rotary-knob" id="vgRotaryKnob" data-vg-action="energyUp" aria-label="Seletor rotativo de energia do cardioversor">
+                    <span class="vg-rotary-cap"></span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tela Colorida TOUCHSCREEN 7" -->
+              <div class="vg-screen-7in" id="vgScreen">
+                <!-- Overlay Standby -->
+                <div class="vg-standby-overlay hidden" id="vgStandbyOverlay">
+                  <div class="standby-badge">VIVO GOLD • STANDBY</div>
+                  <p>Cardioversor Bifásico desligado. Pressione ⏻ para monitorar 3 canais ECG.</p>
+                  <button type="button" class="ctrl-btn accent" data-vg-action="wake">⏻ Ligar Vivo Gold</button>
+                </div>
+
+                <!-- Drawer de Informações Completas do Paciente na Tela 7" -->
+                <div class="vg-patient-drawer hidden" id="vgPatientDrawer">
+                  <div class="vg-pat-drawer-head">
+                    <strong>📋 Informações do Paciente • UTI Leito 04</strong>
+                    <button type="button" class="vg-touch-mini" data-vg-action="togglePatient">✕ Fechar</button>
+                  </div>
+                  <div class="vg-pat-drawer-grid">
+                    <div><span>Identificação:</span> <strong class="mono">UTI-01 (Adulto)</strong></div>
+                    <div><span>Peso / Altura:</span> <strong class="mono" id="vgPatDrawerWeight">70 kg (172 cm)</strong></div>
+                    <div><span>Ritmo Atual:</span> <strong id="vgPatDrawerRhythm">Sinusal Normal</strong></div>
+                    <div><span>Via Aérea:</span> <strong id="vgPatDrawerAirway">Espontânea</strong></div>
+                    <div><span>Impedância Pás:</span> <strong class="mono" id="vgPatDrawerImpedance">52 Ω (Contato OK)</strong></div>
+                    <div><span>Terapia / Choques:</span> <strong class="mono" id="vgPatDrawerMode">MANUAL • 200 J Bifásico</strong></div>
+                    <div><span>Total de Choques:</span> <strong class="mono" id="vgPatDrawerShocks">0 choque(s)</strong></div>
+                    <div><span>Onda Bifásica:</span> <strong class="mono">Exponencial Truncada</strong></div>
+                  </div>
+                </div>
+
+                <!-- Faixa Superior da Tela 7" -->
+                <div class="vg-touch-top">
+                  <div class="vg-top-left">
+                    <span class="vg-mode-chip mono" id="vgModeChip">MANUAL</span>
+                    <span class="vg-patient-line" id="vgPatientLine">PACIENTE: UTI Leito 04 • Adulto 70 kg • Sinusal Normal</span>
+                  </div>
+                  <div class="vg-top-right">
+                    <span class="vg-status-chip idle mono" id="vgChargeChip">DESCARREGADO</span>
+                    <span class="vg-bat-pill mono">BATERIA 100%</span>
+                    <span class="vg-clock mono" id="vgClock">00:00:00</span>
+                  </div>
+                </div>
+
+                <!-- Corpo da Tela 7": 3 Canais ECG (Esquerda) + Telemetria do Paciente (Direita) -->
+                <div class="vg-touch-body">
+                  <div class="vg-ecg-pane">
+                    <div class="vg-ecg-subhead">
+                      <span>3 CANAIS ECG SINCRONIZADOS</span>
+                      <span class="mono" id="vgLeadSetTag">DI • DII • DIII</span>
+                      <span class="mono" id="vgGainTag">x1</span>
+                    </div>
+                    <canvas id="canvasVgEcg" class="vg-ecg-canvas"></canvas>
+                    <div class="vg-charge-progress" aria-hidden="true">
+                      <span id="vgChargeBarFill"></span>
+                    </div>
+                  </div>
+
+                  <div class="vg-param-pane">
+                    <div class="vg-param-box ecg" id="vgParamEcg">
+                      <div class="vg-p-head"><span>ECG</span><small class="mono">50–130</small></div>
+                      <div class="vg-p-val-row">
+                        <strong class="mono" id="vgHrVal">76</strong>
+                        <span class="vg-p-heart" id="vgHrHeart">♥</span>
+                      </div>
+                    </div>
+                    <div class="vg-param-box spo2">
+                      <div class="vg-p-head"><span>SpO2</span><small class="mono">&gt;90%</small></div>
+                      <div class="vg-p-val-row">
+                        <strong class="mono" id="vgSpo2Val">99</strong>
+                        <small>%</small>
+                      </div>
+                    </div>
+                    <div class="vg-param-box co2">
+                      <div class="vg-p-head"><span>EtCO2</span><small class="mono">mmHg</small></div>
+                      <div class="vg-p-val-row">
+                        <strong class="mono" id="vgCo2Val">38</strong>
+                        <small>mmHg</small>
+                      </div>
+                    </div>
+                    <div class="vg-param-box nibp">
+                      <div class="vg-p-head"><span>PNI / PAI</span><small class="mono">mmHg</small></div>
+                      <div class="vg-p-val-row bp">
+                        <strong class="mono" id="vgNibpVal">120/78</strong>
+                        <small class="mono" id="vgMapVal">(92)</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Rodapé Interativo da Tela Touchscreen 7" (Energia + Softkeys Touch) -->
+                <div class="vg-touch-bottom">
+                  <div class="vg-energy-block">
+                    <button type="button" class="vg-e-step" data-vg-action="energyDown" title="Diminuir energia (Joules)">−</button>
+                    <div class="vg-e-display">
+                      <span class="vg-e-num mono" id="vgEnergyVal">200</span>
+                      <span class="vg-e-unit">Joules</span>
+                    </div>
+                    <button type="button" class="vg-e-step" data-vg-action="energyUp" title="Aumentar energia (Joules)">+</button>
+                  </div>
+
+                  <div class="vg-touch-softkeys">
+                    <button type="button" class="vg-touch-sk" data-vg-action="modeCycle">MODO</button>
+                    <button type="button" class="vg-touch-sk" id="vgTouchSyncBtn" data-vg-action="toggleSync">SINC</button>
+                    <button type="button" class="vg-touch-sk" data-vg-action="toggleLeads">DERIV.</button>
+                    <button type="button" class="vg-touch-sk charge" data-vg-action="charge">CARREGAR</button>
+                    <button type="button" class="vg-touch-sk shock" data-vg-action="shock">⚡ CHOQUE</button>
+                    <button type="button" class="vg-touch-sk" data-vg-action="disarm">ANULAR</button>
+                    <button type="button" class="vg-touch-sk pat" id="vgTouchPatientBtn" data-vg-action="togglePatient">PACIENTE</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra Inferior Amarela de Botões Físicos (CARREGAR / ⚡ / ANULAR / SINC / DEA / ⏻) -->
+            <div class="vg-hw-bottom">
+              <button type="button" class="vg-hw-yellow" data-vg-action="charge">CARREGAR</button>
+              <button type="button" class="vg-hw-shock" data-vg-action="shock" title="Descarregar choque bifásico ⚡">⚡</button>
+              <button type="button" class="vg-hw-yellow" data-vg-action="disarm">ANULAR</button>
+              <button type="button" class="vg-hw-yellow" id="vgHwSyncBtn" data-vg-action="toggleSync">SINC</button>
+              <button type="button" class="vg-hw-yellow" id="vgHwDeaBtn" data-vg-action="toggleDea">DEA</button>
+              <div class="vg-power-well">
+                <button type="button" class="vg-hw-power" data-vg-action="power" title="Ligar / Desligar Cardioversor Vivo Gold">⏻</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alça Anatômica Inferior Integrada ao Chassi Amarelo -->
+          <div class="vg-carry-handle" aria-hidden="true">
+            <div class="vg-handle-cutout"></div>
+          </div>
+          <div class="device-resize-handle vg" id="vgResizeHandle" data-resize-target="cardio" title="Arraste para redimensionar o Cardioversor Vivo Gold" role="separator" aria-label="Redimensionar Cardioversor"></div>
+    </section>
+
+    <!-- ====================================================== -->
+    <!-- PAINEL 5: ANALISADOR DE GASES SANGUÍNEOS SEAMATY SG1   -->
+    <!-- ====================================================== -->
+    <section class="device-panel sg1-chassis" id="sg1Chassis" aria-label="Analisador de Gases Sanguíneos Portátil Seamaty SG1">
+      <div class="sg1-printer">
+        <span class="sg1-brand">seamaty</span>
+        <div class="sg1-paper" id="sg1Paper" aria-hidden="true"><div class="sg1-paper-body mono" id="sg1PaperBody"></div></div>
+        <div class="sg1-slot" aria-hidden="true"></div>
+      </div>
+      <div class="sg1-bezel">
+        <div class="sg1-screen" id="sg1Screen">
+          <div class="sg1-status">
+            <span class="sg1-clock mono" id="sg1Clock">2026/11/19 15:00</span>
+            <span class="sg1-icons" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
+
+          <!-- Tela Inicial -->
+          <div class="sg1-view" data-sg1-view="home">
+            <div class="sg1-logo">seamaty<small>斯马特</small></div>
+            <button type="button" class="sg1-start-btn" data-sg1-action="start">👆 Toque para iniciar teste</button>
+            <div class="sg1-wave" aria-hidden="true">
+              <svg viewBox="0 0 200 70" preserveAspectRatio="none">
+                <path class="sg1-wave-a" d="M-30 26 L0 26 C25 8, 50 8, 78 24 C102 38, 120 6, 150 12 C172 16, 186 22, 200 18 L230 18 L230 70 L-30 70 Z" fill="#7cc4b4"/>
+                <path class="sg1-wave-b" d="M-30 38 L0 38 C30 22, 56 24, 84 38 C110 50, 130 24, 160 28 C178 30, 190 36, 200 34 L230 34 L230 70 L-30 70 Z" fill="#1f9aa0"/>
+              </svg>
+              <span class="sg1-version">Versão: V1.00.01.08 / 1.00.01.32</span>
+            </div>
+          </div>
+
+          <!-- Inserir Cartucho -->
+          <div class="sg1-view hidden" data-sg1-view="insert">
+            <div class="sg1-title">Inserir cartucho</div>
+            <div class="sg1-cartridge" aria-hidden="true"><span></span></div>
+            <p class="sg1-hint">Aplique a amostra de sangue arterial no cartucho de gases/eletrólitos e insira no slot do analisador.</p>
+            <button type="button" class="sg1-start-btn" data-sg1-action="insert">Cartucho inserido ✓</button>
+            <button type="button" class="sg1-link-btn" data-sg1-action="home">Cancelar</button>
+          </div>
+
+          <!-- Análise em Andamento -->
+          <div class="sg1-view hidden" data-sg1-view="running">
+            <div class="sg1-title">Analisando…</div>
+            <div class="sg1-slotgfx" aria-hidden="true">
+              <div class="sg1-slotgfx-cart"><span></span></div>
+              <div class="sg1-slotgfx-mouth"></div>
+            </div>
+            <div class="sg1-channel" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <div class="sg1-spinner" aria-hidden="true"></div>
+            <div class="sg1-progress"><span id="sg1ProgressFill"></span></div>
+            <div class="sg1-progress-meta"><span id="sg1Phase">Aquecendo cartucho…</span><strong class="mono" id="sg1ProgressPct">0%</strong></div>
+            <button type="button" class="sg1-link-btn" data-sg1-action="home">Cancelar</button>
+          </div>
+
+          <!-- Resultados -->
+          <div class="sg1-view hidden" data-sg1-view="result">
+            <div class="sg1-result-head">
+              <strong>Resultado</strong>
+              <span class="mono" id="sg1ResultMeta">#1</span>
+            </div>
+            <div class="sg1-result-list" id="sg1ResultList"></div>
+            <div class="sg1-interp" id="sg1Interp">—</div>
+            <div class="sg1-result-actions">
+              <button type="button" class="sg1-mini-btn" data-sg1-action="print" title="Imprimir bobina térmica e baixar arquivo PDF">🖨 Imprimir PDF</button>
+              <button type="button" class="sg1-mini-btn primary" data-sg1-action="newTest">Novo teste</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="sg1-ring" data-sg1-action="home" aria-label="Botão inicial / cancelar teste" title="Início / Cancelar"></button>
+      </div>
+      <!-- Alça de redimensionamento proporcional do Analisador de Gases Seamaty SG1 -->
+      <div class="device-resize-handle sg1" id="sg1ResizeHandle" data-resize-target="sg1" title="Arraste para redimensionar o Analisador de Gases Seamaty SG1 mantendo a proporção original" role="separator" aria-label="Redimensionar Analisador de Gases SG1"></div>
+    </section>
+      </main> <!-- Fim #icuGrid (Área Principal dos Equipamentos) -->
+
+      <!-- Registro de Eventos Compacto -->
+      <footer class="clinical-footer">
+        <div class="clinical-log-box">
+          <div class="notes-head">
+            <strong>Registro de Eventos &amp; Intervenções</strong>
+          </div>
+          <ul class="event-log" id="eventLog"></ul>
+        </div>
+      </footer>
+    </div> <!-- Fim .sim-main-area -->
+  </div> <!-- Fim .sim-workspace -->
+
+  <!-- Modal: Gasometria Arterial (ABG) -->
+  <div class="modal-backdrop hidden" id="modalABG" role="dialog" aria-modal="true" aria-labelledby="abgModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="abgModalTitle">🧪 Gasometria Arterial (Tempo Real)</h3>
+        <button class="modal-close" data-close="modalABG" aria-label="Fechar">✕</button>
+      </div>
+      <div class="abg-grid" id="abgContent"></div>
+      <div class="abg-interpretation" id="abgInterpretation"></div>
+      <div class="modal-foot">
+        <button class="ctrl-btn accent" id="btnRefreshAbg">↻ Nova Coleta</button>
+        <button class="ctrl-btn ghost" data-close="modalABG">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Limites de Alarme -->
+  <div class="modal-backdrop hidden" id="modalAlarms" role="dialog" aria-modal="true" aria-labelledby="alarmModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="alarmModalTitle">⚙ Limites de Alarme do Monitor &amp; Ventilador</h3>
+        <button class="modal-close" data-close="modalAlarms" aria-label="Fechar">✕</button>
+      </div>
+      <div class="alarm-limits-grid">
+        <label>FC Mínima (bpm) <input type="number" id="inpHrLow" value="50" min="20" max="100" /></label>
+        <label>FC Máxima (bpm) <input type="number" id="inpHrHigh" value="130" min="90" max="220" /></label>
+        <label>SpO₂ Mínima (%) <input type="number" id="inpSpo2Low" value="90" min="60" max="98" /></label>
+        <label>PAM Mínima (mmHg) <input type="number" id="inpMapLow" value="65" min="30" max="90" /></label>
+        <label>EtCO₂ Mínimo (mmHg) <input type="number" id="inpEtco2Low" value="28" min="10" max="40" /></label>
+        <label>EtCO₂ Máximo (mmHg) <input type="number" id="inpEtco2High" value="50" min="35" max="80" /></label>
+        <label>Ppico Máxima (cmH₂O) <input type="number" id="inpPpeakHigh" value="35" min="20" max="60" /></label>
+        <label>Driving P Máxima (cmH₂O) <input type="number" id="inpDpHigh" value="15" min="10" max="30" /></label>
+      </div>
+      <div class="modal-foot">
+        <button class="ctrl-btn accent" id="btnSaveAlarms">Salvar Limites</button>
+        <button class="ctrl-btn ghost" data-close="modalAlarms">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <!-- Modal: Guia de Ventilação Mecânica Protetora -->
+  <div class="modal-backdrop hidden" id="modalProtectiveGuide" role="dialog" aria-modal="true" aria-labelledby="protGuideTitle">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h3 id="protGuideTitle">📘 Ventilação Mecânica Protetora &amp; Indicações por Patologia / Gravidade</h3>
+        <button class="modal-close" data-close="modalProtectiveGuide" aria-label="Fechar">✕</button>
+      </div>
+      <div class="prot-modal-body" id="protModalBody"></div>
+      <div class="modal-foot">
+        <button class="ctrl-btn ghost" data-close="modalProtectiveGuide">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <!-- Modal: Atlas & Seletor de Ritmos ECG -->
+  <div class="modal-backdrop hidden" id="modalEcgAtlas" role="dialog" aria-modal="true" aria-labelledby="ecgAtlasTitle">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h3 id="ecgAtlasTitle">📈 Ritmos &amp; Traçados Eletrocardiográficos (Monitor ECG)</h3>
+        <button class="modal-close" data-close="modalEcgAtlas" aria-label="Fechar">✕</button>
+      </div>
+      <div class="ecg-atlas-body" id="ecgAtlasBody"></div>
+      <div class="modal-foot">
+        <button class="ctrl-btn ghost" data-close="modalEcgAtlas">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <!-- Painel Flutuante Não-Bloqueante: Ausculta Pulmonar -->
+  <aside class="ausc-panel hidden" id="auscultationPanel" aria-label="Estetoscópio e Ausculta Pulmonar">
+    <div class="ausc-head">
+      <strong>🩺 Ausculta Pulmonar Ao Vivo</strong>
+      <button type="button" class="modal-close" id="btnCloseAuscPanel" aria-label="Fechar painel de ausculta">✕</button>
+    </div>
+
+    <div class="ausc-chest-map" aria-label="Focos de ausculta torácica">
+      <div class="ausc-lung-col">
+        <span class="ausc-side-lbl">HTD (Direito)</span>
+        <button type="button" class="ausc-spot-btn" data-site="R_apex">Ápice D</button>
+        <button type="button" class="ausc-spot-btn" data-site="R_base">Base D</button>
+      </div>
+      <div class="ausc-center-col">
+        <button type="button" class="ausc-spot-btn active" data-site="bilateral">◎ Bilateral</button>
+        <div class="ausc-meter-wrap" title="Intensidade sonora sincronizada com fluxo respiratório">
+          <div class="ausc-meter-fill" id="auscMeterFill"></div>
+        </div>
+      </div>
+      <div class="ausc-lung-col">
+        <span class="ausc-side-lbl">HTE (Esquerdo)</span>
+        <button type="button" class="ausc-spot-btn" data-site="L_apex">Ápice E</button>
+        <button type="button" class="ausc-spot-btn" data-site="L_base">Base E</button>
+      </div>
+    </div>
+
+    <div class="ausc-finding" id="auscFindingText">MV presente + sem ruídos adventícios</div>
+
+    <div class="ausc-foot">
+      <button type="button" class="ctrl-btn accent" id="btnAuscToggleAudio" aria-pressed="false">🔊 Sons Pulmonares: DESLIGADOS (Ligar)</button>
+    </div>
+  </aside>
+  </div> <!-- Fim #simulatorApp -->
+
+  <script defer src="sweep.js"></script>
+  <script defer src="physiology.js"></script>
+  <script defer src="audio.js"></script>
+  <script defer src="monitor.js"></script>
+  <script defer src="ventilator.js"></script>
+  <script defer src="defib.js"></script>
+  <script defer src="pump.js"></script>
+  <script defer src="sg1.js"></script>
+  <script defer src="slides.js"></script>
+  <script defer src="features.js"></script>
+  <script defer src="app.js"></script>
+</body>
+</html>

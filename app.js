@@ -1,0 +1,2898 @@
+/**
+ * Orquestrador da Interface UTI Sim (Monitor Multiparamétrico + Ventilador Mecânico)
+ */
+(function () {
+  'use strict';
+
+  const {
+    SCENARIOS,
+    ECG_RHYTHMS,
+    ECG_RHYTHM_MAP,
+    IV_DRUGS,
+    IV_DRUG_MAP,
+    O2_DEVICES,
+    O2_DEVICE_MAP,
+    BOLUS_DRUGS,
+    BOLUS_DRUG_MAP,
+    SCENARIO_PHARMA,
+    PhysiologyEngine,
+    MedicalAudio,
+    MultiparameterMonitor,
+    VentilatorDisplay,
+    VivoGoldCardioverter,
+    SamtronicIcatuPump,
+    SeamatySG1,
+    SlidePresentation,
+    Superpowers
+  } = window.ICUSim;
+
+  // Cache de elementos DOM + diffing de texto (elimina ~70 getElementById a cada 120ms)
+  const _domCache = new Map();
+  const _txtCache = new Map();
+  const $id = (id) => {
+    let el = _domCache.get(id);
+    if (el === undefined) {
+      el = document.getElementById(id);
+      _domCache.set(id, el);
+    }
+    return el;
+  };
+  const $txt = (id, val) => {
+    const s = String(val);
+    if (_txtCache.get(id) === s) return;
+    const el = $id(id);
+    if (el) {
+      el.textContent = s;
+      _txtCache.set(id, s);
+    }
+  };
+  let superpowers = null;
+  const _svg = (inner, sz = 20, vb = 24, sw = 1.85) => `<svg viewBox="0 0 ${vb} ${vb}" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+
+  const engine = new PhysiologyEngine();
+  const audio = new MedicalAudio();
+  const monitor = new MultiparameterMonitor(engine, audio);
+  const ventDisplay = new VentilatorDisplay(engine);
+  const vivoGold = VivoGoldCardioverter ? new VivoGoldCardioverter(engine, monitor, audio, () => { refreshScenarioUI(); }) : null;
+  const icatuPump = SamtronicIcatuPump ? new SamtronicIcatuPump(engine, IV_DRUGS, IV_DRUG_MAP, audio, () => { updateNumericUI(); }, { pumpIndex: 0, idSuffix: '', chassisId: 'icatuChassis' }) : null;
+  const icatuPump2 = SamtronicIcatuPump ? new SamtronicIcatuPump(engine, IV_DRUGS, IV_DRUG_MAP, audio, () => { updateNumericUI(); }, { pumpIndex: 1, idSuffix: '2', chassisId: 'icatuChassis2' }) : null;
+  const sg1Analyzer = SeamatySG1 ? new SeamatySG1(engine, audio, (m) => addLog(m)) : null;
+  const presentationEl = document.getElementById('presentationApp');
+  const simulatorEl = document.getElementById('simulatorApp');
+
+  if (simulatorEl) {
+    simulatorEl.addEventListener('pointerdown', () => audio._ensureContext(), { passive: true });
+    simulatorEl.addEventListener('click', (e) => {
+      const devBtn = e.target.closest('.mindray-chassis button, #hamChassis button, #vgChassis button, .icatu-chassis button, #sg1Chassis button');
+      if (devBtn) {
+        audio.playUiClick('_auto');
+      }
+    });
+    simulatorEl.addEventListener('change', (e) => {
+      if (e.target.closest('.mindray-chassis select, #hamChassis select, #vgChassis select, .icatu-chassis select, #sg1Chassis select')) {
+        audio.playUiClick('soft');
+      }
+    });
+  }
+  let simulatorActive = false;
+
+  let isFrozen = false;
+  let lastFrameTime = performance.now();
+  let lastUiUpdate = 0;
+
+  // ================= LOG CLÍNICO =================
+  const eventLogEl = document.getElementById('eventLog');
+  function addLog(message) {
+    if (superpowers) superpowers.recordEvent(message);
+    if (!eventLogEl) return;
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="ev-time">[${hh}:${mm}:${ss}]</span><span>${escapeHtml(message)}</span>`;
+    eventLogEl.prepend(li);
+    while (eventLogEl.children.length > 30) {
+      eventLogEl.removeChild(eventLogEl.lastChild);
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  engine.onLog = addLog;
+
+  // ================= ELEMENTOS DA INTERFACE =================
+  const scenarioSelect = document.getElementById('scenarioSelect');
+  const severityBadge = document.getElementById('severityBadge');
+  const scenarioSubtitle = document.getElementById('scenarioSubtitle');
+  const scenarioGuidance = document.getElementById('scenarioGuidance');
+  const alarmBox = document.getElementById('alarmBox');
+  const alarmText = document.getElementById('alarmText');
+
+  // Botões contextuais de emergência
+  const btnDecompress = document.getElementById('btnDecompress');
+  const btnDefib = document.getElementById('btnDefib');
+  const btnCprToggle = document.getElementById('btnCprToggle');
+
+  // ================= CONFIGURAÇÃO DOS CONTROLES DO VENTILADOR =================
+  function getModeControlSchema(mode) {
+    const pbw = engine.patient.weightKg;
+    const protectiveVt = Math.round(pbw * 6);
+    if (mode === 'VCV') {
+      return {
+        primary: {
+          key: 'vtSet',
+          label: 'Vt (Volume Corrente)',
+          unit: 'mL',
+          min: 200,
+          max: 800,
+          step: 10,
+          hint: `Alvo protetor: ${protectiveVt} mL (6 mL/kg)`
+        },
+        secondary: {
+          key: 'rrSet',
+          label: 'FR (Freq. Resp)',
+          unit: 'irpm',
+          min: 6,
+          max: 40,
+          step: 1,
+          hint: 'Controla lavagem de CO₂'
+        },
+        timing: {
+          key: 'flowSet',
+          label: 'Fluxo Insp.',
+          unit: 'L/min',
+          min: 15,
+          max: 90,
+          step: 1,
+          hint: 'Maior fluxo = menor Ti, maior Te'
+        },
+        extra: {
+          key: 'inspPausePct',
+          label: 'Pausa Insp.',
+          unit: '%',
+          min: 0,
+          max: 30,
+          step: 5,
+          hint: 'Revela Pplatô a cada ciclo'
+        }
+      };
+    }
+    if (mode === 'PCV') {
+      return {
+        primary: {
+          key: 'pcSet',
+          label: 'ΔP (Pressão Controlada)',
+          unit: 'cmH₂O',
+          min: 5,
+          max: 35,
+          step: 1,
+          hint: 'Acima da PEEP • Vt varia c/ Crs'
+        },
+        secondary: {
+          key: 'rrSet',
+          label: 'FR (Freq. Resp)',
+          unit: 'irpm',
+          min: 6,
+          max: 40,
+          step: 1,
+          hint: 'Controla volume minuto'
+        },
+        timing: {
+          key: 'tiSet',
+          label: 'Tempo Insp. (Ti)',
+          unit: 's',
+          min: 0.5,
+          max: 2.5,
+          step: 0.1,
+          hint: 'Ajusta relação I:E'
+        },
+        extra: {
+          key: 'triggerSens',
+          label: 'Trigger (Sensib.)',
+          unit: 'cmH₂O',
+          min: 1,
+          max: 5,
+          step: 0.5,
+          hint: 'Esforço p/ ciclo assistido'
+        }
+      };
+    }
+    // PSV
+    return {
+      primary: {
+        key: 'psSet',
+        label: 'PS (Pressão de Suporte)',
+        unit: 'cmH₂O',
+        min: 4,
+        max: 30,
+        step: 1,
+        hint: 'Suporte acima da PEEP'
+      },
+      secondary: {
+        key: 'triggerSens',
+        label: 'Trigger (Disparo)',
+        unit: 'cmH₂O',
+        min: 1,
+        max: 5,
+        step: 0.5,
+        hint: 'Sensibilidade do esforço'
+      },
+      timing: {
+        key: 'etsPct',
+        label: 'Ciclagem (ETS)',
+        unit: '% pico',
+        min: 15,
+        max: 50,
+        step: 5,
+        hint: '% do fluxo de pico p/ expirar'
+      },
+      extra: {
+        key: 'rrSet',
+        label: 'FR Backup (Apneia)',
+        unit: 'irpm',
+        min: 8,
+        max: 24,
+        step: 1,
+        hint: 'Aciona após 12s sem esforço'
+      }
+    };
+  }
+
+  const HAMILTON_MODE_NAMES = {
+    VCV: '(S)CMV+',
+    PCV: 'PCV+',
+    PSV: 'SPONT'
+  };
+  let selectedDialSlot = 'primary';
+  let hamLocked = false;
+  let hamKnobAngle = 0;
+
+  function syncVentControlsUI() {
+    const v = engine.vent;
+    const schema = getModeControlSchema(v.mode);
+
+    // Tabs de modo
+    document.querySelectorAll('.mode-tab').forEach((btn) => {
+      const active = btn.dataset.mode === v.mode;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', String(active));
+    });
+
+    const modeTitleBtn = document.getElementById('hamModeTitleBtn');
+    if (modeTitleBtn) modeTitleBtn.textContent = HAMILTON_MODE_NAMES[v.mode] || v.mode;
+
+    const mapSlot = (slot, cfg, lblId, unitId, valId, rangeId, hintId) => {
+      const val = v[cfg.key];
+      document.getElementById(lblId).textContent = cfg.label;
+      document.getElementById(unitId).textContent = cfg.unit;
+      document.getElementById(valId).textContent = cfg.step < 1 ? Number(val).toFixed(1) : Math.round(val);
+      const range = document.getElementById(rangeId);
+      range.min = cfg.min;
+      range.max = cfg.max;
+      range.step = cfg.step;
+      range.value = val;
+      document.getElementById(hintId).textContent = cfg.hint;
+    };
+
+    mapSlot('primary', schema.primary, 'lblPrimaryParam', 'unitPrimaryParam', 'valPrimaryParam', 'rangePrimaryParam', 'hintPrimaryParam');
+    mapSlot('secondary', schema.secondary, 'lblSecondaryParam', 'unitSecondaryParam', 'valSecondaryParam', 'rangeSecondaryParam', 'hintSecondaryParam');
+    mapSlot('timing', schema.timing, 'lblTimingParam', 'unitTimingParam', 'valTimingParam', 'rangeTimingParam', 'hintTimingParam');
+    mapSlot('extra', schema.extra, 'lblExtraParam', 'unitExtraParam', 'valExtraParam', 'rangeExtraParam', 'hintExtraParam');
+
+    document.getElementById('valPeep').textContent = Math.round(v.peepSet);
+    document.getElementById('rangePeep').value = v.peepSet;
+
+    const effFio2 = v.o2FlushTimer > 0 ? 100 : v.fio2Set;
+    document.getElementById('valFio2').textContent = Math.round(effFio2);
+    document.getElementById('rangeFio2').value = v.fio2Set;
+
+    // Dials circulares da tela Hamilton-T1
+    const primVal = v[schema.primary.key];
+    document.getElementById('hamDialPrimaryVal').textContent = schema.primary.step < 1 ? Number(primVal).toFixed(1) : Math.round(primVal);
+    document.getElementById('hamDialPrimaryUnit').textContent = schema.primary.unit;
+    document.getElementById('hamDialPrimaryLbl').textContent = v.mode === 'VCV' ? 'Vt' : v.mode === 'PCV' ? 'ΔPcontrol' : 'ΔPsupp';
+    document.getElementById('hamDialPeepVal').textContent = Math.round(v.peepSet);
+    document.getElementById('hamDialFio2Val').textContent = Math.round(effFio2);
+
+    const targetMap = {
+      primary: v.mode === 'VCV' ? 'Vt' : v.mode === 'PCV' ? 'ΔP' : 'PS',
+      peep: 'PEEP',
+      fio2: 'O₂%'
+    };
+    const targetEl = document.getElementById('hamKnobTarget');
+    if (targetEl) targetEl.textContent = targetMap[selectedDialSlot] || 'Vt';
+
+    // Relação Inspiração / Expiração (I:E) em Ajustes Completos do Ventilador
+    const ieTiming = computeVentIeTiming(v);
+    const valIeEl = document.getElementById('valIeRatio');
+    const rangeIeEl = document.getElementById('rangeIeRatio');
+    const hintIeEl = document.getElementById('hintIeRatio');
+    if (valIeEl) valIeEl.textContent = ieTiming.ieLabel;
+    if (rangeIeEl) rangeIeEl.value = ieTiming.ieExp.toFixed(1);
+    if (hintIeEl) {
+      hintIeEl.textContent =
+        v.mode === 'PSV'
+          ? `Ciclagem a fluxo (ETS ${v.etsPct}%) • Ti≈${ieTiming.ti.toFixed(2)}s / Te≈${ieTiming.te.toFixed(2)}s`
+          : `Ti: ${ieTiming.ti.toFixed(2)}s • Te: ${ieTiming.te.toFixed(2)}s (Ajusta ${v.mode === 'VCV' ? 'Fluxo Insp.' : 'Ti'})`;
+    }
+  }
+
+  function formatIeString(ieExp) {
+    if (ieExp < 0.99) {
+      return `${(1 / Math.max(0.4, ieExp)).toFixed(1)}:1`;
+    }
+    return `1:${ieExp.toFixed(1)}`;
+  }
+
+  function computeVentIeTiming(v) {
+    const rr = Math.max(6, v.rrSet || 14);
+    const cycleSec = 60 / rr;
+    let ti = 1.0;
+    if (v.mode === 'VCV') {
+      const vtL = (v.vtSet || 450) / 1000;
+      const flowLs = Math.max(0.2, (v.flowSet || 45) / 60);
+      const tiFlow = vtL / flowLs;
+      const pauseFrac = (v.inspPausePct || 0) / 100;
+      const tiPause = tiFlow * (pauseFrac / Math.max(0.4, 1 - pauseFrac));
+      ti = tiFlow + tiPause;
+    } else if (v.mode === 'PCV') {
+      ti = v.tiSet || 1.0;
+    } else {
+      const b = engine.breath;
+      const estRr = Math.max(6, b.lastRrTotal || engine.patient.intrinsicDrive || 14);
+      const estCycle = 60 / estRr;
+      const estRatio = Math.max(0.8, Math.min(4.5, 1.0 + (v.etsPct - 15) * 0.065));
+      const estTi = estCycle / (1 + estRatio);
+      return { ti: estTi, te: Math.max(0.2, estCycle - estTi), ieExp: estRatio, ieLabel: formatIeString(estRatio) };
+    }
+    const te = Math.max(0.15, cycleSec - ti);
+    const ieExp = Math.max(0.5, Math.min(5.0, te / Math.max(0.2, ti)));
+    return { ti, te, ieExp, ieLabel: formatIeString(ieExp) };
+  }
+
+  function applyVentParamChange(slot, newValue) {
+    const v = engine.vent;
+    if (slot === 'ie') {
+      const targetIeExp = Math.max(0.5, Math.min(5.0, Number(newValue) || 2.0));
+      const rr = Math.max(6, v.rrSet || 14);
+      const cycleSec = 60 / rr;
+      const targetTi = cycleSec / (1 + targetIeExp);
+      if (v.mode === 'PCV') {
+        v.tiSet = Number(Math.max(0.5, Math.min(2.5, targetTi)).toFixed(1));
+      } else if (v.mode === 'VCV') {
+        const vtL = (v.vtSet || 450) / 1000;
+        const pauseFrac = (v.inspPausePct || 0) / 100;
+        const pauseMult = 1 + pauseFrac / Math.max(0.4, 1 - pauseFrac);
+        const tiFlowTarget = Math.max(0.22, targetTi / pauseMult);
+        const flowTarget = (vtL / tiFlowTarget) * 60;
+        v.flowSet = Math.max(15, Math.min(90, Math.round(flowTarget)));
+      } else {
+        v.etsPct = Math.max(15, Math.min(50, Math.round(15 + (targetIeExp - 1.0) / 0.065)));
+      }
+      syncVentControlsUI();
+      return;
+    }
+
+    const schema = getModeControlSchema(v.mode);
+    let key, min, max, step;
+
+    if (slot === 'peep') {
+      key = 'peepSet'; min = 0; max = 24; step = 1;
+    } else if (slot === 'fio2') {
+      key = 'fio2Set'; min = 21; max = 100; step = 1;
+      v.o2FlushTimer = 0;
+    } else {
+      const cfg = schema[slot];
+      key = cfg.key; min = cfg.min; max = cfg.max; step = cfg.step;
+    }
+
+    const clamped = Math.max(min, Math.min(max, Number(newValue)));
+    v[key] = step < 1 ? Number(clamped.toFixed(1)) : Math.round(clamped);
+    syncVentControlsUI();
+  }
+
+  // Eventos nos sliders e botões -/+ do ventilador
+  const rangeMap = {
+    primary: 'rangePrimaryParam',
+    secondary: 'rangeSecondaryParam',
+    timing: 'rangeTimingParam',
+    extra: 'rangeExtraParam',
+    peep: 'rangePeep',
+    fio2: 'rangeFio2',
+    ie: 'rangeIeRatio'
+  };
+
+  Object.entries(rangeMap).forEach(([slot, id]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', (e) => {
+      applyVentParamChange(slot, e.target.value);
+    });
+  });
+
+  document.querySelectorAll('.step-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const slot = btn.dataset.param;
+      const dir = Number(btn.dataset.dir);
+      const range = document.getElementById(rangeMap[slot]);
+      if (!range) return;
+      const step = Number(range.step) || 1;
+      applyVentParamChange(slot, Number(range.value) + dir * step);
+    });
+  });
+
+  function closeAllHamOverlays() {
+    ['hamModesOverlay', 'hamControlsOverlay', 'hamToolsOverlay'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+  }
+
+  function toggleHamOverlay(id) {
+    if (hamLocked) return;
+    const target = document.getElementById(id);
+    const wasHidden = target.classList.contains('hidden');
+    closeAllHamOverlays();
+    if (wasHidden) target.classList.remove('hidden');
+  }
+
+  function setVentView(view) {
+    document.getElementById('ventWavesContainer').classList.toggle('hidden', view !== 'waves');
+    document.getElementById('ventLoopsContainer').classList.toggle('hidden', view !== 'loops');
+    document.querySelectorAll('.ham-bottom-tab').forEach((b) => {
+      b.classList.toggle('active', b.dataset.hamTab === view);
+    });
+    ventDisplay.setView(view);
+  }
+
+  function stepSelectedDial(dir) {
+    if (hamStandby) return;
+    const range = document.getElementById(rangeMap[selectedDialSlot]);
+    if (!range) return;
+    const step = Number(range.step) || 1;
+    applyVentParamChange(selectedDialSlot, Number(range.value) + dir * step);
+    audio.playUiClick('knob');
+    hamKnobAngle += dir * 24;
+    const core = document.getElementById('hamRotaryCore');
+    if (core) core.style.transform = `rotate(${hamKnobAngle}deg)`;
+  }
+
+  let hamStandby = false;
+  let mrStandby = false;
+  let mrKnobAngle = 0;
+
+  function setHamStandby(next) {
+    hamStandby = next;
+    document.getElementById('hamStandbyOverlay').classList.toggle('hidden', !hamStandby);
+    document.getElementById('hamHwPower').classList.toggle('off', hamStandby);
+    audio.playUiClick(hamStandby ? 'powerOff' : 'powerOn');
+    addLog(hamStandby ? 'Hamilton-T1 colocado em Standby' : 'Hamilton-T1 ligado e ventilando');
+  }
+
+  function setMrStandby(next) {
+    mrStandby = next;
+    document.getElementById('mrStandbyOverlay').classList.toggle('hidden', !mrStandby);
+    document.getElementById('mrPowerBtn').classList.toggle('off', mrStandby);
+    monitor.setStandby(mrStandby);
+    audio.playUiClick(mrStandby ? 'powerOff' : 'powerOn');
+    addLog(mrStandby ? 'Mindray iMEC 15 em modo Standby' : 'Mindray iMEC 15 ligado');
+  }
+
+  // Troca de Modo Ventilatório
+  document.querySelectorAll('.mode-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (hamLocked || hamStandby) return;
+      audio.playUiClick('soft');
+      const newMode = btn.dataset.mode;
+      if (engine.vent.mode !== newMode) {
+        engine.vent.mode = newMode;
+        engine.vent.backupActive = false;
+        addLog(`Modo Hamilton-T1 alterado para ${HAMILTON_MODE_NAMES[newMode]} (${newMode})`);
+        syncVentControlsUI();
+      }
+      closeAllHamOverlays();
+    });
+  });
+
+  // Botões laterais da tela Hamilton-T1
+  document.getElementById('hamModeTitleBtn').addEventListener('click', () => {
+    audio.playUiClick('soft');
+    toggleHamOverlay('hamModesOverlay');
+  });
+  document.getElementById('hamBtnModes').addEventListener('click', () => {
+    audio.playUiClick('soft');
+    toggleHamOverlay('hamModesOverlay');
+  });
+  document.getElementById('hamBtnControls').addEventListener('click', () => {
+    audio.playUiClick('soft');
+    toggleHamOverlay('hamControlsOverlay');
+  });
+  document.getElementById('hamBtnAlarms').addEventListener('click', () => {
+    if (!hamLocked && !hamStandby) {
+      audio.playUiClick('soft');
+      document.getElementById('btnAlarmLimits').click();
+    }
+  });
+
+  document.querySelectorAll('[data-close-overlay]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      closeAllHamOverlays();
+    });
+  });
+
+  // Seleção dos 3 Dials Circulares na tela
+  document.querySelectorAll('.ham-dial-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (hamLocked || hamStandby) return;
+      audio.playUiClick('soft');
+      selectedDialSlot = btn.dataset.dial;
+      document.querySelectorAll('.ham-dial-btn').forEach((b) => b.classList.toggle('selected', b === btn));
+      syncVentControlsUI();
+    });
+  });
+
+  // Botão Rotativo Verde (Press & Turn Knob)
+  document.getElementById('hamKnobMinus').addEventListener('click', () => stepSelectedDial(-1));
+  document.getElementById('hamKnobPlus').addEventListener('click', () => stepSelectedDial(1));
+  document.getElementById('hamRotaryKnob').addEventListener('wheel', (e) => {
+    e.preventDefault();
+    stepSelectedDial(e.deltaY < 0 ? 1 : -1);
+  }, { passive: false });
+
+  // Abas inferiores da tela Hamilton-T1
+  document.querySelectorAll('.ham-bottom-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (hamLocked || hamStandby) return;
+      audio.playUiClick('soft');
+      const tab = btn.dataset.hamTab;
+      if (tab === 'waves' || tab === 'loops') {
+        closeAllHamOverlays();
+        setVentView(tab);
+      } else if (tab === 'tools') {
+        toggleHamOverlay('hamToolsOverlay');
+      } else if (tab === 'controls') {
+        toggleHamOverlay('hamControlsOverlay');
+      }
+    });
+  });
+
+  document.getElementById('hamFreezeBtn').addEventListener('click', () => {
+    if (hamStandby) return;
+    audio.playUiClick('soft');
+    const nextView = ventDisplay.activeView === 'waves' ? 'loops' : 'waves';
+    closeAllHamOverlays();
+    setVentView(nextView);
+  });
+
+  document.getElementById('btnToggleLoopsTool').addEventListener('click', () => {
+    audio.playUiClick('soft');
+    const nextView = ventDisplay.activeView === 'waves' ? 'loops' : 'waves';
+    closeAllHamOverlays();
+    setVentView(nextView);
+  });
+
+  // Manobras Especiais (tela + botões físicos do chassi Hamilton-T1)
+  function triggerHoldInsp() {
+    if (hamStandby) return;
+    audio.playUiClick('maneuver');
+    engine.vent.holdInspTimer = 2.2;
+    addLog('Pausa Inspiratória (2s) acionada para medir Pressão de Platô');
+  }
+  function triggerHoldExp() {
+    if (hamStandby) return;
+    audio.playUiClick('maneuver');
+    engine.vent.holdExpTimer = 2.2;
+    addLog('Pausa Expiratória (2s) acionada para quantificar Auto-PEEP');
+  }
+  function triggerO2Flush() {
+    if (hamStandby) return;
+    audio.playUiClick('maneuver');
+    engine.vent.o2FlushTimer = 120;
+    addLog('Enriquecimento O₂ a 100% ativado por 2 minutos');
+    syncVentControlsUI();
+  }
+
+  document.getElementById('btnHoldInsp').addEventListener('click', triggerHoldInsp);
+  document.getElementById('btnHoldExp').addEventListener('click', triggerHoldExp);
+  document.getElementById('btnO2Flush').addEventListener('click', triggerO2Flush);
+  document.getElementById('hamHwManualHold').addEventListener('click', triggerHoldInsp);
+  document.getElementById('hamHwExpHold').addEventListener('click', triggerHoldExp);
+  document.getElementById('hamHwO2').addEventListener('click', triggerO2Flush);
+
+  document.getElementById('hamHwNeb').addEventListener('click', () => {
+    if (hamStandby) return;
+    audio.playUiClick('maneuver');
+    engine.giveBronchodilator();
+  });
+
+  document.getElementById('hamHwSilence').addEventListener('click', () => {
+    audio.playUiClick('silence');
+    document.getElementById('btnSilenceAlarm').click();
+  });
+
+  document.getElementById('hamHwLock').addEventListener('click', () => {
+    if (hamStandby) return;
+    audio.playUiClick('lock');
+    hamLocked = !hamLocked;
+    document.getElementById('hamHwLock').textContent = hamLocked ? '🔒' : '🔓';
+    document.getElementById('hamLockBadge').classList.toggle('hidden', !hamLocked);
+    if (hamLocked) closeAllHamOverlays();
+    addLog(hamLocked ? 'Tela do Hamilton-T1 bloqueada' : 'Tela do Hamilton-T1 desbloqueada');
+  });
+
+  document.getElementById('hamHwDayNight').addEventListener('click', () => {
+    audio.playUiClick('hw');
+    document.getElementById('hamScreen').classList.toggle('dimmed');
+  });
+
+  document.getElementById('hamHwPower').addEventListener('click', () => setHamStandby(!hamStandby));
+  document.getElementById('hamWakeBtn').addEventListener('click', () => setHamStandby(false));
+
+  // ================= CENÁRIOS & STATUS DO PACIENTE =================
+  const SCENARIO_ICONS = [
+    {
+      id: 'stable',
+      shortTitle: '1. Estável',
+      tag: 'Leve',
+      svg: _svg('<path class="sc-svg-primary" d="M12 20.5s-6.8-4.2-6.8-10A4.1 4.1 0 0 1 12 7.5a4.1 4.1 0 0 1 6.8 3c0 5.8-6.8 10-6.8 10z"/><path class="sc-svg-accent" d="M6.8 12h2.2l1.2-2.8 1.6 5.2 1.3-2.4h3.9"/><circle class="sc-svg-accent" cx="18.2" cy="5.5" r="2.2" fill="currentColor" stroke="none"/>')
+    },
+    {
+      id: 'asthma',
+      shortTitle: '2. Asma',
+      tag: 'Mod.',
+      svg: _svg('<path class="sc-svg-primary" d="M10 3v6L6.2 13.8V19M14 3v6l3.8 4.8V19"/><path class="sc-svg-accent" d="M3 11.5h4.2M5.4 9.8L7.2 11.5 5.4 13.2M21 11.5h-4.2M18.6 9.8l-1.8 1.7 1.8 1.7"/><path class="sc-svg-accent" d="M8.5 17.5c1-1.2 2.2-1.2 3.5 0s2.5 1.2 3.5 0"/>')
+    },
+    {
+      id: 'ards',
+      shortTitle: '3. SDRA',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v7M12 10c-2 0-3.2 1.5-4.5 3-1.4 1.6-2.5 3.3-2.5 5.5A2.3 2.3 0 0 0 7.3 21H10c.7 0 1-.4 1-1.2V10M12 10c2 0 3.2 1.5 4.5 3 1.4 1.6 2.5 3.3 2.5 5.5a2.3 2.3 0 0 1-2.3 2.5H14c-.7 0-1-.4-1-1.2V10"/><circle class="sc-svg-accent" cx="7.4" cy="17.6" r="1" fill="currentColor" stroke="none"/><circle class="sc-svg-accent" cx="16.6" cy="17.6" r="1" fill="currentColor" stroke="none"/><path class="sc-svg-accent" d="M6.2 15.2h3.2M14.6 15.2h3.2"/>',20,24,1.8)
+    },
+    {
+      id: 'septic_shock',
+      shortTitle: '4. Choque',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M6 4v16M18 4v16M3 12h2M19 12h2"/><path class="sc-svg-accent" d="M6 11.5c2.5-1.5 9.5-1.5 12 0"/><path class="sc-svg-accent" d="M12 6.5v10.5M9.2 14.2L12 17.2l2.8-3"/>')
+    },
+    {
+      id: 'pulmonary_edema',
+      shortTitle: '5. Edema Pulm.',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v7M12 10c-2 0-3.2 1.5-4.5 3-1.4 1.6-2.5 3.3-2.5 5.5A2.3 2.3 0 0 0 7.3 21H10c.7 0 1-.4 1-1.2V10M12 10c2 0 3.2 1.5 4.5 3 1.4 1.6 2.5 3.3 2.5 5.5a2.3 2.3 0 0 1-2.3 2.5H14c-.7 0-1-.4-1-1.2V10"/><path class="sc-svg-accent" d="M5.4 17.5c1-.8 2 .8 3.2 0M15.4 17.5c1-.8 2 .8 3.2 0"/><circle class="sc-svg-accent" cx="8.2" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle class="sc-svg-accent" cx="15.8" cy="15" r="0.8" fill="currentColor" stroke="none"/>',20,24,1.8)
+    },
+    {
+      id: 'pneumothorax',
+      shortTitle: '6. Pneumotór.',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v18M10 11c-1.5 0-2.5 2-2.5 4.5S8.5 19 10 19zM4.5 6.5C3 9 3 17 5 20M12 10c2 0 3.5 1.8 4.8 3.5 1.2 1.5 2.2 3 2.2 5a2.3 2.3 0 0 1-2.3 2.5H14V10"/><path class="sc-svg-accent" d="M5.2 11l3.2 1.5-3.2 1.5M5.2 15.8l3.2 1.2-3.2 1.2"/>',20,24,1.8)
+    },
+    {
+      id: 'opioid_apnea',
+      shortTitle: '7. TCE/Apneia',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M8 14a5.5 5.5 0 1 1 8.5-4.6A4.5 4.5 0 0 1 18 14.5V17H6v-2.5"/><path class="sc-svg-accent" d="M4 20h16M8.8 10h2.2M13 10h2.2M9.5 13h5"/>',20,24,1.8)
+    },
+    {
+      id: 'cardiac_arrest',
+      shortTitle: '8. PCR (FV)',
+      tag: 'Emerg.',
+      svg: _svg('<path class="sc-svg-primary" d="M12 20.8s-6.8-4.3-6.8-10.2A4.1 4.1 0 0 1 12 7.5a4.1 4.1 0 0 1 6.8 3.1c0 5.9-6.8 10.2-6.8 10.2z"/><path class="sc-svg-accent" d="M13.2 8.2L10.3 12h3.1l-2.3 4.2"/>')
+    },
+    {
+      id: 'copd_exacerbation',
+      shortTitle: '9. DPOC',
+      tag: 'Mod.',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v6M12 9c-2.5 0-4.5 1.8-5.8 3.8-1 1.5-1.5 3.3-1.2 5.2a2.5 2.5 0 0 0 2.5 2h2.8V9M12 9c2.5 0 4.5 1.8 5.8 3.8 1 1.5 1.5 3.3 1.2 5.2a2.5 2.5 0 0 1-2.5 2h-2.8V9"/><path class="sc-svg-accent" d="M6.8 14.5h3M14.2 14.5h3M7.5 17.2h2M14.5 17.2h2"/>',20,24,1.8)
+    },
+    {
+      id: 'pulmonary_embolism',
+      shortTitle: '10. TEP Mac.',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v7M12 10c-2 0-3.2 1.5-4.5 3-1.4 1.6-2.5 3.3-2.5 5.5A2.3 2.3 0 0 0 7.3 21H10V10M12 10c2 0 3.2 1.5 4.5 3 1.4 1.6 2.5 3.3 2.5 5.5a2.3 2.3 0 0 1-2.3 2.5H14V10"/><circle class="sc-svg-accent" cx="15.5" cy="14.5" r="2" fill="currentColor" stroke="none"/><path class="sc-svg-accent" d="M6 12l2.5 2.5M8.5 12L6 14.5"/>',20,24,1.8)
+    },
+    {
+      id: 'dka_acidosis',
+      shortTitle: '11. Cetoac.',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3c-3.5 4.8-6 8.4-6 12a6 6 0 0 0 12 0c0-3.6-2.5-7.2-6-12z"/><path class="sc-svg-accent" d="M9.5 15h5M12 12.5v5"/>',20,24,1.8)
+    },
+    {
+      id: 'anaphylaxis',
+      shortTitle: '12. Anafil.',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3l8 16H4z"/><path class="sc-svg-accent" d="M12 9.5v4.2"/><circle class="sc-svg-accent" cx="12" cy="16" r="1" fill="currentColor" stroke="none"/>',20,24,1.8)
+    },
+    {
+      id: 'cardiogenic_shock',
+      shortTitle: '13. Cardiog.',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M12 20.5s-6.8-4.2-6.8-10A4.1 4.1 0 0 1 12 7.5a4.1 4.1 0 0 1 6.8 3c0 5.8-6.8 10-6.8 10z"/><path class="sc-svg-accent" d="M7.5 12h2.3l1.2-3.2h2.2l1.1 3.2h2.2"/>')
+    },
+    {
+      id: 'cardiac_tamponade',
+      shortTitle: '14. Tampon.',
+      tag: 'Crítico',
+      svg: _svg('<circle class="sc-svg-primary" cx="12" cy="12" r="8.5"/><path class="sc-svg-accent" d="M12 16.2s-4-2.5-4-5.8a2.4 2.4 0 0 1 4-1.8 2.4 2.4 0 0 1 4 1.8c0 3.3-4 5.8-4 5.8z"/>',20,24,1.8)
+    },
+    {
+      id: 'afib_rvr',
+      shortTitle: '15. FA Alta',
+      tag: 'Mod.',
+      svg: _svg('<path class="sc-svg-primary" d="M2.5 14h2.5l1.5-5 1.5 7 1.8-6 1.5 4h2.2l1.6-7 1.7 8 1.5-4H21.5"/><path class="sc-svg-accent" d="M18 5.5l1.5 2-1.5 2"/>')
+    },
+    {
+      id: 'vtach_unstable',
+      shortTitle: '16. TV Inst.',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M2 13l2.5-6 3 11 3-11 3 11 3-11 3 11 2.5-6"/>',20,24,1.9)
+    },
+    {
+      id: 'hyperkalemia_avb',
+      shortTitle: '17. BAV 3º',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M2.5 13h3.5a1.5 1.5 0 0 1 2.2 0H12l1.5-6 1.8 10 1.4-4h4.8"/><circle class="sc-svg-accent" cx="12" cy="6" r="1.4" fill="currentColor" stroke="none"/>')
+    },
+    {
+      id: 'hypothermia_brady',
+      shortTitle: '18. Hipoterm.',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><path class="sc-svg-accent" d="M10 5l2 2 2-2M10 19l2-2 2 2"/>',20,24,1.8)
+    },
+    {
+      id: 'hemorrhagic_shock',
+      shortTitle: '19. Hemorr.',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3.5c-3.5 4.8-5.8 8.2-5.8 11.5a5.8 5.8 0 0 0 11.6 0c0-3.3-2.3-6.7-5.8-11.5z"/><path class="sc-svg-accent" d="M9 15.5h6"/>')
+    },
+    {
+      id: 'hypertensive_crisis',
+      shortTitle: '20. Emerg. PA',
+      tag: 'Grave',
+      svg: _svg('<circle class="sc-svg-primary" cx="12" cy="12" r="8"/><path class="sc-svg-accent" d="M12 16V8M8.8 11.2L12 8l3.2 3.2"/>')
+    },
+    {
+      id: 'status_epilepticus',
+      shortTitle: '21. Mal Epil.',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M7.5 14a5.2 5.2 0 1 1 9-3.6A4.2 4.2 0 0 1 18 15v2H6v-2"/><path class="sc-svg-accent" d="M13 7l-2.5 4h3L11 15"/>',20,24,1.8)
+    },
+    {
+      id: 'svt_unstable',
+      shortTitle: '22. TSV',
+      tag: 'Mod.',
+      svg: _svg('<path class="sc-svg-primary" d="M2 13h3l1.5-7 1.5 10 1.5-10 1.5 10 1.5-10 1.5 10 1.5-7h6"/>')
+    },
+    {
+      id: 'pea_arrest',
+      shortTitle: '23. PCR (AESP)',
+      tag: 'Emerg.',
+      svg: _svg('<path class="sc-svg-primary" d="M3 13h4l1.5-4.5 2 8 1.5-3.5H21"/><path class="sc-svg-accent" d="M15 6l4 4M19 6l-4 4"/>')
+    },
+    {
+      id: 'ards_prone_severe',
+      shortTitle: '24. SDRA Extr.',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v7M12 10c-2 0-3.2 1.5-4.5 3-1.4 1.6-2.5 3.3-2.5 5.5A2.3 2.3 0 0 0 7.3 21H10V10M12 10c2 0 3.2 1.5 4.5 3 1.4 1.6 2.5 3.3 2.5 5.5a2.3 2.3 0 0 1-2.3 2.5H14V10"/><path class="sc-svg-accent" d="M6 14.5h3.5M14.5 14.5H18M6 17.5h3.5M14.5 17.5H18"/>',20,24,1.8)
+    }
+  ];
+
+  const SEVERITY_STATUS_ICONS = {
+    stable: _svg('<circle cx="8" cy="8" r="6"/><path d="M5.2 8.2l2 2 3.8-4"/>',12,16,2.0),
+    moderate: _svg('<circle cx="8" cy="8" r="6"/><path d="M8 5v3.5"/><circle cx="8" cy="11.2" r="0.8" fill="currentColor" stroke="none"/>',12,16,2.0),
+    severe: _svg('<path d="M8 2.2l6.2 11H1.8z"/><path d="M8 6.4v3.2"/><circle cx="8" cy="11.5" r="0.7" fill="currentColor" stroke="none"/>',12,16,2.0),
+    critical: _svg('<path d="M9.4 2L4.2 9h3.4l-1 5L11.8 7H8.4z"/>',12,16,2.0)
+  };
+
+  const ALARM_STATUS_ICONS = {
+    ok: _svg('<path d="M2.5 9.5h3l1.5-3.8 2.2 7.2 1.6-3.4h4.7"/>',15,18,1.9),
+    warning: _svg('<path d="M9 2.5L16 14.8H2z"/><path d="M9 7v3.6"/><circle cx="9" cy="12.8" r="0.8" fill="currentColor" stroke="none"/>',15,18,1.9),
+    critical: _svg('<circle cx="9" cy="9" r="6.8"/><path d="M9 5.2v4.3"/><circle cx="9" cy="12.2" r="0.9" fill="currentColor" stroke="none"/>',15,18,1.9),
+    arrest: _svg('<path d="M10.5 2L4.5 10h4L7.5 16l6-8h-4z"/>',15,18,1.9)
+  };
+
+  const AIRWAY_BADGE_ICONS = {
+    on: _svg('<path d="M10.5 2v6.5a2.5 2.5 0 0 1-2.5 2.5H4"/><ellipse cx="9.2" cy="10.8" rx="1.7" ry="1.2"/>',12,16,1.8),
+    off: _svg('<circle cx="8" cy="5.5" r="2.3"/><path d="M4.5 13.5c.8-2 2.1-3 3.5-3s2.7 1 3.5 3"/>',12,16,1.8)
+  };
+
+  function resetEquipmentOnScenarioChange() {
+    if (isFrozen) {
+      isFrozen = false;
+      const btnFrz = document.getElementById('btnFreeze');
+      if (btnFrz) {
+        btnFrz.setAttribute('aria-pressed', 'false');
+        btnFrz.textContent = '❄';
+        btnFrz.title = 'Congelar traçados para inspeção';
+      }
+      monitor.setFrozen(false);
+      ventDisplay.setFrozen(false);
+    }
+    monitor.clearBuffers();
+    ventDisplay.clearBuffers();
+    if (icatuPump && icatuPump.resetUI) icatuPump.resetUI();
+    if (icatuPump2 && icatuPump2.resetUI) icatuPump2.resetUI();
+    if (vivoGold && vivoGold.resetUI) vivoGold.resetUI();
+    if (sg1Analyzer && sg1Analyzer.resetUI) sg1Analyzer.resetUI();
+  }
+
+  function renderStatusButtonSet(containerId, compact) {
+    const gridEl = document.getElementById(containerId);
+    if (!gridEl) return;
+    if (gridEl.children.length !== SCENARIO_ICONS.length) {
+      gridEl.innerHTML = SCENARIO_ICONS.map((item) => {
+        const scObj = SCENARIOS[item.id];
+        const sev = scObj ? scObj.severity : 'stable';
+        const tip = escapeHtmlAttr(scObj ? `${scObj.name} — ${scObj.subtitle}` : item.shortTitle);
+        const cls = compact ? `pat-status-btn sev-${sev}` : `scenario-tile sev-${sev}`;
+        const cleanLabel = item.shortTitle.replace(/^\d+\.\s*/, '');
+        const labelHtml = compact
+          ? `<span class="pat-status-lbl">${cleanLabel}</span>`
+          : `<span class="scenario-tile-text"><strong>${item.shortTitle}</strong><small>${item.tag}</small></span>`;
+        return `
+          <button type="button" class="${cls}" data-scenario-id="${item.id}" title="${tip}" aria-pressed="false">
+            <span class="sc-status-dot" aria-hidden="true"></span>
+            <span class="scenario-tile-icon" aria-hidden="true">${item.svg}</span>
+            ${labelHtml}
+          </button>`;
+      }).join('');
+    }
+    if (!gridEl.dataset.statusWired) {
+      gridEl.dataset.statusWired = '1';
+      gridEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-scenario-id]');
+        if (!btn) return;
+        audio.playUiClick('soft');
+        const bolusSel = document.getElementById('bolusDrugSelect');
+        if (bolusSel) delete bolusSel.dataset.userTouched;
+        engine.loadScenario(btn.dataset.scenarioId);
+        resetEquipmentOnScenarioChange();
+        refreshScenarioUI();
+      });
+    }
+  }
+
+  function ensureScenarioGridRendered() {
+    renderStatusButtonSet('scenarioGrid', false);
+    renderStatusButtonSet('patientStatusBtns', true);
+  }
+
+  if (severityBadge && !severityBadge.dataset.wired) {
+    severityBadge.dataset.wired = '1';
+    severityBadge.addEventListener('click', () => {
+      const levels = ['stable', 'moderate', 'severe', 'critical'];
+      const curSev = (engine.scenario && engine.scenario.severity) || 'stable';
+      const nextSev = levels[(levels.indexOf(curSev) + 1) % levels.length];
+      const candidates = SCENARIO_ICONS.filter((item) => {
+        const obj = SCENARIOS[item.id];
+        return obj && obj.severity === nextSev;
+      });
+      if (!candidates.length) return;
+      audio.playUiClick('soft');
+      const bolusSel = document.getElementById('bolusDrugSelect');
+      if (bolusSel) delete bolusSel.dataset.userTouched;
+      engine.loadScenario(candidates[0].id);
+      resetEquipmentOnScenarioChange();
+      refreshScenarioUI();
+    });
+  }
+
+  function refreshScenarioUI() {
+    ensureScenarioGridRendered();
+    const sc = engine.scenario;
+    if (scenarioSelect) scenarioSelect.value = sc.id;
+    ['scenarioGrid', 'patientStatusBtns'].forEach((cid) => {
+      const container = document.getElementById(cid);
+      if (!container) return;
+      container.querySelectorAll('[data-scenario-id]').forEach((tile) => {
+        const isActive = tile.dataset.scenarioId === sc.id;
+        tile.classList.toggle('active', isActive);
+        tile.setAttribute('aria-pressed', String(isActive));
+      });
+    });
+    const sevIcon = SEVERITY_STATUS_ICONS[sc.severity] || SEVERITY_STATUS_ICONS.stable;
+    if (severityBadge) {
+      severityBadge.innerHTML = `<span class="sev-pill-icon" aria-hidden="true">${sevIcon}</span><span>${sc.severityLabel}</span>`;
+      severityBadge.className = `severity-pill ${sc.severity}`;
+    }
+    if (scenarioSubtitle) scenarioSubtitle.textContent = sc.subtitle;
+    if (scenarioGuidance) scenarioGuidance.textContent = sc.guidance;
+
+    document.getElementById('fluidCount').textContent = engine.interventions.fluidBoluses;
+    document.getElementById('noraValue').textContent = engine.interventions.noraDose.toFixed(2);
+    document.getElementById('metaPatient').textContent = engine.patient.label;
+
+    btnDecompress.classList.toggle('hidden', !engine.patient.pneumothoraxActive);
+    const showArrestBtns = engine.patient.arrested || sc.id === 'cardiac_arrest' || engine.cardiac.rhythm === 'vtach';
+    btnDefib.classList.toggle('hidden', !showArrestBtns || engine.interventions.roscAchieved);
+    btnCprToggle.classList.toggle('hidden', !showArrestBtns || engine.interventions.roscAchieved);
+    btnCprToggle.setAttribute('aria-pressed', String(engine.interventions.cprActive));
+
+    syncRhythmUI();
+    syncPhysiologyModalInputs();
+    syncVentControlsUI();
+    if (typeof syncAirwayO2AndPharmaUI === 'function') syncAirwayO2AndPharmaUI();
+    if (vivoGold) vivoGold.syncUI();
+    if (icatuPump) icatuPump.syncUI();
+    if (icatuPump2) icatuPump2.syncUI();
+    if (sg1Analyzer) sg1Analyzer.syncUI();
+    if (typeof syncAuscultationUI === 'function') syncAuscultationUI();
+  }
+
+  // ================= VIA AÉREA (ACOPLAMENTO VM), OXIGENOTERAPIA & FÁRMACOS =================
+  const O2_DEVICE_ICONS = {
+    room_air: {
+      badge: '21%',
+      svg: _svg('<path d="M12 3v7"/><path d="M12 10c-2 0-3 1.5-4.5 3C6 14.5 5 16 5 18.5A2.5 2.5 0 0 0 7.5 21H10c.8 0 1-.5 1-1.3V10"/><path d="M12 10c2 0 3 1.5 4.5 3 1.5 1.5 2.5 3 2.5 5.5a2.5 2.5 0 0 1-2.5 2.5H14c-.8 0-1-.5-1-1.3V10"/><path d="M3 7h4"/><path d="M17 7h4"/>',22,24,1.8)
+    },
+    nasal_cannula: {
+      badge: '24–44%',
+      svg: _svg('<path d="M9 6v3a1.5 1.5 0 0 1-1.5 1.5H6"/><path d="M15 6v3a1.5 1.5 0 0 0 1.5 1.5H18"/><rect x="7" y="9.5" width="10" height="3" rx="1.5"/><path d="M7 11c-2.5 1-3 3-3 5.5 0 2 1.8 3.5 5 4.5l3 1"/><path d="M17 11c2.5 1 3 3 3 5.5 0 2-1.8 3.5-5 4.5l-3 1"/><path d="M12 22v-1"/>',22,24,1.8)
+    },
+    venturi: {
+      badge: '24–50%',
+      svg: _svg('<path d="M7 5c1-1.5 9-1.5 10 0l1.5 6c.2 1.8-2 3.2-6.5 3.2S5.3 12.8 5.5 11L7 5z"/><rect x="10" y="14.2" width="4" height="4.5" rx="1"/><path d="M9 16.5h1M14 16.5h1"/><path d="M12 18.7V22"/>',22,24,1.8)
+    },
+    hudson_mask: {
+      badge: '40–60%',
+      svg: _svg('<path d="M6.5 6.5C8 4 16 4 17.5 6.5l1.3 5.8c.3 2.5-2.6 4.7-6.8 4.7s-7.1-2.2-6.8-4.7l1.3-5.8z"/><circle cx="9.2" cy="10.5" r="0.8" fill="currentColor"/><circle cx="14.8" cy="10.5" r="0.8" fill="currentColor"/><path d="M12 17v5"/><path d="M4.5 9.5L6 10M19.5 9.5L18 10"/>',22,24,1.8)
+    },
+    non_rebreather: {
+      badge: '85–95%',
+      svg: _svg('<path d="M7 4.5c1.5-1.5 8.5-1.5 10 0l1 4.5c.2 1.8-2.3 3-6 3s-6.2-1.2-6-3l1-4.5z"/><rect x="10.2" y="12" width="3.6" height="2.2" rx="0.6"/><path d="M12 14.2c2.8 0 4.8 1.8 4.8 4.2A3.6 3.6 0 0 1 13.2 22h-2.4a3.6 3.6 0 0 1-3.6-3.6c0-2.4 2-4.2 4.8-4.2z"/>',22,24,1.8)
+    },
+    hfnc: {
+      badge: 'CNAF',
+      svg: _svg('<path d="M9.5 4v3M14.5 4v3"/><rect x="7" y="7" width="10" height="3.2" rx="1.5"/><path d="M7 8.6C4.8 9.2 4.5 11.5 6 13.5L9 15.5"/><rect x="8.5" y="14.5" width="7" height="6.5" rx="1.4"/><path d="M9.5 18.2c.8-.7 1.7.7 2.5 0s1.7.7 2.5 0"/>',22,24,1.8)
+    },
+    niv: {
+      badge: 'BiPAP',
+      svg: _svg('<rect x="6" y="4" width="12" height="12.5" rx="4.5"/><circle cx="12" cy="10.5" r="2.2"/><path d="M6 8H3M18 8h3M6 13H3.5M18 13h2.5"/><path d="M12 12.7v6.8a2 2 0 0 0 2 2h3"/>',22,24,1.8)
+    },
+    bvm: {
+      badge: '100%',
+      svg: _svg('<path d="M3 10.5c1-2.5 3-3.5 4.5-2.5l1.5 2v4l-1.5 2C6 17 4 16 3 13.5z"/><rect x="9" y="10.2" width="2.5" height="3.6" rx="0.6"/><ellipse cx="15.8" cy="12" rx="4.3" ry="3.4"/><path d="M20.1 12H22"/>',22,24,1.8)
+    },
+    ett_vm: {
+      badge: 'VM TOT',
+      svg: _svg('<path d="M15 4v9a4 4 0 0 1-4 4H6"/><path d="M12 4v8a1.5 1.5 0 0 1-1.5 1.5H6"/><ellipse cx="13.5" cy="15.5" rx="2.6" ry="1.8"/><path d="M4 13.5v4.5"/><path d="M11 4h6"/>',22,24,1.8)
+    }
+  };
+
+  function ensureO2DeviceGridRendered() {
+    if (!O2_DEVICES) return;
+    const html = O2_DEVICES.map((d) => {
+      const meta = O2_DEVICE_ICONS[d.id] || O2_DEVICE_ICONS.room_air;
+      return `
+        <button type="button" class="o2-dev-tile" data-o2-device="${d.id}" title="${d.name} — ${d.desc}">
+          <span class="o2-tile-icon" aria-hidden="true">${meta.svg}</span>
+          <span class="o2-tile-text">
+            <strong>${d.shortName}</strong>
+            <small class="mono">${meta.badge}</small>
+          </span>
+        </button>`;
+    }).join('');
+    ['o2DeviceGrid', 'hamO2DeviceGrid'].forEach((id) => {
+      const gridEl = document.getElementById(id);
+      if (!gridEl) return;
+      if (gridEl.children.length !== O2_DEVICES.length) {
+        gridEl.innerHTML = html;
+      }
+      if (!gridEl.dataset.wired) {
+        gridEl.dataset.wired = '1';
+        gridEl.addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-o2-device]');
+          if (!btn) return;
+          audio.playUiClick('soft');
+          engine.setO2Device(btn.dataset.o2Device);
+          syncAirwayO2AndPharmaUI();
+        });
+      }
+    });
+  }
+
+  function syncAirwayO2AndPharmaUI() {
+    ensureO2DeviceGridRendered();
+    const connected = Boolean(engine.airway && engine.airway.connectedToVent);
+    const o2Info = engine.getEffectiveO2Info();
+    const dev = O2_DEVICE_MAP && O2_DEVICE_MAP[engine.airway ? engine.airway.o2Device : 'room_air'];
+
+    const badge = document.getElementById('airwayStatusBadge');
+    const hamBadge = document.getElementById('hamAirwayStatusBadge');
+    const btnToggle = document.getElementById('btnVentConnectToggle');
+    const discOverlay = document.getElementById('hamDisconnectedOverlay');
+    const o2Box = document.getElementById('o2TherapyBox');
+
+    const airwayIcon = connected ? AIRWAY_BADGE_ICONS.on : AIRWAY_BADGE_ICONS.off;
+    if (badge) {
+      badge.innerHTML = `<span class="airway-pill-icon" aria-hidden="true">${airwayIcon}</span><span>${connected ? 'EM VM (TOT)' : 'SEM VM'}</span>`;
+      badge.className = `airway-pill ${connected ? 'on' : 'off'}`;
+    }
+    if (hamBadge) {
+      hamBadge.innerHTML = `<span class="airway-pill-icon" aria-hidden="true">${airwayIcon}</span><span>${connected ? 'EM VM (TOT)' : 'SEM VM • FORA DA VM'}</span>`;
+      hamBadge.className = `airway-pill ${connected ? 'on' : 'off'}`;
+    }
+    if (btnToggle) {
+      btnToggle.setAttribute('aria-pressed', String(connected));
+      btnToggle.textContent = connected ? '🔓 Extubar / Desacoplar da VM' : '🔌 Intubar & Acoplar à VM';
+    }
+    if (discOverlay) discOverlay.classList.toggle('hidden', connected);
+    if (o2Box) o2Box.classList.toggle('vm-active', connected);
+
+    const activeMeta = connected ? O2_DEVICE_ICONS.ett_vm : O2_DEVICE_ICONS[dev ? dev.id : 'room_air'] || O2_DEVICE_ICONS.room_air;
+    if (activeMeta) {
+      ['o2ActiveIcon', 'hamO2ActiveIcon'].forEach((id) => {
+        const iconEl = document.getElementById(id);
+        if (iconEl) iconEl.innerHTML = activeMeta.svg;
+      });
+    }
+
+    if (dev) {
+      ['o2DeviceGrid', 'hamO2DeviceGrid'].forEach((id) => {
+        const gridEl = document.getElementById(id);
+        if (!gridEl) return;
+        gridEl.querySelectorAll('[data-o2-device]').forEach((tile) => {
+          tile.classList.toggle('active', !connected && tile.dataset.o2Device === dev.id);
+        });
+      });
+
+      const hasRange = !connected && dev.flowMax > dev.flowMin;
+      const o2SelEl = document.getElementById('o2DeviceSelect');
+      if (o2SelEl && o2SelEl.value !== dev.id) o2SelEl.value = dev.id;
+      ['o2EffectiveFio2', 'hamO2EffectiveFio2'].forEach((id) => {
+        const fio2El = document.getElementById(id);
+        if (fio2El) fio2El.textContent = connected ? `VM: FiO₂ ${engine.vent.fio2Set}%` : `FiO₂ ${o2Info.fio2}%`;
+      });
+      ['o2FlowRow', 'hamO2FlowRow'].forEach((id) => {
+        const flowRowEl = document.getElementById(id);
+        if (flowRowEl) flowRowEl.classList.toggle('hidden', !hasRange);
+      });
+      ['o2FlowRange', 'hamO2FlowRange'].forEach((id) => {
+        const rangeEl = document.getElementById(id);
+        if (rangeEl && hasRange) {
+          rangeEl.min = dev.flowMin;
+          rangeEl.max = dev.flowMax;
+          rangeEl.step = dev.flowStep || 1;
+          rangeEl.value = engine.airway.o2Flow;
+        }
+      });
+      ['o2FlowVal', 'hamO2FlowVal'].forEach((id) => {
+        const valEl = document.getElementById(id);
+        if (valEl) valEl.textContent = `${engine.airway.o2Flow} ${dev.flowUnit}`;
+      });
+      ['o2DeviceHint', 'hamO2DeviceHint'].forEach((id) => {
+        const hintEl = document.getElementById(id);
+        if (hintEl) hintEl.textContent = connected ? 'Paciente acoplado à VM — FiO₂ controlada no HAMILTON-T1.' : dev.desc;
+      });
+    }
+
+    // Recomendação farmacológica para o caso + ritmo atual
+    const adv = (SCENARIO_PHARMA && SCENARIO_PHARMA[engine.scenarioId]) || (SCENARIO_PHARMA && SCENARIO_PHARMA.stable);
+    if (adv) {
+      const bestEl = document.getElementById('pharmaBestDrugName');
+      const ratEl = document.getElementById('pharmaBestRationale');
+      const avoidEl = document.getElementById('pharmaAvoidHint');
+      const bolusSel = document.getElementById('bolusDrugSelect');
+
+      let rhythmNote = '';
+      const rId = engine.cardiac.rhythm;
+      if (rId === 'de_winter' || rId === 'stemi') {
+        rhythmNote = ' • ECG Isquêmico: AAS + P2Y12 + Heparina + Cateterismo';
+      } else if (rId === 'hyperkalemia') {
+        rhythmNote = ' • Hipercalemia: Gluconato de Cálcio 10% imediato!';
+      } else if (rId === 'svt') {
+        rhythmNote = ' • TPSV: Adenosina 6 mg EV em bolus rápido';
+      } else if (rId === 'wpw') {
+        rhythmNote = ' • WPW: Evitar bloqueadores nodais (Adenosina/Amiodarona na FA)!';
+      } else if (rId === 'av_block_3' || rId === 'sinus_brady') {
+        rhythmNote = ' • Bradiarritmia: Atropina 1 mg (sinusal) ou Adrenalina/MP no BAVT';
+      }
+
+      if (bestEl) bestEl.textContent = adv.bestDrug;
+      if (ratEl) ratEl.textContent = adv.rationale + rhythmNote;
+      if (avoidEl) avoidEl.textContent = adv.avoid;
+
+      // Seleciona sugestão padrão no dropdown apenas quando troca de cenário/ritmo
+      if (bolusSel && !bolusSel.dataset.userTouched) {
+        const targetBolus =
+          rId === 'hyperkalemia'
+            ? 'gluconato_calcio'
+            : rId === 'svt'
+            ? 'adenosina'
+            : rId === 'sinus_brady'
+            ? 'atropina'
+            : adv.recommendedBolusId;
+        if (BOLUS_DRUG_MAP && BOLUS_DRUG_MAP[targetBolus]) bolusSel.value = targetBolus;
+      }
+    }
+  }
+
+  function toggleVentConnection() {
+    audio.playUiClick('hw');
+    engine.connectVentilator(!engine.airway.connectedToVent);
+    syncAirwayO2AndPharmaUI();
+    syncVentControlsUI();
+    if (typeof syncAuscultationUI === 'function') syncAuscultationUI();
+  }
+
+  const btnVentConnectToggle = document.getElementById('btnVentConnectToggle');
+  const hamVentConnectBtn = document.getElementById('hamVentConnectBtn');
+  if (btnVentConnectToggle) btnVentConnectToggle.addEventListener('click', toggleVentConnection);
+  if (hamVentConnectBtn) hamVentConnectBtn.addEventListener('click', toggleVentConnection);
+
+  const o2DeviceSelectEl = document.getElementById('o2DeviceSelect');
+  if (o2DeviceSelectEl) {
+    o2DeviceSelectEl.addEventListener('change', (e) => {
+      audio.playUiClick('soft');
+      engine.setO2Device(e.target.value);
+      syncAirwayO2AndPharmaUI();
+    });
+  }
+  ['o2FlowRange', 'hamO2FlowRange'].forEach((id) => {
+    const rngEl = document.getElementById(id);
+    if (!rngEl) return;
+    rngEl.addEventListener('input', (e) => {
+      engine.setO2Device(engine.airway.o2Device, Number(e.target.value));
+      syncAirwayO2AndPharmaUI();
+    });
+  });
+
+  const bolusDrugSelectEl = document.getElementById('bolusDrugSelect');
+  if (bolusDrugSelectEl) {
+    bolusDrugSelectEl.addEventListener('change', () => {
+      bolusDrugSelectEl.dataset.userTouched = '1';
+    });
+  }
+
+  const btnGiveBolusDrug = document.getElementById('btnGiveBolusDrug');
+  if (btnGiveBolusDrug && bolusDrugSelectEl) {
+    btnGiveBolusDrug.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      engine.administerBolusDrug(bolusDrugSelectEl.value);
+      syncPhysiologyModalInputs();
+      syncRhythmUI();
+      syncAirwayO2AndPharmaUI();
+      if (typeof syncAuscultationUI === 'function') syncAuscultationUI();
+    });
+  }
+
+  const ecgRhythmSelect = document.getElementById('ecgRhythmSelect');
+  const ecgRhythmCriteriaEl = document.getElementById('ecgRhythmCriteria');
+  const ecgRhythmGridEl = document.getElementById('ecgRhythmGrid');
+
+  const ECG_MINI_PATHS = {
+    sinus: 'M2 15 H7 Q9 11 11 15 H14 L15 17 L17 4 L19 19 L21 15 H24 Q27 9 30 15 H37 Q39 11 41 15 H44 L45 17 L47 4 L49 19 L51 15 H54 Q57 9 60 15 H62',
+    sinus_tach: 'M2 15 Q4 11 6 15 H8 L9 4 L11 18 L12 15 Q14 10 16 15 H20 Q22 11 24 15 H26 L27 4 L29 18 L30 15 Q32 10 34 15 H38 Q40 11 42 15 H44 L45 4 L47 18 L48 15 Q50 10 52 15 H56 Q58 11 60 15 H62',
+    sinus_brady: 'M2 15 H12 Q15 11 18 15 H22 L23 17 L25 4 L27 19 L29 15 H32 Q36 9 40 15 H62',
+    afib: 'M2 15 L4 14 L6 16 L8 14 L10 15 L12 4 L14 18 L16 14 L18 16 L20 14 L22 15 L24 4 L26 18 L28 15 L31 14 L34 16 L37 14 L40 16 L43 14 L45 15 L47 4 L49 18 L51 14 L54 16 L58 14 L62 15',
+    afib_rvr: 'M2 15 L5 14 L7 4 L9 18 L12 14 L14 16 L16 4 L18 18 L21 14 L24 16 L27 4 L29 18 L32 14 L34 4 L36 18 L39 15 L42 14 L44 4 L46 18 L49 15 L53 14 L55 4 L57 18 L60 14 L62 15',
+    aflutter: 'M2 17 L5 11 L7 17 L10 11 L12 17 L15 11 L16 3 L18 19 L20 17 L23 11 L25 17 L28 11 L30 17 L33 11 L35 17 L37 3 L39 19 L41 17 L44 11 L46 17 L49 11 L51 17 L54 11 L56 17 L58 3 L60 19 L62 17',
+    svt: 'M2 15 H5 L6 4 L8 18 L9 15 H12 L13 4 L15 18 L16 15 H19 L20 4 L22 18 L23 15 H26 L27 4 L29 18 L30 15 H33 L34 4 L36 18 L37 15 H40 L41 4 L43 18 L44 15 H47 L48 4 L50 18 L51 15 H54 L55 4 L57 18 L58 15 H62',
+    wpw: 'M2 15 H7 Q9 11 11 15 L15 4 L18 18 L20 15 Q23 18 26 15 H36 Q38 11 40 15 L44 4 L47 18 L49 15 Q52 18 55 15 H62',
+    av_block_1: 'M2 15 H4 Q7 10 10 15 H21 L22 17 L24 4 L26 19 L28 15 Q31 9 34 15 H38 Q41 10 44 15 H55 L56 4 L58 19 L60 15 H62',
+    av_block_2_m1: 'M2 15 Q4 11 6 15 H9 L11 4 L13 18 L15 15 H20 Q22 11 24 15 H32 L34 4 L36 18 L38 15 H43 Q45 11 47 15 H62',
+    av_block_2_m2: 'M2 15 Q4 11 6 15 H10 L12 4 L14 18 L16 15 H21 Q23 11 25 15 H29 L31 4 L33 18 L35 15 H41 Q43 11 45 15 H55 Q57 11 59 15 H62',
+    av_block_3: 'M2 15 Q4 11 6 15 H10 L13 5 L16 19 L19 15 Q21 11 23 15 H31 Q33 11 35 15 H41 Q43 11 45 15 L48 5 L51 19 L54 15 Q56 11 58 15 H62',
+    rbbb: 'M2 15 H7 Q9 11 11 15 H15 L17 5 L19 14 L22 6 L25 18 L28 15 Q31 11 34 15 H40 Q42 11 44 15 H47 L49 5 L51 14 L54 6 L57 18 L60 15 H62',
+    lbbb: 'M2 15 H7 Q9 11 11 15 H14 L16 5 L19 7 L21 5 L24 18 Q28 20 32 15 H39 Q41 11 43 15 H46 L48 5 L51 7 L53 5 L56 18 Q59 20 62 15',
+    vtach: 'M2 16 Q6 3 10 16 Q13 21 16 16 Q20 3 24 16 Q27 21 30 16 Q34 3 38 16 Q41 21 44 16 Q48 3 52 16 Q55 21 58 16 L62 10',
+    torsades: 'M2 13 L5 10 L7 16 L10 7 L13 19 L16 5 L19 20 L22 9 L25 15 L28 11 L31 14 L34 8 L37 18 L40 4 L43 21 L46 6 L49 18 L52 10 L55 15 L58 11 L62 13',
+    vf: 'M2 14 L5 9 L8 17 L11 7 L14 15 L17 11 L20 19 L23 6 L26 16 L29 10 L32 18 L35 8 L38 14 L41 19 L44 6 L47 16 L50 9 L53 18 L56 10 L59 15 L62 12',
+    pea: 'M2 15 H10 L12 6 L14 18 L16 15 H36 L38 6 L40 18 L42 15 H62',
+    asystole: 'M2 14 H22 L24 13.4 L26 14.3 L28 14 H62',
+    stemi: 'M2 15 H8 Q10 11 12 15 H15 L17 4 L19 9 Q23 5 28 15 H36 Q38 11 40 15 H43 L45 4 L47 9 Q51 5 56 15 H62',
+    de_winter: 'M2 15 H8 Q10 12 12 15 H15 L17 5 L19 19 L22 17 Q26 4 30 15 H37 Q39 12 41 15 H44 L46 5 L48 19 L51 17 Q55 4 59 15 H62',
+    hyperkalemia: 'M2 15 H11 L13 17 L15 6 L17 18 L20 15 L23 3 L26 15 H39 L41 17 L43 6 L45 18 L48 15 L51 3 L54 15 H62',
+    paced: 'M2 15 H11 L11.5 3 L12 17 L15 5 L18 19 Q22 20 26 15 H38 L38.5 3 L39 17 L42 5 L45 19 Q49 20 53 15 H62'
+  };
+
+  function escapeHtmlAttr(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function ensureEcgRhythmGridRendered() {
+    if (!ecgRhythmGridEl || !ECG_RHYTHMS || ecgRhythmGridEl.children.length === ECG_RHYTHMS.length) return;
+    ecgRhythmGridEl.innerHTML = ECG_RHYTHMS.map((r) => {
+      const d = ECG_MINI_PATHS[r.id] || ECG_MINI_PATHS.sinus;
+      const tone = r.shockable || r.pulseless ? 'crit' : r.stDefault !== 0 || r.category === 'Bloqueios AV' || r.category === 'Bloqueios de Ramo' ? 'warn' : 'norm';
+      const tip = escapeHtmlAttr(`${r.name} — ${r.criteria}`);
+      return `
+        <button type="button" class="ecg-rhythm-tile tone-${tone}" data-ecg-rhythm="${r.id}" title="${tip}">
+          <span class="ecg-tile-wave" aria-hidden="true">
+            <svg viewBox="0 0 64 24" width="60" height="22" fill="none">
+              <path d="${d}" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="ecg-tile-lbl">${r.shortLabel}</span>
+        </button>`;
+    }).join('');
+    ecgRhythmGridEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-ecg-rhythm]');
+      if (!btn) return;
+      audio.playUiClick('soft');
+      engine.setRhythm(btn.dataset.ecgRhythm);
+      refreshScenarioUI();
+    });
+  }
+
+  function syncRhythmUI() {
+    ensureEcgRhythmGridRendered();
+    const rId = engine.cardiac.rhythm || 'sinus';
+    const meta = ECG_RHYTHM_MAP && ECG_RHYTHM_MAP[rId];
+    if (ecgRhythmSelect && ecgRhythmSelect.value !== rId) {
+      ecgRhythmSelect.value = rId;
+    }
+    if (ecgRhythmGridEl) {
+      ecgRhythmGridEl.querySelectorAll('[data-ecg-rhythm]').forEach((tile) => {
+        tile.classList.toggle('active', tile.dataset.ecgRhythm === rId);
+      });
+    }
+    if (ecgRhythmCriteriaEl && meta) {
+      ecgRhythmCriteriaEl.textContent = meta.criteria;
+    }
+  }
+
+  if (ecgRhythmSelect) {
+    ecgRhythmSelect.addEventListener('change', (e) => {
+      audio.playUiClick('soft');
+      engine.setRhythm(e.target.value);
+      refreshScenarioUI();
+    });
+  }
+
+  if (scenarioSelect) {
+    scenarioSelect.addEventListener('change', (e) => {
+      const bolusSel = document.getElementById('bolusDrugSelect');
+      if (bolusSel) delete bolusSel.dataset.userTouched;
+      engine.loadScenario(e.target.value);
+      resetEquipmentOnScenarioChange();
+      refreshScenarioUI();
+    });
+  }
+
+  document.getElementById('btnResetScenario').addEventListener('click', () => {
+    engine.loadScenario(engine.scenarioId);
+    resetEquipmentOnScenarioChange();
+    refreshScenarioUI();
+  });
+
+  document.getElementById('btnFluidBolus').addEventListener('click', () => {
+    engine.giveFluidBolus();
+    document.getElementById('fluidCount').textContent = engine.interventions.fluidBoluses;
+  });
+
+  document.getElementById('btnNoraUp').addEventListener('click', () => {
+    engine.adjustNora(0.05);
+    document.getElementById('noraValue').textContent = engine.interventions.noraDose.toFixed(2);
+  });
+
+  document.getElementById('btnNoraDown').addEventListener('click', () => {
+    engine.adjustNora(-0.05);
+    document.getElementById('noraValue').textContent = engine.interventions.noraDose.toFixed(2);
+  });
+
+  document.getElementById('btnBronchodilator').addEventListener('click', () => {
+    engine.giveBronchodilator();
+  });
+
+  document.getElementById('btnSuctionRecruit').addEventListener('click', () => {
+    engine.suctionAndRecruit();
+    syncPhysiologyModalInputs();
+  });
+
+  btnDecompress.addEventListener('click', () => {
+    engine.decompressChest();
+    refreshScenarioUI();
+  });
+
+  btnCprToggle.addEventListener('click', () => {
+    const active = engine.toggleCpr();
+    btnCprToggle.setAttribute('aria-pressed', String(active));
+  });
+
+  btnDefib.addEventListener('click', () => {
+    audio.playDefibChargeAndShock();
+    engine.defibrillate();
+    refreshScenarioUI();
+  });
+
+  // ================= CONTROLES GLOBAIS & MONITOR =================
+  const btnFreeze = document.getElementById('btnFreeze');
+  btnFreeze.addEventListener('click', () => {
+    isFrozen = !isFrozen;
+    monitor.setFrozen(isFrozen);
+    ventDisplay.setFrozen(isFrozen);
+    btnFreeze.setAttribute('aria-pressed', String(isFrozen));
+    btnFreeze.textContent = isFrozen ? '▶' : '❄';
+    btnFreeze.title = isFrozen ? 'Retomar traçados em tempo real' : 'Congelar traçados para inspeção';
+    addLog(isFrozen ? 'Traçados congelados para análise' : 'Traçados retomados em tempo real');
+  });
+
+  const btnSilenceAlarm = document.getElementById('btnSilenceAlarm');
+  btnSilenceAlarm.addEventListener('click', () => {
+    const nextSilenced = !audio.isSilenced();
+    audio.setAlarmSilenced(nextSilenced);
+    btnSilenceAlarm.setAttribute('aria-pressed', String(nextSilenced));
+    btnSilenceAlarm.textContent = nextSilenced ? '🔕' : '🔔';
+    btnSilenceAlarm.title = nextSilenced ? 'Alarmes silenciados por 2 minutos (clique para reativar)' : 'Silenciar alarmes por 2 minutos';
+  });
+
+  const btnQrsBeep = document.getElementById('btnQrsBeep');
+  btnQrsBeep.addEventListener('click', () => {
+    const next = !audio.qrsEnabled;
+    audio.setQrsEnabled(next);
+    btnQrsBeep.setAttribute('aria-pressed', String(next));
+  });
+
+  // Ausculta Pulmonar (Estetoscópio Ao Vivo) + Botão Ligar/Desligar Sons Pulmonares
+  const btnAuscultation = document.getElementById('btnAuscultation');
+  const btnLungSoundsToggle = document.getElementById('btnLungSoundsToggle');
+  const auscPanel = document.getElementById('auscultationPanel');
+  const btnAuscToggleAudio = document.getElementById('btnAuscToggleAudio');
+  const auscFindingEl = document.getElementById('auscFindingText');
+  const auscMeterFillEl = document.getElementById('auscMeterFill');
+
+  function syncAuscultationUI() {
+    const active = audio.auscultationEnabled;
+    const panelOpen = auscPanel ? !auscPanel.classList.contains('hidden') : false;
+    if (btnAuscultation) btnAuscultation.setAttribute('aria-pressed', String(panelOpen));
+    if (btnLungSoundsToggle) {
+      btnLungSoundsToggle.setAttribute('aria-pressed', String(active));
+      btnLungSoundsToggle.textContent = '🫁';
+      btnLungSoundsToggle.title = active
+        ? 'Sons pulmonares LIGADOS (clique para desligar)'
+        : 'Sons pulmonares DESLIGADOS (clique para ligar)';
+    }
+    if (btnAuscToggleAudio) {
+      btnAuscToggleAudio.setAttribute('aria-pressed', String(active));
+      btnAuscToggleAudio.textContent = active
+        ? '🔇 Sons Pulmonares: LIGADOS (Desligar)'
+        : '🔊 Sons Pulmonares: DESLIGADOS (Ligar)';
+    }
+    const prof = audio.getAuscultationProfile(engine);
+    if (auscFindingEl) auscFindingEl.textContent = prof.text;
+  }
+
+  function toggleLungSounds() {
+    audio.playUiClick('soft');
+    const next = !audio.auscultationEnabled;
+    audio.setAuscultationEnabled(next);
+    syncAuscultationUI();
+    addLog(next ? 'Sons pulmonares LIGADOS (Ausculta ao vivo)' : 'Sons pulmonares DESLIGADOS (Silenciados)');
+  }
+
+  if (btnLungSoundsToggle) {
+    btnLungSoundsToggle.addEventListener('click', toggleLungSounds);
+  }
+
+  if (btnAuscultation && auscPanel) {
+    btnAuscultation.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      const isHidden = auscPanel.classList.contains('hidden');
+      if (isHidden) {
+        auscPanel.classList.remove('hidden');
+        if (!audio.auscultationEnabled) {
+          audio.setAuscultationEnabled(true);
+          addLog('Sons pulmonares LIGADOS (Ausculta ao vivo)');
+        }
+      } else {
+        auscPanel.classList.add('hidden');
+      }
+      syncAuscultationUI();
+    });
+  }
+
+  document.getElementById('btnCloseAuscPanel').addEventListener('click', () => {
+    audio.playUiClick('soft');
+    auscPanel.classList.add('hidden');
+    syncAuscultationUI();
+  });
+
+  if (btnAuscToggleAudio) {
+    btnAuscToggleAudio.addEventListener('click', toggleLungSounds);
+  }
+
+  document.querySelectorAll('.ausc-spot-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      audio.setAuscultationSite(btn.dataset.site);
+      document.querySelectorAll('.ausc-spot-btn').forEach((b) => b.classList.toggle('active', b === btn));
+      syncAuscultationUI();
+      addLog(`Foco de ausculta: ${btn.textContent.trim()}`);
+    });
+  });
+
+  document.getElementById('ecgLeadSelect').addEventListener('change', (e) => {
+    const val = e.target.value;
+    monitor.setLead(val);
+    const label = val === 'V5' ? 'V5' : `D${val}`;
+    document.getElementById('ecgLeadTag').textContent = `${label} • 25 mm/s`;
+    const waveTag = document.getElementById('ecgWaveLeadTag');
+    if (waveTag) waveTag.textContent = `${val}   X1   Diagnostic`;
+  });
+
+  function triggerAnimatedNibp() {
+    if (mrStandby) return;
+    audio.playUiClick('nibp');
+    const busyEl = document.getElementById('mrNibpBusy');
+    if (busyEl) busyEl.classList.remove('hidden');
+    setTimeout(() => {
+      if (busyEl) busyEl.classList.add('hidden');
+      engine.triggerNibp();
+      audio.playUiClick('soft');
+    }, 950);
+  }
+
+  document.getElementById('btnNibpMeasure').addEventListener('click', triggerAnimatedNibp);
+
+  // Botões físicos & softkeys do Mindray iMEC 15
+  document.getElementById('mrHwSilence').addEventListener('click', () => {
+    audio.playUiClick('silence');
+    btnSilenceAlarm.click();
+  });
+  document.getElementById('mrHwPause').addEventListener('click', () => {
+    if (mrStandby) return;
+    audio.playUiClick('silence');
+    if (!audio.isSilenced()) {
+      audio.setAlarmSilenced(true);
+      btnSilenceAlarm.setAttribute('aria-pressed', 'true');
+      btnSilenceAlarm.textContent = '🔕';
+      btnSilenceAlarm.title = 'Alarmes silenciados por 2 minutos (clique para reativar)';
+      addLog('Mindray iMEC 15: Pausa de alarmes ativada por 2 minutos');
+    } else {
+      audio.setAlarmSilenced(false);
+      btnSilenceAlarm.setAttribute('aria-pressed', 'false');
+      btnSilenceAlarm.textContent = '🔔';
+      btnSilenceAlarm.title = 'Silenciar alarmes por 2 minutos';
+      addLog('Mindray iMEC 15: Pausa de alarmes encerrada manualmente');
+    }
+    updateNumericUI();
+  });
+  document.getElementById('mrHwFreeze').addEventListener('click', () => {
+    audio.playUiClick('hw');
+    btnFreeze.click();
+  });
+  document.getElementById('mrHwNibp').addEventListener('click', triggerAnimatedNibp);
+  document.getElementById('mrHwRecord').addEventListener('click', () => {
+    audio.playUiClick('hw');
+    document.getElementById('btnAbgModal').click();
+  });
+  document.getElementById('mrHwMenu').addEventListener('click', () => {
+    if (mrStandby) return;
+    audio.playUiClick('hw');
+    document.getElementById('btnAlarmLimits').click();
+    addLog('Mindray iMEC 15: Menu de Configuração & Alarmes aberto');
+  });
+  document.getElementById('mrBtnMainMenu').addEventListener('click', () => {
+    if (mrStandby) return;
+    audio.playUiClick('soft');
+    focusSidebarPatientSection();
+    addLog('Mindray Main Menu: Painel Paciente & Fisiologia destacado');
+  });
+  document.getElementById('mrPowerBtn').addEventListener('click', () => setMrStandby(!mrStandby));
+  document.getElementById('mrWakeBtn').addEventListener('click', () => setMrStandby(false));
+
+  function cycleMindrayTrimKnob(dir = 1) {
+    if (mrStandby) return;
+    audio.playUiClick('knob');
+    mrKnobAngle += dir * 45;
+    const knob = document.getElementById('mrTrimKnob');
+    if (knob) knob.style.transform = `rotate(${mrKnobAngle}deg)`;
+    const sel = document.getElementById('ecgLeadSelect');
+    const order = ['II', 'V5', 'I'];
+    const nextIdx = (order.indexOf(sel.value) + (dir > 0 ? 1 : 2)) % order.length;
+    const next = order[nextIdx];
+    sel.value = next;
+    sel.dispatchEvent(new Event('change'));
+    addLog(`Mindray Trim Knob: Derivação alterada para ${next === 'V5' ? 'V5' : 'D' + next}`);
+  }
+
+  document.getElementById('mrTrimKnob').addEventListener('click', () => cycleMindrayTrimKnob(1));
+  document.getElementById('mrTrimKnob').addEventListener('wheel', (e) => {
+    e.preventDefault();
+    cycleMindrayTrimKnob(e.deltaY < 0 ? 1 : -1);
+  }, { passive: false });
+
+  // ================= MODAIS =================
+  function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('hidden');
+  }
+  function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  }
+
+  document.querySelectorAll('[data-close]').forEach((btn) => {
+    btn.addEventListener('click', () => closeModal(btn.dataset.close));
+  });
+  document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) backdrop.classList.add('hidden');
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach((el) => el.classList.add('hidden'));
+    if (auscPanel && !auscPanel.classList.contains('hidden')) {
+      auscPanel.classList.add('hidden');
+      syncAuscultationUI();
+    }
+    closeAllHamOverlays();
+    if (vivoGold && vivoGold.patientDrawerOpen) {
+      vivoGold.patientDrawerOpen = false;
+      vivoGold.syncUI();
+    }
+  });
+
+  // Modal Gasometria Arterial
+  function renderABG() {
+    const abg = engine.getABG();
+    const phNum = Number(abg.ph);
+    const cells = [
+      {
+        name: 'pH (7.35–7.45)',
+        val: abg.ph,
+        cls: phNum < 7.20 || phNum > 7.55 ? 'critical' : phNum < 7.35 || phNum > 7.45 ? 'abnormal' : ''
+      },
+      {
+        name: 'PaCO₂ (35–45 mmHg)',
+        val: `${abg.paco2} mmHg`,
+        cls: abg.paco2 > 55 || abg.paco2 < 25 ? 'critical' : abg.paco2 > 45 || abg.paco2 < 35 ? 'abnormal' : ''
+      },
+      {
+        name: 'PaO₂ (80–100 mmHg)',
+        val: `${abg.pao2} mmHg`,
+        cls: abg.pao2 < 60 ? 'critical' : abg.pao2 < 80 ? 'abnormal' : ''
+      },
+      {
+        name: 'HCO₃⁻ (22–26 mEq/L)',
+        val: `${abg.hco3} mEq/L`,
+        cls: Number(abg.hco3) < 16 ? 'critical' : Number(abg.hco3) < 22 || Number(abg.hco3) > 26 ? 'abnormal' : ''
+      },
+      {
+        name: 'Relação PaO₂/FiO₂',
+        val: `${abg.pf} (FiO₂ ${abg.fio2Pct}%)`,
+        cls: abg.pf < 100 ? 'critical' : abg.pf < 300 ? 'abnormal' : ''
+      },
+      {
+        name: 'Lactato (< 2.0 mmol/L)',
+        val: `${abg.lactate} mmol/L`,
+        cls: Number(abg.lactate) >= 4.0 ? 'critical' : Number(abg.lactate) >= 2.0 ? 'abnormal' : ''
+      }
+    ];
+
+    document.getElementById('abgContent').innerHTML = cells
+      .map(
+        (c) => `
+      <div class="abg-cell ${c.cls}">
+        <div class="abg-name">${c.name}</div>
+        <div class="abg-val">${c.val}</div>
+      </div>`
+      )
+      .join('');
+
+    // Interpretação automática e sugestão de conduta
+    const analyzeFn = window.ICUSim && window.ICUSim.analyzeAcidBase;
+    const abAnalysis = analyzeFn
+      ? analyzeFn({
+          ph: phNum,
+          pco2: abg.paco2,
+          hco3: abg.hco3,
+          be: abg.be,
+          po2: abg.pao2,
+          so2: abg.sao2,
+          lac: abg.lactate
+        })
+      : {
+          interp:
+            phNum < 7.35
+              ? abg.paco2 > 45
+                ? 'Acidose respiratória'
+                : 'Acidose metabólica'
+              : phNum > 7.45
+              ? abg.paco2 < 35
+                ? 'Alcalose respiratória'
+                : 'Alcalose metabólica'
+              : 'Equilíbrio ácido-base normal',
+          conduct: ''
+        };
+
+    const parts = [abAnalysis.interp];
+    if (abg.pf < 100) parts.push('Hipoxemia grave (P/F < 100 — padrão SDRA grave)');
+    else if (abg.pf < 200) parts.push('Hipoxemia moderada (P/F 100–200)');
+    else if (abg.pf < 300) parts.push('Troca gasosa comprometida (P/F < 300)');
+    else parts.push('Oxigenação adequada (P/F ≥ 300)');
+
+    document.getElementById('abgInterpretation').innerHTML =
+      `<strong>Interpretação:</strong> ${parts.join(' • ')}.${abAnalysis.conduct ? `<br/><strong>Sugestão de conduta:</strong> ${abAnalysis.conduct}` : ''}`;
+  }
+
+  document.getElementById('btnAbgModal').addEventListener('click', () => {
+    renderABG();
+    openModal('modalABG');
+    addLog('Gasometria arterial coletada');
+  });
+  document.getElementById('btnRefreshAbg').addEventListener('click', renderABG);
+
+  // Modal: Guia de Ventilação Mecânica Protetora
+  let modalProtIdx = 1;
+  function renderProtectiveGuideModal() {
+    const body = document.getElementById('protModalBody');
+    const pillars = window.ICUSim.PROTECTIVE_PILLARS || [];
+    const protocols = window.ICUSim.PROTECTIVE_PROTOCOLS || [];
+    const active = protocols[modalProtIdx] || protocols[0];
+    if (!body || !active) return;
+
+    body.innerHTML = `
+      <div class="prot-pillars-strip">
+        ${pillars
+          .map(
+            (pil) => `
+          <div class="prot-pillar-mini" title="${pil.why}">
+            <strong>${pil.title}</strong>
+            <span class="mono">${pil.target}</span>
+            <small>${pil.why}</small>
+          </div>`
+          )
+          .join('')}
+      </div>
+      <div class="prot-interactive-grid">
+        <div class="prot-list">
+          ${protocols
+            .map(
+              (item, idx) => `
+            <button type="button" class="prot-item-btn ${idx === modalProtIdx ? 'active' : ''}" data-modal-prot="${idx}">
+              <span class="m-sev ${item.sevClass}">${item.severity}</span>
+              <strong>${item.name}</strong>
+            </button>`
+            )
+            .join('')}
+        </div>
+        <div class="prot-detail-card">
+          <div class="prot-detail-head">
+            <div>
+              <span class="m-sev ${active.sevClass}">${active.severity}</span>
+              <h4>${active.name}</h4>
+            </div>
+            <button type="button" class="ctrl-btn accent" id="btnLoadProtScenario" data-load-sc="${active.id}">▶ Carregar Cenário</button>
+          </div>
+          <div class="prot-params-grid">
+            <div class="prot-param"><span>Modo Preferencial</span><strong>${active.mode}</strong></div>
+            <div class="prot-param"><span>Vt (Peso Predito)</span><strong class="mono">${active.vt}</strong></div>
+            <div class="prot-param"><span>PEEP Indicada</span><strong class="mono">${active.peep}</strong></div>
+            <div class="prot-param"><span>FR &amp; Relação I:E</span><strong class="mono">${active.frIe}</strong></div>
+            <div class="prot-param"><span>Limites de Pressão</span><strong class="mono">${active.pressures}</strong></div>
+            <div class="prot-param"><span>Alvos Gasométricos</span><strong class="mono">${active.gasTargets}</strong></div>
+          </div>
+          <div class="clinical-pearl">
+            📋 <strong>Indicações &amp; Conduta:</strong> ${active.indications}
+          </div>
+        </div>
+      </div>
+    `;
+
+    body.querySelectorAll('[data-modal-prot]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        audio.playUiClick('soft');
+        modalProtIdx = Number(btn.dataset.modalProt);
+        renderProtectiveGuideModal();
+      });
+    });
+
+    const loadBtn = document.getElementById('btnLoadProtScenario');
+    if (loadBtn) {
+      loadBtn.addEventListener('click', () => {
+        audio.playUiClick('soft');
+        engine.loadScenario(loadBtn.dataset.loadSc);
+        refreshScenarioUI();
+        closeModal('modalProtectiveGuide');
+      });
+    }
+  }
+
+  document.getElementById('btnProtectiveGuide').addEventListener('click', () => {
+    audio.playUiClick('soft');
+    renderProtectiveGuideModal();
+    openModal('modalProtectiveGuide');
+  });
+
+  // Modal: Atlas & Seletor de Ritmos ECG
+  function renderEcgAtlasModal() {
+    const body = document.getElementById('ecgAtlasBody');
+    if (!body || !ECG_RHYTHMS) return;
+    const currentId = engine.cardiac.rhythm || 'sinus';
+    const categories = [...new Set(ECG_RHYTHMS.map((r) => r.category))];
+
+    body.innerHTML = categories
+      .map((cat) => {
+        const items = ECG_RHYTHMS.filter((r) => r.category === cat);
+        return `
+          <div class="ecg-cat-group">
+            <h4 class="ecg-cat-title">${cat}</h4>
+            <div class="ecg-cards-grid">
+              ${items
+                .map((r) => {
+                  const active = r.id === currentId;
+                  const badge = r.pulseless
+                    ? '<span class="m-sev critical">PCR</span>'
+                    : r.id === 'av_block_3' || r.id === 'vtach' || r.id === 'stemi' || r.id === 'de_winter' || r.id === 'hyperkalemia'
+                    ? '<span class="m-sev severe">ALERTA</span>'
+                    : r.id.startsWith('av_block') || r.id === 'rbbb' || r.id === 'lbbb' || r.id.startsWith('afib') || r.id === 'aflutter' || r.id === 'svt' || r.id === 'wpw' || r.id === 'paced'
+                    ? '<span class="m-sev moderate">ARRITMIA/BLOQ</span>'
+                    : '<span class="m-sev stable">BASAL</span>';
+                  return `
+                    <div class="ecg-rhythm-card ${active ? 'active' : ''}">
+                      <div class="ecg-card-top">
+                        <div>
+                          ${badge}
+                          <strong>${r.name}</strong>
+                        </div>
+                        <span class="mono ecg-hr-chip">${r.defaultHr > 0 ? r.defaultHr + ' bpm' : '0 bpm'}</span>
+                      </div>
+                      <p class="ecg-card-criteria">${r.criteria}</p>
+                      <button type="button" class="ctrl-btn ${active ? 'ghost' : 'accent'} ecg-apply-btn" data-apply-rhythm="${r.id}">
+                        ${active ? '✓ Ativo no Monitor' : '▶ Aplicar Traçado'}
+                      </button>
+                    </div>`;
+                })
+                .join('')}
+            </div>
+          </div>`;
+      })
+      .join('');
+
+    body.querySelectorAll('[data-apply-rhythm]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        audio.playUiClick('soft');
+        engine.setRhythm(btn.dataset.applyRhythm);
+        refreshScenarioUI();
+        closeModal('modalEcgAtlas');
+      });
+    });
+  }
+
+  function openEcgAtlas() {
+    audio.playUiClick('soft');
+    renderEcgAtlasModal();
+    openModal('modalEcgAtlas');
+  }
+
+  const btnEcgAtlas = document.getElementById('btnEcgAtlas');
+  const btnOpenEcgAtlasSide = document.getElementById('btnOpenEcgAtlasSide');
+  const rhythmLabelEl = document.getElementById('rhythmLabel');
+    if (btnEcgAtlas) btnEcgAtlas.addEventListener('click', openEcgAtlas);
+  if (btnOpenEcgAtlasSide) btnOpenEcgAtlasSide.addEventListener('click', openEcgAtlas);
+  if (rhythmLabelEl) rhythmLabelEl.addEventListener('click', openEcgAtlas);
+
+  const btnPumpIcatu = document.getElementById('btnPumpIcatu');
+  const icatuChassisEl = document.getElementById('icatuChassis');
+  const icatuChassis2El = document.getElementById('icatuChassis2');
+  if (btnPumpIcatu && icatuChassisEl) {
+    btnPumpIcatu.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      const hidden = icatuChassisEl.classList.toggle('hidden');
+      if (icatuChassis2El) icatuChassis2El.classList.toggle('hidden', hidden);
+      btnPumpIcatu.classList.toggle('active', !hidden);
+      if (hidden && icuGridEl && icuGridEl.classList.contains('only-pump')) {
+        setDeviceLayout('50-50');
+      } else if (!hidden) {
+        applyDeviceSizing();
+        icatuChassisEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
+  const btnCardioverter = document.getElementById('btnCardioverter');
+  const vgChassisEl = document.getElementById('vgChassis');
+  if (btnCardioverter && vgChassisEl) {
+    btnCardioverter.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      const hidden = vgChassisEl.classList.toggle('hidden');
+      btnCardioverter.classList.toggle('active', !hidden);
+      if (hidden && icuGridEl && icuGridEl.classList.contains('only-cardio')) {
+        setDeviceLayout('50-50');
+      } else if (!hidden) {
+        applyDeviceSizing();
+        if (vivoGold) vivoGold.resize();
+        vgChassisEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
+  const btnGasSg1 = document.getElementById('btnGasSg1');
+  const sg1ChassisEl = document.getElementById('sg1Chassis');
+  if (btnGasSg1 && sg1ChassisEl) {
+    btnGasSg1.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      const hidden = sg1ChassisEl.classList.toggle('hidden');
+      btnGasSg1.classList.toggle('active', !hidden);
+      if (hidden && icuGridEl && icuGridEl.classList.contains('only-sg1')) {
+        setDeviceLayout('50-50');
+      } else if (!hidden) {
+        applyDeviceSizing();
+        if (sg1Analyzer && sg1Analyzer.resize) sg1Analyzer.resize();
+        sg1ChassisEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
+  // Modal Fisiologia
+  const PHYS_KNOB_ARC_LEN = 117.81;
+
+  function renderPhysKnob(id, rawVal) {
+    const dial = document.getElementById(id);
+    if (!dial) return;
+    const min = Number(dial.dataset.min);
+    const max = Number(dial.dataset.max);
+    const step = Number(dial.dataset.step) || 1;
+    const clamped = Math.max(min, Math.min(max, Math.round(Number(rawVal) / step) * step));
+    dial.dataset.value = String(clamped);
+    dial.setAttribute('aria-valuenow', String(clamped));
+    const frac = max > min ? (clamped - min) / (max - min) : 0;
+    const deg = (-135 + frac * 270).toFixed(1);
+    const cap = dial.querySelector('.phys-knob-cap');
+    if (cap) cap.style.transform = `rotate(${deg}deg)`;
+    const arc = dial.querySelector('.phys-knob-arc');
+    if (arc) arc.setAttribute('stroke-dasharray', `${(frac * PHYS_KNOB_ARC_LEN).toFixed(2)} 157.08`);
+    const unit = dial.dataset.unit || '';
+    const valEl = document.getElementById(`${id}Val`);
+    if (valEl) valEl.textContent = `${clamped}${unit}`;
+  }
+
+  function syncPhysiologyModalInputs() {
+    const p = engine.patient;
+    renderPhysKnob('physWeight', Math.round(p.weightKg));
+    renderPhysKnob('physComp', Math.round(p.compliance));
+    renderPhysKnob('physRes', Math.round(p.resistance));
+    renderPhysKnob('physShunt', Math.round(p.shunt * 100));
+    renderPhysKnob('physDrive', Math.round(p.intrinsicDrive));
+    renderPhysKnob('physBe', Math.round(p.baseExcess));
+  }
+
+  function focusSidebarPatientSection() {
+    const ws = document.getElementById('simWorkspace');
+    const toggleBtn = document.getElementById('btnToggleSidebar');
+    if (ws && ws.classList.contains('sidebar-collapsed')) {
+      ws.classList.remove('sidebar-collapsed');
+      if (toggleBtn) toggleBtn.setAttribute('aria-pressed', 'true');
+      applyDeviceSizing();
+    }
+    const sec = document.getElementById('sideSectionPatient');
+    if (sec) {
+      sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      sec.classList.add('highlight-flash');
+      setTimeout(() => sec.classList.remove('highlight-flash'), 900);
+    }
+  }
+
+  // Toggle Menu Lateral Esquerdo
+  const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+  if (btnToggleSidebar) {
+    btnToggleSidebar.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      const ws = document.getElementById('simWorkspace');
+      const collapsed = ws.classList.toggle('sidebar-collapsed');
+      btnToggleSidebar.setAttribute('aria-pressed', String(!collapsed));
+      applyDeviceSizing();
+    });
+  }
+
+  // Alternância Modo Claro (Quente padrão) / Modo Escuro (Sincronizado)
+  const btnThemePres = document.getElementById('btnThemePres');
+  const btnThemeSim = document.getElementById('btnThemeSim');
+  let currentTheme = 'light';
+  try {
+    currentTheme = localStorage.getItem('uticomed_warm_theme') || 'light';
+  } catch (_) {}
+
+  function applyTheme(theme) {
+    currentTheme = theme === 'dark' ? 'dark' : 'light';
+    const isLight = currentTheme === 'light';
+    document.body.classList.toggle('theme-light', isLight);
+    const label = isLight ? '🌙 Modo Escuro' : '☀️ Modo Claro';
+    if (btnThemePres) btnThemePres.textContent = label;
+    if (btnThemeSim) {
+      btnThemeSim.textContent = currentTheme === 'light' ? '🌙' : '☀';
+      btnThemeSim.title = label;
+    }
+    try {
+      localStorage.setItem('uticomed_warm_theme', currentTheme);
+    } catch (_) {}
+  }
+
+  function toggleTheme() {
+    audio.playUiClick('soft');
+    applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+  }
+
+  if (btnThemePres) btnThemePres.addEventListener('click', toggleTheme);
+  if (btnThemeSim) btnThemeSim.addEventListener('click', toggleTheme);
+  applyTheme(currentTheme);
+
+  const physKnobSetters = {};
+  const bindPhys = (id, _labelId, _suffix, setter) => {
+    const dial = document.getElementById(id);
+    if (!dial) return;
+    physKnobSetters[id] = setter;
+
+    const applyKnobVal = (nextRaw) => {
+      const min = Number(dial.dataset.min);
+      const max = Number(dial.dataset.max);
+      const step = Number(dial.dataset.step) || 1;
+      const next = Math.max(min, Math.min(max, Math.round(nextRaw / step) * step));
+      const cur = Number(dial.dataset.value);
+      if (next !== cur) {
+        renderPhysKnob(id, next);
+        setter(next);
+      }
+    };
+
+    let dragging = false;
+    let startY = 0;
+    let startVal = Number(dial.dataset.value || 0);
+
+    dial.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      dial.focus();
+      dragging = true;
+      startY = e.clientY;
+      startVal = Number(dial.dataset.value || 0);
+      dial.classList.add('dragging');
+      if (dial.setPointerCapture) dial.setPointerCapture(e.pointerId);
+    });
+
+    dial.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const min = Number(dial.dataset.min);
+      const max = Number(dial.dataset.max);
+      const span = Math.max(1, max - min);
+      const dy = startY - e.clientY;
+      const delta = (dy / 110) * span;
+      applyKnobVal(startVal + delta);
+    });
+
+    const endKnobDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      dial.classList.remove('dragging');
+      audio.playUiClick('knob');
+    };
+    dial.addEventListener('pointerup', endKnobDrag);
+    dial.addEventListener('pointercancel', endKnobDrag);
+
+    dial.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const step = Number(dial.dataset.step) || 1;
+      const cur = Number(dial.dataset.value || 0);
+      audio.playUiClick('knob');
+      applyKnobVal(cur + (e.deltaY < 0 ? step : -step));
+    }, { passive: false });
+
+    dial.addEventListener('keydown', (e) => {
+      const step = Number(dial.dataset.step) || 1;
+      const cur = Number(dial.dataset.value || 0);
+      const min = Number(dial.dataset.min);
+      const max = Number(dial.dataset.max);
+      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        audio.playUiClick('knob');
+        applyKnobVal(cur + step);
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        audio.playUiClick('knob');
+        applyKnobVal(cur - step);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        applyKnobVal(min);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        applyKnobVal(max);
+      }
+    });
+  };
+
+  document.querySelectorAll('.phys-knob-step[data-knob-target]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.knobTarget;
+      const dir = Number(btn.dataset.knobDir) || 1;
+      const dial = document.getElementById(targetId);
+      const setter = physKnobSetters[targetId];
+      if (!dial || !setter) return;
+      const min = Number(dial.dataset.min);
+      const max = Number(dial.dataset.max);
+      const step = Number(dial.dataset.step) || 1;
+      const cur = Number(dial.dataset.value || 0);
+      const next = Math.max(min, Math.min(max, cur + dir * step));
+      audio.playUiClick('knob');
+      if (next !== cur) {
+        renderPhysKnob(targetId, next);
+        setter(next);
+      }
+    });
+  });
+
+  bindPhys('physWeight', 'physWeightVal', ' kg', (v) => {
+    engine.patient.weightKg = v;
+    engine.patient.label = `Adulto • ${v} kg (PBW)`;
+    document.getElementById('metaPatient').textContent = engine.patient.label;
+    syncVentControlsUI();
+  });
+
+  // Calculadora de Peso Predito (ARDSNet / Devine: Homem e Mulher)
+  let pbwSex = 'M';
+  let pbwHeightCm = 175;
+  const pbwHeightRange = document.getElementById('pbwHeightRange');
+  const pbwHeightInput = document.getElementById('pbwHeightInput');
+
+  function calcPredictedBodyWeight(sex, heightCm) {
+    const base = sex === 'F' ? 45.5 : 50.0;
+    return Math.max(34, Math.min(115, base + 0.91 * (heightCm - 152.4)));
+  }
+
+  function updatePbwPreview() {
+    const pbw = calcPredictedBodyWeight(pbwSex, pbwHeightCm);
+    const vt6 = Math.round(pbw * 6);
+    const vt4 = Math.round(pbw * 4);
+    const vt8 = Math.round(pbw * 8);
+    document.getElementById('pbwResultVal').textContent = `${pbw.toFixed(1)} kg`;
+    document.getElementById('pbwVtTargetVal').textContent = `${vt6} mL`;
+    document.getElementById('pbwVtRangeVal').textContent = `Faixa protetora (4–8 mL/kg): ${vt4}–${vt8} mL`;
+    return pbw;
+  }
+
+  document.querySelectorAll('.pbw-sex-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      pbwSex = btn.dataset.sex === 'F' ? 'F' : 'M';
+      document.querySelectorAll('.pbw-sex-btn').forEach((b) => {
+        const active = b === btn;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      updatePbwPreview();
+    });
+  });
+
+  function setPbwHeight(val) {
+    pbwHeightCm = Math.max(140, Math.min(210, Math.round(Number(val) || 175)));
+    if (pbwHeightRange) pbwHeightRange.value = pbwHeightCm;
+    if (pbwHeightInput) pbwHeightInput.value = pbwHeightCm;
+    updatePbwPreview();
+  }
+
+  if (pbwHeightRange) pbwHeightRange.addEventListener('input', (e) => setPbwHeight(e.target.value));
+  if (pbwHeightInput) pbwHeightInput.addEventListener('input', (e) => setPbwHeight(e.target.value));
+
+  document.getElementById('btnApplyPbw').addEventListener('click', () => {
+    audio.playUiClick('soft');
+    const pbw = updatePbwPreview();
+    const roundedWeight = Math.round(pbw);
+    const sexLabel = pbwSex === 'F' ? 'Mulher' : 'Homem';
+    const protectiveVt = Math.max(200, Math.min(800, Math.round((pbw * 6) / 10) * 10));
+
+    engine.patient.weightKg = roundedWeight;
+    engine.patient.label = `${sexLabel} (${pbwHeightCm}cm) • ${roundedWeight} kg`;
+    engine.vent.vtSet = protectiveVt;
+
+    syncPhysiologyModalInputs();
+    document.getElementById('metaPatient').textContent = engine.patient.label;
+    syncVentControlsUI();
+    addLog(`PBW aplicado: ${sexLabel}, ${pbwHeightCm} cm → ${pbw.toFixed(1)} kg (Vt alvo: ${protectiveVt} mL)`);
+  });
+
+  updatePbwPreview();
+  bindPhys('physComp', 'physCompVal', ' mL/cmH₂O', (v) => (engine.patient.compliance = v));
+  bindPhys('physRes', 'physResVal', ' cmH₂O/L/s', (v) => (engine.patient.resistance = v));
+  bindPhys('physShunt', 'physShuntVal', '%', (v) => (engine.patient.shunt = v / 100));
+  bindPhys('physDrive', 'physDriveVal', ' irpm', (v) => (engine.patient.intrinsicDrive = v));
+  bindPhys('physBe', 'physBeVal', ' mEq/L', (v) => (engine.patient.baseExcess = v));
+
+  // Modal Limites de Alarme
+  document.getElementById('btnAlarmLimits').addEventListener('click', () => {
+    const a = engine.alarms;
+    document.getElementById('inpHrLow').value = a.hrLow;
+    document.getElementById('inpHrHigh').value = a.hrHigh;
+    document.getElementById('inpSpo2Low').value = a.spo2Low;
+    document.getElementById('inpMapLow').value = a.mapLow;
+    document.getElementById('inpEtco2Low').value = a.etco2Low;
+    document.getElementById('inpEtco2High').value = a.etco2High;
+    document.getElementById('inpPpeakHigh').value = a.ppeakHigh;
+    document.getElementById('inpDpHigh').value = a.dpHigh;
+    openModal('modalAlarms');
+  });
+
+  document.getElementById('btnSaveAlarms').addEventListener('click', () => {
+    const a = engine.alarms;
+    a.hrLow = Number(document.getElementById('inpHrLow').value) || 50;
+    a.hrHigh = Number(document.getElementById('inpHrHigh').value) || 130;
+    a.spo2Low = Number(document.getElementById('inpSpo2Low').value) || 90;
+    a.mapLow = Number(document.getElementById('inpMapLow').value) || 65;
+    a.etco2Low = Number(document.getElementById('inpEtco2Low').value) || 28;
+    a.etco2High = Number(document.getElementById('inpEtco2High').value) || 50;
+    a.ppeakHigh = Number(document.getElementById('inpPpeakHigh').value) || 35;
+    a.dpHigh = Number(document.getElementById('inpDpHigh').value) || 15;
+
+    document.getElementById('limHR').textContent = `${a.hrLow}–${a.hrHigh}`;
+    document.getElementById('limSpO2').textContent = `> ${a.spo2Low}%`;
+    document.getElementById('limMAP').textContent = `PAM > ${a.mapLow}`;
+    document.getElementById('limEtCO2').textContent = `${a.etco2Low}–${a.etco2High}`;
+    closeModal('modalAlarms');
+    addLog('Limites de alarme atualizados');
+  });
+
+  // ================= ATUALIZAÇÃO NUMÉRICA PERIÓDICA =================
+  const RHYTHM_NAMES = {
+    sinus: 'Ritmo Sinusal Normal',
+    sinus_tach: 'Taquicardia Sinusal',
+    sinus_brady: 'Bradicardia Sinusal',
+    afib: 'Fibrilação Atrial (FA)',
+    afib_rvr: 'FA de Alta Resposta (RVR)',
+    aflutter: 'Flutter Atrial (3:1)',
+    svt: 'TPSV (Taqui Supra)',
+    av_block_1: 'BAV de 1º Grau',
+    av_block_2_m1: 'BAV 2ºG Mobitz I (Wenckebach)',
+    av_block_2_m2: 'BAV 2ºG Mobitz II',
+    av_block_3: 'BAV Total / 3º Grau',
+    rbbb: 'Bloqueio Ramo Direito (BRD)',
+    lbbb: 'Bloqueio Ramo Esquerdo (BRE)',
+    vtach: 'Taquicardia Ventricular (TV)',
+    torsades: 'Torsades de Pointes',
+    vf: 'Fibrilação Ventricular (FV)',
+    pea: 'AESP (Sem Pulso)',
+    asystole: 'Assistolia',
+    stemi: 'Supra de ST (IAMCSST)',
+    de_winter: 'Padrão de De Winter',
+    wpw: 'Síndrome de WPW (Onda Delta)',
+    hyperkalemia: 'Hipercalemia (T Apiculada)',
+    paced: 'Marcapasso (VVI)'
+  };
+
+  // Referências fixas fora de ID único (cacheadas 1 única vez)
+  const _mrChassisEl = document.querySelector('.mindray-chassis');
+  const _mrPowerLedEl = document.querySelector('.mr-bottom-bezel .mr-led.green');
+  const _hamChassisEl = document.getElementById('hamChassis');
+  const _vgChassisEl = document.getElementById('vgChassis');
+
+  // Culling por Viewport (IntersectionObserver): pausa render GPU de aparelhos fora da tela
+  const _visState = { mon: true, vent: true, defib: true };
+  if (typeof IntersectionObserver === 'function') {
+    const _io = new IntersectionObserver((entries) => {
+      for (let i = 0; i < entries.length; i++) {
+        const e = entries[i];
+        if (e.target === _mrChassisEl) _visState.mon = e.isIntersecting;
+        else if (e.target === _hamChassisEl) _visState.vent = e.isIntersecting;
+        else if (e.target === _vgChassisEl) _visState.defib = e.isIntersecting;
+      }
+    }, { rootMargin: '80px' });
+    if (_mrChassisEl) _io.observe(_mrChassisEl);
+    if (_hamChassisEl) _io.observe(_hamChassisEl);
+    if (_vgChassisEl) _io.observe(_vgChassisEl);
+  }
+
+  // Pausa limpa de áudio e prevenção de salto de dt ao trocar de aba
+  document.addEventListener('visibilitychange', () => {
+    audio.setTabHidden(document.hidden);
+    if (!document.hidden) lastFrameTime = performance.now();
+  });
+
+  function updateNumericUI() {
+    const v = engine.vitals;
+    const b = engine.breath;
+    const p = engine.patient;
+    const a = engine.alarms;
+    const vent = engine.vent;
+
+    // Monitor (cache + diffing)
+    const isChaosOrFlat = v.rhythm === 'vf' || v.rhythm === 'asystole' || v.rhythm === 'torsades';
+    const isPulseless = isChaosOrFlat || v.rhythm === 'pea';
+    const cprOn = engine.interventions.cprActive;
+    $txt('valHR', isChaosOrFlat ? '---' : Math.round(v.hr));
+    $txt('valST', `ST: ${v.stDeviation >= 0 ? '+' : ''}${v.stDeviation.toFixed(1)} mm`);
+    $txt('rhythmLabel', RHYTHM_NAMES[v.rhythm] || 'Sinusal');
+
+    $txt('valSpO2', isPulseless && !cprOn ? '--' : Math.round(v.spo2));
+    $txt('valPI', `${v.perfusionIndex.toFixed(1)}%`);
+    $txt('valPulseRate', isPulseless ? (cprOn ? 'PR: 110' : 'PR: ---') : `PR: ${Math.round(v.hr)}`);
+    $txt('perfusionLabel', v.perfusionIndex < 1.0 ? 'Má Perfusão!' : v.perfusionIndex < 2.0 ? 'Perfusão Reduzida' : 'Perfusão Boa');
+
+    $txt('valBP', isPulseless && !cprOn ? '---/---' : `${Math.round(v.sbp)}/${Math.round(v.dbp)}`);
+    $txt('valMAP', isPulseless && !cprOn ? '(--)' : `(${v.map})`);
+    $txt('valNIBP', v.nibpSbp > 0 ? `PNI: ${v.nibpSbp}/${v.nibpDbp}` : 'PNI: ---/---');
+
+    $txt('valEtCO2', Math.round(v.etco2));
+    $txt('valRRMon', v.rrMonitor);
+    $txt('valTemp', `${p.temp.toFixed(1)}°C`);
+    $txt('co2ShapeLabel', p.resistance > 16 ? 'Obstrutiva (Barbatana)' : 'Platô Normal');
+
+    // Cards com alerta visual
+    $id('cardHR').classList.toggle(
+      'alarming',
+      isPulseless || v.rhythm === 'av_block_3' || v.rhythm === 'vtach' || v.rhythm === 'stemi' || v.rhythm === 'de_winter' || v.hr < a.hrLow || v.hr > a.hrHigh
+    );
+    $id('cardSpO2').classList.toggle('alarming', v.spo2 < a.spo2Low);
+    $id('cardIBP').classList.toggle('alarming', v.map < a.mapLow);
+    $id('cardEtCO2').classList.toggle('alarming', v.etco2 > a.etco2High || v.etco2 < a.etco2Low);
+
+    // Ventilador Readouts (HAMILTON-T1)
+    const ventConnected = Boolean(engine.airway && engine.airway.connectedToVent);
+    const o2Info = engine.getEffectiveO2Info();
+    if (!ventConnected) {
+      $txt('roPpeak', '--');
+      $txt('roPplat', '--');
+      $txt('roDP', '--');
+      $id('roDpBox').classList.remove('alarming');
+      $txt('roPeepTot', o2Info.peep > 0 ? o2Info.peep.toFixed(1) : '--');
+      $txt('roAutoPeepHint', 'Fora da VM');
+      $txt('roVte', '--');
+      $txt('roVe', '--');
+      $txt('roRRTot', '--');
+      $txt('roIE', 'I:E --');
+    } else {
+      const totalPeep = vent.peepSet + b.lastAutoPeep;
+      const dp = Math.max(0, b.lastPlatPaw - totalPeep);
+      $txt('roPpeak', Math.round(b.lastPeakPaw));
+      $txt('roPplat', Math.round(b.lastPlatPaw));
+      $txt('roDP', Math.round(dp));
+      $id('roDpBox').classList.toggle('alarming', dp > a.dpHigh);
+      $txt('roPeepTot', totalPeep.toFixed(1));
+      $txt('roAutoPeepHint', `Auto-PEEP: ${b.lastAutoPeep.toFixed(1)}`);
+      $txt('roVte', Math.round(b.lastVteMl));
+      $txt('roVe', b.lastVeLmin.toFixed(1));
+      $txt('roRRTot', Number(b.lastRrTotal).toFixed(1));
+      $txt('roIE', `I:E ${b.lastIeString}`);
+    }
+    $txt('roMechanics', `${Math.round(p.compliance)} / ${Math.round(p.resistance)}`);
+
+    // Relógios (só escrevem no DOM 1x/s graças ao $txt diffing)
+    const nowDt = new Date();
+    const dStr = `${nowDt.getFullYear()}-${String(nowDt.getMonth() + 1).padStart(2, '0')}-${String(nowDt.getDate()).padStart(2, '0')}`;
+    const tStr = `${String(nowDt.getHours()).padStart(2, '0')}:${String(nowDt.getMinutes()).padStart(2, '0')}:${String(nowDt.getSeconds()).padStart(2, '0')}`;
+    $txt('hamClock', tStr);
+    $txt('mindrayClock', `${dStr} ${tStr}`);
+    $txt('noraValue', engine.interventions.noraDose.toFixed(2));
+    if (vivoGold) vivoGold.syncUI();
+    if (icatuPump) icatuPump.syncUI();
+    if (icatuPump2) icatuPump2.syncUI();
+    if (sg1Analyzer) sg1Analyzer.syncUI();
+
+    // Indicador de Fase e Tipo de Ciclo do Ventilador
+    const badge = $id('breathTypeBadge');
+    let badgeText, badgeCls;
+    if (!ventConnected) {
+      badgeText = b.lastRrTotal <= 0 ? 'APNEIA' : 'SEM VM';
+      badgeCls = b.lastRrTotal <= 0 ? 'breath-badge apnea' : 'breath-badge spont';
+    } else if (vent.mode === 'PSV' && p.intrinsicDrive <= 0) {
+      badgeText = vent.backupActive ? 'BACKUP APNEIA' : 'APNEIA';
+      badgeCls = 'breath-badge apnea';
+    } else if (b.lastBreathWasSpont) {
+      badgeText = 'ESPONTÂNEA / ASSIST.';
+      badgeCls = 'breath-badge spont';
+    } else {
+      badgeText = 'MANDATÓRIA';
+      badgeCls = 'breath-badge mand';
+    }
+    if (badge) {
+      if (badge.textContent !== badgeText) badge.textContent = badgeText;
+      if (badge.className !== badgeCls) badge.className = badgeCls;
+    }
+
+    const phaseNames = {
+      TRIGGER: 'Disparo Paciente',
+      INSP: vent.holdInspTimer > 0 ? 'Hold Inspiratório' : 'Inspiração',
+      PAUSE: 'Pausa Inspiratória (Pplatô)',
+      EXP: vent.holdExpTimer > 0 ? 'Hold Expiratório (Auto-PEEP)' : 'Expiração'
+    };
+    const shortO2Name = o2Info.deviceId === 'room_air' ? 'Ar' : String(o2Info.deviceName || 'O₂').replace(/\s*\(.*?\)/g, '');
+    $txt('breathPhaseLabel', ventConnected ? (phaseNames[b.phase] || b.phase) : `${shortO2Name} ${o2Info.fio2}%`);
+
+    // Indicador LED inspiratório pulsante & animações operacionais Mindray + Hamilton-T1
+    const isInspPhase = ventConnected && !hamStandby && (b.phase === 'INSP' || b.phase === 'PAUSE' || b.phase === 'TRIGGER');
+    const inspLed = $id('hamInspLed');
+    if (inspLed) inspLed.classList.toggle('active', isInspPhase);
+
+    const mrLiveDotEl = $id('mrLiveDot');
+    if (_mrChassisEl) _mrChassisEl.classList.toggle('mr-operating', !mrStandby && !isFrozen);
+    if (mrLiveDotEl) mrLiveDotEl.classList.toggle('live', !mrStandby && !isFrozen);
+    if (_mrPowerLedEl) _mrPowerLedEl.classList.toggle('operating', !mrStandby);
+
+    const hamMiniLungEl = $id('hamMiniLung');
+    const hamPawFillEl = $id('hamPawLiveFill');
+    const hamTurbineBadgeEl = $id('hamTurbineBadge');
+    const hamRotaryRingEl = $id('hamRotaryKnob');
+    const hamRunning = ventConnected && !hamStandby;
+    if (_hamChassisEl) {
+      _hamChassisEl.classList.toggle('ham-ventilating', hamRunning);
+      _hamChassisEl.classList.toggle('ham-insp', isInspPhase);
+      _hamChassisEl.classList.toggle('ham-exp', hamRunning && !isInspPhase);
+    }
+    if (hamMiniLungEl) {
+      const volMl = (b.volumeL || 0) * 1000;
+      const vtNorm = Math.max(0, Math.min(1.25, volMl / Math.max(250, vent.vtSet || 450)));
+      const lungScale = hamRunning ? (1 + 0.28 * vtNorm) : 0.96;
+      hamMiniLungEl.style.transform = `scale(${lungScale.toFixed(3)})`;
+      hamMiniLungEl.classList.toggle('insp', isInspPhase);
+      hamMiniLungEl.classList.toggle('ventilating', hamRunning);
+    }
+    if (hamPawFillEl) {
+      const pawSpan = Math.max(0.06, Math.min(1, ((b.paw || 0) - (vent.peepSet || 0)) / 28));
+      hamPawFillEl.style.width = `${hamRunning ? Math.round(pawSpan * 100) : 8}%`;
+      hamPawFillEl.classList.toggle('insp', isInspPhase);
+    }
+    if (hamTurbineBadgeEl) hamTurbineBadgeEl.classList.toggle('active', hamRunning);
+    if (hamRotaryRingEl) hamRotaryRingEl.classList.toggle('ventilating', hamRunning);
+
+    // Botões de manobra ativos (tela + chassi físico)
+    $id('btnHoldInsp').classList.toggle('active', vent.holdInspTimer > 0);
+    $id('btnHoldExp').classList.toggle('active', vent.holdExpTimer > 0);
+    $id('btnO2Flush').classList.toggle('active', vent.o2FlushTimer > 0);
+    $id('hamHwManualHold').classList.toggle('active', vent.holdInspTimer > 0);
+    $id('hamHwExpHold').classList.toggle('active', vent.holdExpTimer > 0);
+    $id('hamHwO2').classList.toggle('active', vent.o2FlushTimer > 0);
+    $id('hamHwSilence').classList.toggle('active', audio.isSilenced());
+
+    // Meta Strip
+    const vtKg = b.lastVteMl / Math.max(30, p.weightKg);
+    const ventFio2 = vent.o2FlushTimer > 0 ? 100 : vent.fio2Set;
+    const effFio2 = o2Info.fio2 / 100;
+    $txt('hamDialFio2Val', Math.round(ventFio2));
+    const pf = Math.round(v.pao2 / Math.max(0.21, effFio2));
+    $txt('metaVtKg', ventConnected ? `${vtKg.toFixed(1)} mL/kg` : `Espont. ${vtKg.toFixed(1)}`);
+    $txt('metaPF', pf);
+    $txt('metaPH', v.ph.toFixed(2));
+
+    const setMetaChipState = (id, status) => {
+      const el = $id(id);
+      if (!el) return;
+      const cls = `status-${status}`;
+      if (!el.classList.contains(cls)) {
+        el.classList.remove('status-ok', 'status-warn', 'status-crit');
+        el.classList.add(cls);
+      }
+    };
+    setMetaChipState('metaChipVtKg', (vtKg > 8.5 || (ventConnected && vtKg < 4.0)) ? 'crit' : vtKg > 7.5 ? 'warn' : 'ok');
+    setMetaChipState('metaChipPF', pf < 150 ? 'crit' : pf < 250 ? 'warn' : 'ok');
+    setMetaChipState('metaChipPH', (v.ph < 7.20 || v.ph > 7.55) ? 'crit' : (v.ph < 7.32 || v.ph > 7.48) ? 'warn' : 'ok');
+
+    // Faixa de Alarmes & Som
+    const alarms = engine.activeAlarms;
+    let highest = null;
+    if (alarms.some((al) => al.level === 'critical')) highest = 'critical';
+    else if (alarms.length > 0) highest = 'warning';
+
+    const mrAlarmLampEl = $id('mrAlarmLamp');
+    const hamAlarmLampEl = $id('hamAlarmLamp');
+    if (mrAlarmLampEl) {
+      mrAlarmLampEl.classList.toggle('warning', highest === 'warning');
+      mrAlarmLampEl.classList.toggle('critical', highest === 'critical');
+    }
+    if (hamAlarmLampEl) {
+      hamAlarmLampEl.classList.toggle('warning', highest === 'warning');
+      hamAlarmLampEl.classList.toggle('critical', highest === 'critical');
+    }
+
+    const alarmIconKey = p.arrested ? 'arrest' : (highest || 'ok');
+    const alarmStatusIconEl = $id('alarmStatusIcon');
+    if (alarmStatusIconEl && alarmStatusIconEl.dataset.iconKey !== alarmIconKey) {
+      alarmStatusIconEl.dataset.iconKey = alarmIconKey;
+      alarmStatusIconEl.innerHTML = ALARM_STATUS_ICONS[alarmIconKey] || ALARM_STATUS_ICONS.ok;
+    }
+
+    const nextAlarmCls = highest === 'critical' ? 'alarm-status critical' : highest === 'warning' ? 'alarm-status warning' : 'alarm-status ok';
+    const nextAlarmMsg = highest ? alarms.map((al) => al.msg).join('  •  ') : 'Parâmetros dentro da faixa alvo — Monitorização e ventilação estáveis';
+    if (alarmBox.className !== nextAlarmCls) alarmBox.className = nextAlarmCls;
+    if (alarmText.textContent !== nextAlarmMsg) alarmText.textContent = nextAlarmMsg;
+
+    audio.tickAlarms(highest);
+
+    const silencedNow = audio.isSilenced();
+    const mrSilBtn = $id('mrHwSilence');
+    const mrPauseBtn = $id('mrHwPause');
+    if (mrSilBtn) mrSilBtn.classList.toggle('active', silencedNow);
+    if (mrPauseBtn) mrPauseBtn.classList.toggle('active', silencedNow);
+
+    // Atualiza texto do botão silenciar quando expirar 2 min
+    if (!silencedNow && btnSilenceAlarm.getAttribute('aria-pressed') === 'true') {
+      btnSilenceAlarm.setAttribute('aria-pressed', 'false');
+      btnSilenceAlarm.textContent = '🔔';
+      btnSilenceAlarm.title = 'Silenciar alarmes por 2 minutos';
+    }
+  }
+
+  // ================= EFEITO DE PARALAXE MULTICAMADAS (IDLE-SKIP) =================
+  const pxLayers = Array.from(document.querySelectorAll('#parallaxBackdrop .px-layer'));
+  const pxState = { targetX: 0, targetY: 0, curX: 0, curY: 0, scrollY: 0, lastScrollY: -1, dirty: true };
+
+  window.addEventListener('pointermove', (e) => {
+    const nx = (e.clientX / Math.max(1, window.innerWidth) - 0.5) * 2;
+    const ny = (e.clientY / Math.max(1, window.innerHeight) - 0.5) * 2;
+    pxState.targetX = nx * 28;
+    pxState.targetY = ny * 20;
+    pxState.dirty = true;
+  }, { passive: true });
+
+  window.addEventListener('scroll', () => {
+    pxState.scrollY = window.scrollY || 0;
+    pxState.dirty = true;
+  }, { passive: true });
+
+  function stepParallax(dt) {
+    if (!pxLayers.length || !pxState.dirty) return;
+    const alpha = Math.min(1, dt * 6);
+    pxState.curX += (pxState.targetX - pxState.curX) * alpha;
+    pxState.curY += (pxState.targetY - pxState.curY) * alpha;
+    const dx = Math.abs(pxState.targetX - pxState.curX);
+    const dy = Math.abs(pxState.targetY - pxState.curY);
+    if (dx < 0.05 && dy < 0.05 && pxState.scrollY === pxState.lastScrollY) {
+      pxState.dirty = false;
+      return;
+    }
+    pxState.lastScrollY = pxState.scrollY;
+    for (let i = 0; i < pxLayers.length; i++) {
+      const layer = pxLayers[i];
+      const depth = Number(layer.dataset.depth) || 0.2;
+      const tx = (pxState.curX * depth).toFixed(2);
+      const ty = (pxState.curY * depth - pxState.scrollY * depth * 0.45).toFixed(2);
+      layer.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+    }
+  }
+
+  // ================= LOOP PRINCIPAL 60 FPS (COM VIEWPORT CULLING & SUPERPOWERS) =================
+  function frameLoop(now) {
+    const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTime) / 1000));
+    lastFrameTime = now;
+
+    stepParallax(dt);
+
+    if (simulatorActive) {
+      if (sg1Analyzer) sg1Analyzer.step(dt);
+      if (!isFrozen) {
+        engine.step(dt);
+        monitor.step(dt);
+        ventDisplay.step(dt);
+        if (vivoGold) vivoGold.step(dt);
+      }
+      if (superpowers) superpowers.step(dt, isFrozen);
+
+      audio.stepAuscultation(engine, isFrozen || (hamStandby && engine.airway.connectedToVent));
+      if (auscMeterFillEl) {
+        auscMeterFillEl.style.width = `${Math.round(audio.auscLevel * 100)}%`;
+      }
+
+      // Renderiza somente dispositivos visíveis no viewport (zero GPU desperdiçada fora da tela)
+      if (_visState.mon) monitor.render();
+      if (_visState.vent) ventDisplay.render();
+      if (vivoGold && _visState.defib && !isFrozen) vivoGold.render();
+
+      if (now - lastUiUpdate >= 120) {
+        lastUiUpdate = now;
+        updateNumericUI();
+        if (auscPanel && !auscPanel.classList.contains('hidden')) {
+          syncAuscultationUI();
+        }
+      }
+    }
+
+    requestAnimationFrame(frameLoop);
+  }
+
+  // ================= DIMENSIONAMENTO DO MONITOR, VENTILADOR, CARDIOVERSOR, BOMBA & ANALISADOR SG1 =================
+  const icuGridEl = document.getElementById('icuGrid');
+  const rangeDeviceScale = document.getElementById('rangeDeviceScale');
+  const valDeviceScale = document.getElementById('valDeviceScale');
+  const btnAutoFit = document.getElementById('btnAutoFit');
+  const valSizeMon = document.getElementById('valSizeMon');
+  const valSizeVent = document.getElementById('valSizeVent');
+  const valSizeCardio = document.getElementById('valSizeCardio');
+  const valSizePump = document.getElementById('valSizePump');
+  const valSizePump2 = document.getElementById('valSizePump2');
+  const valSizeSg1 = document.getElementById('valSizeSg1');
+  let autoFitEnabled = true;
+  let manualScalePct = 100;
+  const deviceCustomPct = { mon: 70, vent: 70, cardio: 70, pump: 50, pump2: 50, sg1: 70 };
+  let vgWidthPct = null;
+  let pumpWidthPct = null;
+
+  function clampScalePct(pct) {
+    return Math.max(40, Math.min(140, Math.round(Number(pct) || 100)));
+  }
+
+  function applyDeviceSizing() {
+    if (!icuGridEl) return;
+    let targetH;
+    let uiScale;
+
+    if (autoFitEnabled) {
+      const gridTop = Math.max(120, Math.round(icuGridEl.getBoundingClientRect().top));
+      const avail = window.innerHeight - gridTop - 16;
+      targetH = Math.max(460, Math.min(820, avail));
+      uiScale = Math.max(0.75, Math.min(1.12, targetH / 680));
+      const pct = Math.round(uiScale * 100);
+      if (rangeDeviceScale) rangeDeviceScale.value = Math.max(60, Math.min(135, pct));
+      if (valDeviceScale) valDeviceScale.textContent = 'Auto';
+    } else {
+      uiScale = manualScalePct / 100;
+      targetH = Math.round(680 * uiScale);
+      if (rangeDeviceScale) rangeDeviceScale.value = Math.max(60, Math.min(135, manualScalePct));
+      if (valDeviceScale) valDeviceScale.textContent = `${manualScalePct}%`;
+    }
+
+    icuGridEl.style.setProperty('--device-h', `${targetH}px`);
+    icuGridEl.style.setProperty('--ui-scale', uiScale.toFixed(3));
+
+    const labelMap = { mon: valSizeMon, vent: valSizeVent, cardio: valSizeCardio, pump: valSizePump, pump2: valSizePump2, sg1: valSizeSg1 };
+    const prefixMap = { mon: 'mon', vent: 'vent', cardio: 'vg', pump: 'pump', pump2: 'pump2', sg1: 'sg1' };
+
+    ['mon', 'vent', 'cardio', 'pump', 'pump2', 'sg1'].forEach((dev) => {
+      const custom = deviceCustomPct[dev];
+      const devScale = custom !== null ? custom / 100 : uiScale;
+      const devH = Math.max(300, Math.min(960, custom !== null ? Math.round(680 * devScale) : targetH));
+      const pfx = prefixMap[dev];
+      if (icuGridEl) {
+        icuGridEl.style.setProperty(`--${pfx}-h`, `${devH}px`);
+        icuGridEl.style.setProperty(`--${pfx}-scale`, devScale.toFixed(3));
+      }
+      if (labelMap[dev]) {
+        labelMap[dev].textContent = custom !== null ? `${custom}%` : (autoFitEnabled ? 'Auto' : `${manualScalePct}%`);
+      }
+    });
+
+    if (icuGridEl) {
+      icuGridEl.style.setProperty('--vg-w', vgWidthPct !== null ? `${vgWidthPct}%` : '100%');
+      icuGridEl.style.setProperty('--pump-w', pumpWidthPct !== null ? `${pumpWidthPct}%` : '100%');
+      const pumpTargetScale = deviceCustomPct.pump !== null ? deviceCustomPct.pump / 100 : uiScale;
+      if (icatuChassisEl && !icatuChassisEl.classList.contains('hidden')) {
+        const actualPumpH = icatuChassisEl.getBoundingClientRect().height;
+        if (actualPumpH > 0) {
+          icuGridEl.style.setProperty('--pump-scale', Math.min(pumpTargetScale, actualPumpH / 680).toFixed(3));
+        }
+      }
+      const pump2TargetScale = deviceCustomPct.pump2 !== null ? deviceCustomPct.pump2 / 100 : uiScale;
+      if (icatuChassis2El && !icatuChassis2El.classList.contains('hidden')) {
+        const actualPump2H = icatuChassis2El.getBoundingClientRect().height;
+        if (actualPump2H > 0) {
+          icuGridEl.style.setProperty('--pump2-scale', Math.min(pump2TargetScale, actualPump2H / 680).toFixed(3));
+        }
+      }
+      const sg1TargetScale = deviceCustomPct.sg1 !== null ? deviceCustomPct.sg1 / 100 : uiScale;
+      if (sg1ChassisEl && !sg1ChassisEl.classList.contains('hidden')) {
+        const actualSg1H = sg1ChassisEl.getBoundingClientRect().height;
+        if (actualSg1H > 0) {
+          icuGridEl.style.setProperty('--sg1-scale', Math.min(sg1TargetScale, actualSg1H / 610).toFixed(3));
+        }
+      }
+    }
+
+    const allAuto =
+      autoFitEnabled &&
+      deviceCustomPct.mon === null &&
+      deviceCustomPct.vent === null &&
+      deviceCustomPct.cardio === null &&
+      deviceCustomPct.pump === null &&
+      deviceCustomPct.pump2 === null &&
+      deviceCustomPct.sg1 === null &&
+      vgWidthPct === null &&
+      pumpWidthPct === null;
+    if (btnAutoFit) btnAutoFit.classList.toggle('active', allAuto);
+
+    if (simulatorActive) {
+      requestAnimationFrame(() => {
+        monitor.resizeAll();
+        ventDisplay.resizeAll();
+        if (vivoGold) vivoGold.resize();
+        if (sg1Analyzer && sg1Analyzer.resize) sg1Analyzer.resize();
+      });
+    }
+  }
+
+  function setDeviceLayout(layoutKey) {
+    if (!icuGridEl) return;
+    const simMainAreaEl = icuGridEl.closest('.sim-main-area');
+    icuGridEl.classList.remove('only-mon', 'only-vent', 'only-pump', 'only-cardio', 'only-sg1');
+    if (simMainAreaEl) {
+      simMainAreaEl.classList.toggle('only-pump', layoutKey === 'only-pump');
+      simMainAreaEl.classList.toggle('only-cardio', layoutKey === 'only-cardio');
+      simMainAreaEl.classList.toggle('only-sg1', layoutKey === 'only-sg1');
+      simMainAreaEl.classList.toggle('equal-four', layoutKey === '50-50');
+    }
+    document.querySelectorAll('.layout-pill').forEach((b) => {
+      b.classList.toggle('active', b.dataset.layout === layoutKey);
+    });
+
+    if (layoutKey === 'only-pump') {
+      if (icatuChassisEl && icatuChassisEl.classList.contains('hidden')) {
+        icatuChassisEl.classList.remove('hidden');
+        if (icatuChassis2El) icatuChassis2El.classList.remove('hidden');
+        if (btnPumpIcatu) btnPumpIcatu.classList.add('active');
+      }
+    }
+    if (layoutKey === 'only-cardio') {
+      if (vgChassisEl && vgChassisEl.classList.contains('hidden')) {
+        vgChassisEl.classList.remove('hidden');
+        if (btnCardioverter) btnCardioverter.classList.add('active');
+      }
+    }
+    if (layoutKey === 'only-sg1') {
+      if (sg1ChassisEl && sg1ChassisEl.classList.contains('hidden')) {
+        sg1ChassisEl.classList.remove('hidden');
+        if (btnGasSg1) btnGasSg1.classList.add('active');
+      }
+    }
+
+    if (layoutKey === 'only-mon') {
+      icuGridEl.classList.add('only-mon');
+    } else if (layoutKey === 'only-vent') {
+      icuGridEl.classList.add('only-vent');
+    } else if (layoutKey === 'only-pump') {
+      icuGridEl.classList.add('only-pump');
+    } else if (layoutKey === 'only-cardio') {
+      icuGridEl.classList.add('only-cardio');
+    } else if (layoutKey === 'only-sg1') {
+      icuGridEl.classList.add('only-sg1');
+    } else if (layoutKey === '62-38') {
+      icuGridEl.style.setProperty('--split-left', '62fr');
+      icuGridEl.style.setProperty('--split-right', '38fr');
+    } else if (layoutKey === '38-62') {
+      icuGridEl.style.setProperty('--split-left', '38fr');
+      icuGridEl.style.setProperty('--split-right', '62fr');
+    } else {
+      icuGridEl.style.setProperty('--split-left', '1fr');
+      icuGridEl.style.setProperty('--split-right', '1fr');
+      if (layoutKey === '50-50') {
+        vgWidthPct = null;
+        pumpWidthPct = null;
+        applyDeviceSizing();
+      }
+    }
+
+    requestAnimationFrame(() => {
+      applyDeviceSizing();
+      monitor.resizeAll();
+      ventDisplay.resizeAll();
+      if (vivoGold) vivoGold.resize();
+      if (sg1Analyzer && sg1Analyzer.resize) sg1Analyzer.resize();
+    });
+  }
+
+  if (rangeDeviceScale) {
+    rangeDeviceScale.addEventListener('input', (e) => {
+      autoFitEnabled = false;
+      manualScalePct = Number(e.target.value);
+      deviceCustomPct.mon = null;
+      deviceCustomPct.vent = null;
+      deviceCustomPct.cardio = null;
+      deviceCustomPct.pump = null;
+      deviceCustomPct.pump2 = null;
+      deviceCustomPct.sg1 = null;
+      applyDeviceSizing();
+    });
+  }
+  const btnScaleDownEl = document.getElementById('btnScaleDown');
+  if (btnScaleDownEl) {
+    btnScaleDownEl.addEventListener('click', () => {
+      autoFitEnabled = false;
+      manualScalePct = Math.max(60, (rangeDeviceScale ? Number(rangeDeviceScale.value) : manualScalePct) - 5);
+      deviceCustomPct.mon = null;
+      deviceCustomPct.vent = null;
+      deviceCustomPct.cardio = null;
+      deviceCustomPct.pump = null;
+      deviceCustomPct.pump2 = null;
+      deviceCustomPct.sg1 = null;
+      applyDeviceSizing();
+    });
+  }
+  const btnScaleUpEl = document.getElementById('btnScaleUp');
+  if (btnScaleUpEl) {
+    btnScaleUpEl.addEventListener('click', () => {
+      autoFitEnabled = false;
+      manualScalePct = Math.min(135, (rangeDeviceScale ? Number(rangeDeviceScale.value) : manualScalePct) + 5);
+      deviceCustomPct.mon = null;
+      deviceCustomPct.vent = null;
+      deviceCustomPct.cardio = null;
+      deviceCustomPct.pump = null;
+      deviceCustomPct.pump2 = null;
+      deviceCustomPct.sg1 = null;
+      applyDeviceSizing();
+    });
+  }
+  if (btnAutoFit) {
+    btnAutoFit.addEventListener('click', () => {
+      autoFitEnabled = true;
+      deviceCustomPct.mon = null;
+      deviceCustomPct.vent = null;
+      deviceCustomPct.cardio = null;
+      deviceCustomPct.pump = null;
+      deviceCustomPct.pump2 = null;
+      deviceCustomPct.sg1 = null;
+      vgWidthPct = null;
+      pumpWidthPct = null;
+      if (icuGridEl) {
+        icuGridEl.style.setProperty('--split-left', '1fr');
+        icuGridEl.style.setProperty('--split-right', '1fr');
+      }
+      applyDeviceSizing();
+    });
+  }
+  document.querySelectorAll('[data-dev-resize]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      audio.playUiClick('soft');
+      const dev = btn.dataset.devResize;
+      const dir = Number(btn.dataset.dir) || 1;
+      const baseAutoPct = Math.round((autoFitEnabled ? Number(icuGridEl.style.getPropertyValue('--ui-scale') || 1) * 100 : manualScalePct));
+      const curPct = deviceCustomPct[dev] !== null ? deviceCustomPct[dev] : baseAutoPct;
+      deviceCustomPct[dev] = clampScalePct(curPct + dir * 5);
+      applyDeviceSizing();
+    });
+  });
+
+  // Alças de redimensionamento direto nos cantos (Monitor, Ventilador, Cardioversor, Bomba e Analisador SG1)
+  document.querySelectorAll('.device-resize-handle[data-resize-target]').forEach((handle) => {
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startPct = 100;
+    const target = handle.dataset.resizeTarget;
+
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const baseAutoPct = Math.round(Number(icuGridEl.style.getPropertyValue('--ui-scale') || 1) * 100);
+      startPct = deviceCustomPct[target] !== null ? deviceCustomPct[target] : baseAutoPct;
+      handle.classList.add('dragging');
+      handle.setPointerCapture(e.pointerId);
+    });
+
+    handle.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const deltaPct = Math.round(dy / 5.5);
+      deviceCustomPct[target] = clampScalePct(startPct + deltaPct);
+
+      if (Math.abs(dx) > 8 && icuGridEl && !icuGridEl.classList.contains('only-mon') && !icuGridEl.classList.contains('only-vent') && !icuGridEl.classList.contains('only-pump') && !icuGridEl.classList.contains('only-cardio') && !icuGridEl.classList.contains('only-sg1')) {
+        const rect = icuGridEl.getBoundingClientRect();
+        const isLeftCol = target === 'mon' || target === 'pump' || target === 'cardio';
+        const rel = isLeftCol ? (e.clientX - rect.left) / Math.max(200, rect.width) : 1 - (rect.right - e.clientX) / Math.max(200, rect.width);
+        const leftPct = Math.max(30, Math.min(70, Math.round(rel * 100)));
+        icuGridEl.style.setProperty('--split-left', `${leftPct}fr`);
+        icuGridEl.style.setProperty('--split-right', `${100 - leftPct}fr`);
+      }
+      applyDeviceSizing();
+    });
+
+    const stopResize = () => {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove('dragging');
+      applyDeviceSizing();
+    };
+    handle.addEventListener('pointerup', stopResize);
+    handle.addEventListener('pointercancel', stopResize);
+  });
+  document.querySelectorAll('.layout-pill').forEach((btn) => {
+    btn.addEventListener('click', () => setDeviceLayout(btn.dataset.layout));
+  });
+
+  function wireSplitterDrag(splitterEl, gridEl, leftVar, rightVar, onResize) {
+    if (!splitterEl || !gridEl) return;
+    let draggingSplit = false;
+    splitterEl.addEventListener('pointerdown', (e) => {
+      draggingSplit = true;
+      splitterEl.classList.add('dragging');
+      splitterEl.setPointerCapture(e.pointerId);
+    });
+    splitterEl.addEventListener('pointermove', (e) => {
+      if (!draggingSplit) return;
+      const rect = gridEl.getBoundingClientRect();
+      const rel = (e.clientX - rect.left) / Math.max(200, rect.width);
+      const leftPct = Math.max(30, Math.min(70, Math.round(rel * 100)));
+      gridEl.style.setProperty(leftVar, `${leftPct}fr`);
+      gridEl.style.setProperty(rightVar, `${100 - leftPct}fr`);
+      document.querySelectorAll('.layout-pill').forEach((b) => b.classList.remove('active'));
+      if (onResize) onResize();
+    });
+    const endDrag = () => {
+      if (!draggingSplit) return;
+      draggingSplit = false;
+      splitterEl.classList.remove('dragging');
+    };
+    splitterEl.addEventListener('pointerup', endDrag);
+    splitterEl.addEventListener('pointercancel', endDrag);
+  }
+
+  wireSplitterDrag(document.getElementById('icuSplitter'), icuGridEl, '--split-left', '--split-right', () => {
+    monitor.resizeAll();
+    ventDisplay.resizeAll();
+    if (vivoGold) vivoGold.resize();
+  });
+
+  function showSimulator(scenarioId) {
+    if (scenarioId) {
+      engine.loadScenario(scenarioId);
+    }
+    if (presentationEl) presentationEl.classList.add('hidden');
+    if (simulatorEl) simulatorEl.classList.remove('hidden');
+    simulatorActive = true;
+    lastFrameTime = performance.now();
+    refreshScenarioUI();
+    updateNumericUI();
+    applyDeviceSizing();
+  }
+
+  function showPresentation() {
+    if (!presentationEl) return;
+    simulatorActive = false;
+    if (simulatorEl) simulatorEl.classList.add('hidden');
+    presentationEl.classList.remove('hidden');
+    audio.setQrsEnabled(false);
+    audio.setAuscultationEnabled(false);
+    if (auscPanel) auscPanel.classList.add('hidden');
+    syncAuscultationUI();
+    btnQrsBeep.setAttribute('aria-pressed', 'false');
+  }
+
+  const btnBackToSlidesEl = document.getElementById('btnBackToSlides');
+  if (btnBackToSlidesEl) {
+    btnBackToSlidesEl.addEventListener('click', showPresentation);
+  }
+
+  if (Superpowers) {
+    superpowers = new Superpowers({
+      engine,
+      onLog: addLog,
+      onStateRestored: () => {
+        refreshScenarioUI();
+        updateNumericUI();
+      },
+      setFrozen: (f) => {
+        isFrozen = Boolean(f);
+        monitor.setFrozen(isFrozen);
+        ventDisplay.setFrozen(isFrozen);
+      }
+    });
+  }
+
+  // Inicialização unificada: suporta Apresentação + ?modo=simulador / #simulador / #caso=...
+  window.addEventListener('resize', () => {
+    if (simulatorActive) {
+      applyDeviceSizing();
+    }
+  });
+
+  const _qs = new URLSearchParams(window.location.search);
+  const _directSim =
+    Boolean(window.__UTICOMED_DIRECT_SIM__) ||
+    _qs.get('modo') === 'simulador' ||
+    _qs.get('tela') === 'sala' ||
+    window.location.hash === '#simulador' ||
+    window.location.hash.startsWith('#caso=');
+
+  if (presentationEl && typeof SlidePresentation === 'function' && !_directSim) {
+    new SlidePresentation(showSimulator);
+    refreshScenarioUI();
+  } else {
+    if (presentationEl && typeof SlidePresentation === 'function') {
+      new SlidePresentation(showSimulator);
+    }
+    showSimulator('stable');
+  }
+  addLog('UTICoMed v2 Otimizado — Modo offline pronto');
+  requestAnimationFrame(frameLoop);
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
