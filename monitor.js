@@ -7,6 +7,7 @@
 
   function gauss(x, mu, sigma) {
     const z = (x - mu) / sigma;
+    if (z > 4.2 || z < -4.2) return 0;
     return Math.exp(-0.5 * z * z);
   }
 
@@ -24,6 +25,27 @@
         ibp: document.getElementById('canvasIBP'),
         co2: document.getElementById('canvasEtCO2')
       };
+      // Contextos opacos cacheados 1 única vez (evita alpha-compositing com fundo e zero getContext por frame)
+      this.ctxs = {};
+      Object.entries(this.canvases).forEach(([k, cv]) => {
+        if (cv) this.ctxs[k] = cv.getContext('2d', { alpha: false, desynchronized: true });
+      });
+      this._traceOpts = {
+        buf: null, len: 1200, cursor: 0, gapSamples: 34, fadeLen: 55, tailHighlight: 28,
+        color: '#00ff66', lineWidth: 2.0, dpr: 1, w: 0, h: 0, minVal: 0, invSpan: 1,
+        plotH: 0, padY: 0, topY: 2, botY: 0, glow: true
+      };
+      this._ibpRefs = [60, 120];
+      this._co2Refs = [20, 40];
+      this._refYBuf = [];
+      this._beatTimer = 0;
+      this._beatVisualOn = false;
+      this.keepSamplingInStandby = false;
+      this.onBeat = null;
+      this.qrsBeatSeq = 0;
+      this.lastQrsWriteIdx = -1;
+      this._shockArtifactTimer = 0;
+      this._shockArtifactEnergy = 200;
 
       this.colors = {
         ecg: '#00ff66',
@@ -76,6 +98,7 @@
       this.cardHR = document.getElementById('cardHR');
       this.vgHrHeart = document.getElementById('vgHrHeart');
       this.vgParamEcg = document.getElementById('vgParamEcg');
+      this.c1HeartIcon = document.getElementById('c1HeartIcon');
       this.ibpScaleEl = document.getElementById('ibpScaleTag');
       this.spo2BarSpans = Array.from(document.querySelectorAll('#mrSpo2Bar span'));
       this._dirty = true;
@@ -113,14 +136,38 @@
       this._dirty = true;
     }
 
+    triggerShockArtifact(energyJ = 200) {
+      this._shockArtifactTimer = 0.24;
+      this._shockArtifactEnergy = Math.max(20, Number(energyJ) || 200);
+      this._dirty = true;
+    }
+
     step(dt) {
-      if (this.frozen || this.standby) return;
+      if (this.frozen) return;
+      if (this.standby && !this.keepSamplingInStandby) return;
+      if (this._beatTimer > 0) {
+        this._beatTimer -= dt;
+        if (this._beatTimer <= 0 && this._beatVisualOn) {
+          this._setBeatVisual(false);
+        }
+      }
       this.sampleAccum += dt;
       while (this.sampleAccum >= this.sampleDt) {
         this.sampleAccum -= this.sampleDt;
         this._generateSample(this.sampleDt);
-        this._dirty = true;
+        if (!this.standby) this._dirty = true;
       }
+    }
+
+    _setBeatVisual(on) {
+      this._beatVisualOn = on;
+      const monOn = on && !this.standby;
+      if (this.heartIcon) this.heartIcon.classList.toggle('beat', monOn);
+      if (this.hrPulseDot) this.hrPulseDot.classList.toggle('beat', monOn);
+      if (this.cardHR) this.cardHR.classList.toggle('beat', monOn);
+      if (this.vgHrHeart) this.vgHrHeart.classList.toggle('beat', on);
+      if (this.vgParamEcg) this.vgParamEcg.classList.toggle('beat', on);
+      if (this.c1HeartIcon) this.c1HeartIcon.classList.toggle('beat', on);
     }
 
     _triggerQrsBeat(vit, isPvc = false) {
@@ -128,28 +175,16 @@
       this.lastBeatWasPvc = isPvc;
       this.artPreEject = this.artShape;
       this.plethPreEject = this.plethShape;
+      this.qrsBeatSeq += 1;
+      this.lastQrsWriteIdx = this.writeIdx;
       if (!this.standby) {
         this.audio.playQrsBeep(vit.spo2);
       }
-      if (this.heartIcon) {
-        this.heartIcon.classList.add('beat');
-        setTimeout(() => this.heartIcon && this.heartIcon.classList.remove('beat'), 115);
-      }
-      if (this.hrPulseDot) {
-        this.hrPulseDot.classList.add('beat');
-        setTimeout(() => this.hrPulseDot && this.hrPulseDot.classList.remove('beat'), 130);
-      }
-      if (this.cardHR) {
-        this.cardHR.classList.add('beat');
-        setTimeout(() => this.cardHR && this.cardHR.classList.remove('beat'), 140);
-      }
-      if (this.vgHrHeart) {
-        this.vgHrHeart.classList.add('beat');
-        setTimeout(() => this.vgHrHeart && this.vgHrHeart.classList.remove('beat'), 140);
-      }
-      if (this.vgParamEcg) {
-        this.vgParamEcg.classList.add('beat');
-        setTimeout(() => this.vgParamEcg && this.vgParamEcg.classList.remove('beat'), 140);
+      // Temporizador determinístico único sem setTimeout (zero flicker mesmo em TSV/TV 190 bpm)
+      this._beatTimer = 0.125;
+      if (!this._beatVisualOn) this._setBeatVisual(true);
+      if (typeof this.onBeat === 'function') {
+        this.onBeat(vit, isPvc, this.writeIdx);
       }
     }
 
@@ -476,7 +511,18 @@
 
           const pulseP = Math.max(10, vit.sbp - vit.dbp);
           const beatFactor = this.lastBeatWasPvc ? 0.55 : rhythm === 'vtach' ? 0.65 : 1.0;
-          ibpMmHg = vit.dbp + pulseP * beatFactor * this.artShape;
+
+          // Interação cardiopulmonar (HAMILTON-C1 -> Monitor): variação respiratória da pressão de pulso (ΔPP / PPV)
+          let ppvScale = 1.0;
+          if (this.engine.airway && this.engine.airway.connectedToVent && this.engine.vent && !this.engine.vent.standby) {
+            const pawDelta = Math.max(0, (b.paw || 0) - (this.engine.vent.peepSet || 0));
+            const preload = (this.engine.cardiac && this.engine.cardiac.preload) || 1.0;
+            const hypoGain = clamp(1.45 - preload, 0.25, 1.25);
+            const peepGain = this.engine.vent.peepSet > 10 ? 1 + (this.engine.vent.peepSet - 10) * 0.04 : 1;
+            const swing = Math.min(0.22, (pawDelta / 24) * 0.11 * hypoGain * peepGain);
+            ppvScale = 1.0 - swing;
+          }
+          ibpMmHg = vit.dbp + pulseP * beatFactor * ppvScale * this.artShape;
 
           // Pletismografia SpO2 contínua (atraso vascular periférico ~0.12 s pós-QRS)
           const tPleth = this.lastQrsAge - 0.12;
@@ -494,12 +540,32 @@
           }
 
           const ampScale = Math.max(0.15, Math.min(1.0, vit.perfusionIndex / 3.0));
-          spo2Y = 0.08 + 0.85 * ampScale * this.plethShape;
+          spo2Y = 0.08 + 0.85 * ampScale * ppvScale * this.plethShape;
         }
       }
 
-      // 2. Capnografia EtCO2 sincronizada com o ciclo do ventilador
-      if (b.phase === 'EXP') {
+      // Artefato de descarga bifásica no ECG & Pletismografia (Cardioversor -> Monitor em tempo real)
+      if (this._shockArtifactTimer > 0) {
+        this._shockArtifactTimer = Math.max(0, this._shockArtifactTimer - dt);
+        const rem = this._shockArtifactTimer;
+        const amp = Math.min(1.38, 0.9 + (this._shockArtifactEnergy / 360) * 0.48);
+        if (rem > 0.20) {
+          ecgY = amp;
+        } else if (rem > 0.16) {
+          ecgY = -amp * 0.88;
+        } else {
+          // Recuperação exponencial curta da linha de base pós-choque
+          ecgY = ecgY * 0.25 + Math.sin(rem * 42) * (rem / 0.16) * 0.24;
+        }
+        spo2Y = clamp(spo2Y + (rem > 0.16 ? 0.32 : -0.06 * (rem / 0.16)), 0, 1);
+      }
+
+      // 2. Capnografia EtCO2 sincronizada com o ciclo do ventilador (zera em apneia ou C1 Standby)
+      const isApneicOrStandby = b.lastRrTotal <= 0 || (this.engine.airway && this.engine.airway.connectedToVent && this.engine.vent && this.engine.vent.standby);
+      if (isApneicOrStandby) {
+        this.expTime = 0;
+        this.co2Val = this.co2Val * Math.exp(-dt * 6);
+      } else if (b.phase === 'EXP') {
         this.expTime += dt;
         const targetEtco2 = vit.etco2;
         if (this.expTime < 0.16) {
@@ -532,15 +598,15 @@
     }
 
     render() {
-      if (!this._dirty) return;
+      if (!this._dirty || this.standby) return;
       this._dirty = false;
 
-      this._renderChannel(this.canvases.ecg, this.buffers.ecg, this.colors.ecg, -1.22, 1.48);
-      this._renderChannel(this.canvases.spo2, this.buffers.spo2, this.colors.spo2, -0.05, 1.05);
+      this._renderChannel('ecg', this.buffers.ecg, this.colors.ecg, -1.22, 1.48, null);
+      this._renderChannel('spo2', this.buffers.spo2, this.colors.spo2, -0.05, 1.05, null);
 
       const maxIbp = Math.max(160, Math.ceil((this.engine.vitals.sbp + 20) / 20) * 20);
-      this._renderChannel(this.canvases.ibp, this.buffers.ibp, this.colors.ibp, 0, maxIbp, [60, 120]);
-      this._renderChannel(this.canvases.co2, this.buffers.co2, this.colors.co2, -2, 62, [20, 40]);
+      this._renderChannel('ibp', this.buffers.ibp, this.colors.ibp, 0, maxIbp, this._ibpRefs);
+      this._renderChannel('co2', this.buffers.co2, this.colors.co2, -2, 62, this._co2Refs);
 
       if (this.ibpScaleEl && this._lastMaxIbp !== maxIbp) {
         this._lastMaxIbp = maxIbp;
@@ -562,54 +628,46 @@
       }
     }
 
-    _renderChannel(canvas, buf, color, minVal, maxVal, refLines = []) {
-      if (!canvas || !canvas.width || !canvas.height) return;
+    _renderChannel(key, buf, color, minVal, maxVal, refLines) {
+      const canvas = this.canvases[key];
+      const ctx = this.ctxs[key];
+      if (!canvas || !ctx || !canvas.width || !canvas.height) return;
       const Sweep = global.ICUSim.Sweep;
-      const ctx = canvas.getContext('2d');
       const w = canvas.width;
       const h = canvas.height;
       const dpr = Sweep.getDpr();
 
-      ctx.clearRect(0, 0, w, h);
-      Sweep.drawGrid(ctx, w, h, dpr, 6, 4);
-
-      if (refLines.length > 0) {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4 * dpr, 4 * dpr]);
-        ctx.beginPath();
+      const invSpan = 1 / (maxVal - minVal);
+      const refYs = this._refYBuf;
+      refYs.length = 0;
+      if (refLines && refLines.length > 0) {
+        const innerH = h - 14 * dpr;
+        const offY = 7 * dpr;
         for (let k = 0; k < refLines.length; k++) {
-          const y = h - ((refLines[k] - minVal) / (maxVal - minVal)) * (h - 14 * dpr) - 7 * dpr;
-          ctx.moveTo(0, y);
-          ctx.lineTo(w, y);
+          refYs.push(h - ((refLines[k] - minVal) * invSpan) * innerH - offY);
         }
-        ctx.stroke();
-        ctx.restore();
       }
 
-      const len = this.bufferLen;
-      const span = maxVal - minVal;
-      const invSpan = 1 / span;
-      const plotH = h - 12 * dpr;
-      const padY = 6 * dpr;
+      // Fundo opaco + grade + linhas de referência pré-renderizadas em cache (1 único drawImage na GPU!)
+      const gridBg = Sweep.getCachedGridCanvas(canvas, w, h, dpr, 6, 4, 'rgba(148, 163, 184, 0.065)', '#070a0f', refYs);
+      ctx.drawImage(gridBg, 0, 0);
 
-      Sweep.drawSweepTrace(ctx, {
-        buf,
-        len,
-        cursor: this.writeIdx,
-        gapSamples: 34,
-        fadeLen: 55,
-        tailHighlight: 28,
-        color,
-        lineWidth: 2.0,
-        dpr,
-        toX: (i) => (i / (len - 1)) * w,
-        toY: (v) => h - Math.max(0.03, Math.min(0.97, (v - minVal) * invSpan)) * plotH - padY,
-        topY: 2 * dpr,
-        botY: h - 2 * dpr,
-        glow: true
-      });
+      // Zero alocações de objeto/closure por frame
+      const o = this._traceOpts;
+      o.buf = buf;
+      o.len = this.bufferLen;
+      o.cursor = this.writeIdx;
+      o.color = color;
+      o.dpr = dpr;
+      o.w = w;
+      o.h = h;
+      o.minVal = minVal;
+      o.invSpan = invSpan;
+      o.plotH = h - 12 * dpr;
+      o.padY = 6 * dpr;
+      o.topY = 2 * dpr;
+      o.botY = h - 2 * dpr;
+      Sweep.drawSweepTrace(ctx, o);
     }
   }
 

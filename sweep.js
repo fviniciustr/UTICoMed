@@ -43,70 +43,150 @@
     ctx.restore();
   }
 
+  const _gridCache = new WeakMap();
+
+  function getCachedGridCanvas(canvas, w, h, dpr, vCols, hRows, strokeStyle, bgColor, refYs) {
+    const refKey = refYs && refYs.length ? refYs.map((v) => Math.round(v)).join(',') : '';
+    const key = `${w}x${h}:${dpr}:${vCols}:${hRows}:${bgColor}:${refKey}`;
+    let entry = _gridCache.get(canvas);
+    if (entry && entry.key === key) return entry.off;
+
+    const off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    const octx = off.getContext('2d', { alpha: !bgColor });
+    if (bgColor) {
+      octx.fillStyle = bgColor;
+      octx.fillRect(0, 0, w, h);
+    }
+    drawGrid(octx, w, h, dpr, vCols, hRows, strokeStyle);
+    if (refYs && refYs.length) {
+      octx.save();
+      octx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
+      octx.lineWidth = Math.max(1, dpr);
+      octx.setLineDash([4 * dpr, 4 * dpr]);
+      octx.beginPath();
+      for (let k = 0; k < refYs.length; k++) {
+        const y = refYs[k];
+        octx.moveTo(0, y);
+        octx.lineTo(w, y);
+      }
+      octx.stroke();
+      octx.restore();
+    }
+    entry = { key, off };
+    _gridCache.set(canvas, entry);
+    return off;
+  }
+
   /**
-   * Desenha traçado com barra apagadora fosforescente sem ctx.shadowBlur (halo em 2 passadas GPU-friendly)
+   * Desenha traçado com barra apagadora fosforescente sem ctx.shadowBlur
+   * Otimizado: zero closures por ponto (modo afim), subamostragem preservadora de picos QRS e halo 2-pass GPU-friendly
    */
-  function drawSweepTrace(ctx, {
-    buf,
-    len,
-    cursor,
-    gapSamples = 34,
-    fadeLen = 50,
-    tailHighlight = 26,
-    color = '#00ff66',
-    fillColor = null,
-    baseY = 0,
-    lineWidth = 2.0,
-    dpr = 1,
-    toX,
-    toY,
-    topY = 2 * dpr,
-    botY = 0,
-    glow = true
-  }) {
+  function drawSweepTrace(ctx, opts) {
+    const {
+      buf,
+      len,
+      cursor,
+      gapSamples = 34,
+      fadeLen = 50,
+      tailHighlight = 26,
+      color = '#00ff66',
+      fillColor = null,
+      baseY = 0,
+      lineWidth = 2.0,
+      dpr = 1,
+      toX,
+      toY,
+      w = 0,
+      h = 0,
+      minVal = 0,
+      invSpan = 1,
+      plotH = 0,
+      padY = 0,
+      topY = 2 * dpr,
+      botY = 0,
+      glow = true
+    } = opts;
+
+    const fastAffine = !toX && !toY && w > 0 && h > 0;
+    const xStep = fastAffine ? w / (len - 1) : 0;
+    // Subamostragem preservadora de pico quando há mais amostras que pixels (reduz até 50% os vértices sem perder pontas de QRS)
+    const decimate = fastAffine && len > w * 1.15 ? Math.max(2, Math.floor(len / (w * 0.92))) : 1;
+
+    const mapX = (i) => (fastAffine ? i * xStep : toX(i));
+    const mapY = (v) => {
+      if (!fastAffine) return toY(v);
+      let norm = (v - minVal) * invSpan;
+      if (norm < 0.03) norm = 0.03;
+      else if (norm > 0.97) norm = 0.97;
+      return h - norm * plotH - padY;
+    };
+
+    const tracePath = (start, end) => {
+      if (decimate <= 1) {
+        for (let i = start; i < end; i++) {
+          const x = mapX(i);
+          const y = mapY(buf[i]);
+          if (i === start) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        return;
+      }
+      // Preserva picos locais (ex.: onda R aguda ou espícula de marcapasso) dentro de cada janela decimate
+      ctx.moveTo(mapX(start), mapY(buf[start]));
+      let prevV = buf[start];
+      for (let i = start + 1; i < end; i += decimate) {
+        const chunkEnd = i + decimate < end ? i + decimate : end;
+        let bestIdx = i;
+        let bestDiff = -1;
+        for (let j = i; j < chunkEnd; j++) {
+          const diff = Math.abs(buf[j] - prevV);
+          if (diff > bestDiff) {
+            bestDiff = diff;
+            bestIdx = j;
+          }
+        }
+        prevV = buf[bestIdx];
+        ctx.lineTo(mapX(bestIdx), mapY(prevV));
+      }
+      const last = end - 1;
+      ctx.lineTo(mapX(last), mapY(buf[last]));
+    };
+
     const drawSlice = (start, end, alpha, widthScale, isBright) => {
       if (end - start < 2) return;
-      ctx.save();
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
 
-      // Preenchimento opcional sob a curva (Ventilador)
       if (fillColor) {
         ctx.globalAlpha = alpha;
         ctx.beginPath();
-        ctx.moveTo(toX(start), baseY);
-        for (let i = start; i < end; i++) ctx.lineTo(toX(i), toY(buf[i]));
-        ctx.lineTo(toX(end - 1), baseY);
+        ctx.moveTo(mapX(start), baseY);
+        tracePath(start, end);
+        ctx.lineTo(mapX(end - 1), baseY);
         ctx.closePath();
         ctx.fillStyle = fillColor;
         ctx.fill();
       }
 
-      // Constrói o caminho uma única vez para halo + núcleo
       ctx.beginPath();
-      for (let i = start; i < end; i++) {
-        const x = toX(i);
-        const y = toY(buf[i]);
-        if (i === start) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
+      tracePath(start, end);
 
-      // Passada 1: halo fosforescente leve sem shadowBlur (5-10x mais rápido na GPU)
       if (glow) {
         ctx.strokeStyle = color;
         ctx.globalAlpha = alpha * (isBright ? 0.24 : 0.14);
-        ctx.lineWidth = (lineWidth * widthScale + (isBright ? 3.8 : 2.6)) * dpr;
+        ctx.lineWidth = (lineWidth * widthScale + (isBright ? 3.6 : 2.4)) * dpr;
         ctx.stroke();
       }
 
-      // Passada 2: traço principal nítido
       ctx.strokeStyle = color;
       ctx.globalAlpha = alpha;
       ctx.lineWidth = lineWidth * widthScale * dpr;
       ctx.stroke();
-      ctx.restore();
     };
 
+    ctx.save();
     // Segmento ativo (0 -> cursor)
     if (cursor > 1) {
       if (tailHighlight > 0 && glow) {
@@ -127,11 +207,10 @@
       if (resumeIdx + fl < len - 1) drawSlice(resumeIdx + fl - 1, len, 0.68, 1.0, false);
     }
 
-    // Barra vertical de varredura + ponto luminoso trifásico na ponta
+    // Barra vertical de varredura + ponto luminoso na ponta
     const headIdx = (cursor - 1 + len) % len;
-    const hx = toX(headIdx);
-    const hy = toY(buf[headIdx]);
-    ctx.save();
+    const hx = mapX(headIdx);
+    const hy = mapY(buf[headIdx]);
     ctx.strokeStyle = color;
     ctx.globalAlpha = 0.13;
     ctx.lineWidth = 1.2 * dpr;
@@ -143,22 +222,22 @@
     ctx.fillStyle = color;
     ctx.globalAlpha = 0.28;
     ctx.beginPath();
-    ctx.arc(hx, hy, 5.5 * dpr, 0, Math.PI * 2);
+    ctx.arc(hx, hy, 5.2 * dpr, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.globalAlpha = 0.75;
+    ctx.globalAlpha = 0.78;
     ctx.beginPath();
-    ctx.arc(hx, hy, 3.2 * dpr, 0, Math.PI * 2);
+    ctx.arc(hx, hy, 3.0 * dpr, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.globalAlpha = 1;
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(hx, hy, 1.8 * dpr, 0, Math.PI * 2);
+    ctx.arc(hx, hy, 1.7 * dpr, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
   global.ICUSim = global.ICUSim || {};
-  global.ICUSim.Sweep = { getDpr, resizeCanvas, drawGrid, drawSweepTrace };
+  global.ICUSim.Sweep = { getDpr, resizeCanvas, drawGrid, getCachedGridCanvas, drawSweepTrace };
 })(window);

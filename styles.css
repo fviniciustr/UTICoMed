@@ -56,16 +56,16 @@ body.theme-light .pat-meta-chip.status-warn { background: #fef3c7; border-color:
 body.theme-light .pat-meta-chip.status-warn .pat-meta-icon { color: #b45309; }
 body.theme-light .pat-meta-chip.status-crit { background: #fee2e2; border-color: #dc2626; color: #7f1d1d; }
 body.theme-light .pat-meta-chip.status-crit .pat-meta-icon { color: #dc2626; }
-.patient-status-btns { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); align-items: center; justify-items: center; gap: 6px; width: 100%; padding: 3px; }
+.patient-status-btns { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); align-items: center; justify-items: center; gap: 5px; width: 100%; padding: 3px; }
 @media (max-width: 900px) {
   .patient-strip-meta { width: 100%; }
   .pat-meta-chip { flex: 1 1 auto; }
 }
 @media (max-width: 1180px) {
-  .patient-status-btns { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .patient-status-btns { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
-  .patient-status-btns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .patient-status-btns { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .patient-strip-meta strong { color: var(--text-main); }
 .action-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-strong); background: #121c2f; color: var(--text-main); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
@@ -86,30 +86,25 @@ body.theme-light .pat-meta-chip.status-crit .pat-meta-icon { color: #dc2626; }
 .layout-pill.active { background: #0284c7; border-color: #38bdf8; color: #ffffff; }
 .icu-grid { display: grid; grid-template-columns: var(--split-left, 1fr) 10px var(--split-right, 1fr); row-gap: 10px; column-gap: 2px; padding: 10px 14px; align-items: start; }
 .icu-grid .mindray-chassis { grid-column: 1; grid-row: 1; --ui-scale: var(--mon-scale, 1); height: var(--mon-h, var(--device-h, 660px)); min-height: 300px; position: relative; }
-.icu-grid .ham-chassis { grid-column: 3; grid-row: 1; --ui-scale: var(--vent-scale, 1); height: var(--vent-h, var(--device-h, 660px)); min-height: 300px; position: relative; }
+.icu-grid .c1-chassis { grid-column: 3; grid-row: 1; --ui-scale: var(--vent-scale, 1); width: 100%; max-width: 100%; height: calc(var(--vent-h, var(--device-h, 660px)) - 14px); min-height: 360px; justify-self: stretch; align-self: start; position: relative; }
 .icu-grid .icu-splitter { grid-column: 2; grid-row: 1 / span 3; align-self: stretch; height: 100%; }
 .icu-grid .icatu-chassis { grid-column: 1; grid-row: 2; --ui-scale: var(--pump-scale, 1); width: min(calc(100% - 44px), calc(var(--pump-h, var(--device-h, 660px)) * 4 / 3)); height: auto; min-height: 0; aspect-ratio: 4 / 3; justify-self: center; margin: 34px 40px 6px 4px; position: relative; }
 .icu-grid #icatuChassis2 { grid-column: 3; grid-row: 2; --ui-scale: var(--pump2-scale, var(--pump-scale, 1)); --pump-scale: var(--pump2-scale, 1); width: min(calc(100% - 44px), calc(var(--pump2-h, var(--pump-h, var(--device-h, 660px))) * 4 / 3)); }
-.icu-grid .vg-chassis { grid-column: 1; grid-row: 3; --ui-scale: var(--vg-scale, 1); height: var(--vg-h, var(--device-h, 660px)); min-height: 300px; width: min(100%, var(--vg-w, 100%)); max-width: 100%; justify-self: center; position: relative; }
-.icu-grid .sg1-chassis { grid-column: 3; grid-row: 3; --ui-scale: var(--sg1-scale, 1); width: min(calc(100% - 24px), calc(var(--sg1-h, var(--device-h, 610px)) * 252 / 610)); height: auto; min-height: 0; aspect-ratio: 252 / 610; justify-self: center; margin: 10px 0 12px; position: relative; }
-.icatu-chassis.hidden, .vg-chassis.hidden, .sg1-chassis.hidden { display: none !important; }
+.icu-grid .vg-chassis { grid-column: 1; grid-row: 2; --ui-scale: var(--vg-scale, 1); height: var(--vg-h, var(--device-h, 660px)); min-height: 300px; width: min(100%, var(--vg-w, 100%)); max-width: 100%; justify-self: center; position: relative; }
+.icu-grid .sg1-chassis { grid-column: 3; grid-row: 2; --ui-scale: var(--sg1-scale, 1); width: min(calc(100% - 24px), calc(var(--sg1-h, var(--device-h, 610px)) * 252 / 610)); height: auto; min-height: 0; aspect-ratio: 252 / 610; justify-self: center; margin: 10px 0 12px; position: relative; }
+.icatu-chassis.hidden, .vg-chassis.hidden, .sg1-chassis.hidden, .c1-chassis.hidden { display: none !important; }
 .device-resize-handle { position: absolute; right: 5px; bottom: 5px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 32; border-right: 3px solid rgba(100, 116, 139, 0.75); border-bottom: 3px solid rgba(100, 116, 139, 0.75); border-radius: 0 0 6px 0; touch-action: none; transition: border-color 0.14s ease, transform 0.14s ease; }
 .device-resize-handle::after { content: ''; position: absolute; right: 3px; bottom: 3px; width: 7px; height: 7px; border-right: 2px solid rgba(148, 163, 184, 0.75); border-bottom: 2px solid rgba(148, 163, 184, 0.75); }
 .device-resize-handle.vg { right: 8px; bottom: 8px; border-color: #78350f; }
 .device-resize-handle.vg::after { border-color: #92400e; }
 .device-resize-handle:hover, .device-resize-handle.dragging { border-color: #38bdf8; transform: scale(1.12); }
 .device-resize-handle:hover::after, .device-resize-handle.dragging::after { border-color: #7dd3fc; }
-.icu-grid.only-mon, .icu-grid.only-vent, .icu-grid.only-pump, .icu-grid.only-cardio, .icu-grid.only-sg1 { grid-template-columns: 1fr; }
-.icu-grid.only-mon .ham-chassis, .icu-grid.only-mon .icatu-chassis, .icu-grid.only-mon .vg-chassis, .icu-grid.only-mon .sg1-chassis, .icu-grid.only-mon .icu-splitter { display: none; }
-.icu-grid.only-vent .mindray-chassis, .icu-grid.only-vent .icatu-chassis, .icu-grid.only-vent .vg-chassis, .icu-grid.only-vent .sg1-chassis, .icu-grid.only-vent .icu-splitter { display: none; }
-.icu-grid.only-vent .ham-chassis { grid-column: 1; grid-row: 1; }
-.icu-grid.only-pump .mindray-chassis, .icu-grid.only-pump .ham-chassis, .icu-grid.only-pump .vg-chassis, .icu-grid.only-pump .sg1-chassis, .icu-grid.only-pump .icu-splitter { display: none; }
-.icu-grid.only-pump .icatu-chassis { grid-column: 1; grid-row: 1; width: min(calc(100% - 48px), calc(var(--pump-h, var(--device-h, 660px)) * 4 / 3), 920px); }
-.icu-grid.only-pump #icatuChassis2 { grid-column: 1; grid-row: 2; width: min(calc(100% - 48px), calc(var(--pump2-h, var(--pump-h, var(--device-h, 660px))) * 4 / 3), 920px); }
-.icu-grid.only-cardio .mindray-chassis, .icu-grid.only-cardio .ham-chassis, .icu-grid.only-cardio .icatu-chassis, .icu-grid.only-cardio .sg1-chassis, .icu-grid.only-cardio .icu-splitter { display: none; }
+.icu-grid.only-mon, .icu-grid.only-vent, .icu-grid.only-cardio { grid-template-columns: 1fr; }
+.icu-grid.only-mon .vg-chassis, .icu-grid.only-mon .c1-chassis, .icu-grid.only-mon .icu-splitter { display: none; }
+.icu-grid.only-vent .mindray-chassis, .icu-grid.only-vent .vg-chassis, .icu-grid.only-vent .icu-splitter { display: none; }
+.icu-grid.only-vent .c1-chassis { grid-column: 1; grid-row: 1; max-width: 880px; justify-self: center; }
+.icu-grid.only-cardio .mindray-chassis, .icu-grid.only-cardio .c1-chassis, .icu-grid.only-cardio .icu-splitter { display: none; }
 .icu-grid.only-cardio .vg-chassis { grid-column: 1; grid-row: 1; max-width: 820px; }
-.icu-grid.only-sg1 .mindray-chassis, .icu-grid.only-sg1 .ham-chassis, .icu-grid.only-sg1 .icatu-chassis, .icu-grid.only-sg1 .vg-chassis, .icu-grid.only-sg1 .icu-splitter { display: none; }
-.icu-grid.only-sg1 .sg1-chassis { grid-column: 1; grid-row: 1; width: min(calc(100% - 48px), calc(var(--sg1-h, var(--device-h, 610px)) * 252 / 610), 420px); }
 .icu-splitter { width: 10px; cursor: col-resize; display: flex; align-items: center; justify-content: center; position: relative; user-select: none; }
 .icu-splitter::after { content: ""; width: 4px; height: 54px; border-radius: 999px; background: rgba(148, 163, 184, 0.3); transition: background 0.15s, height 0.15s; }
 .icu-splitter:hover::after, .icu-splitter.dragging::after { background: var(--flow-sky); height: 96px; }
@@ -123,31 +118,32 @@ body.theme-light .pat-meta-chip.status-crit .pat-meta-icon { color: #dc2626; }
 .ch-tag.amber { color: var(--paw-amber); }
 .rhythm-tag, .sub-tag { background: rgba(5, 8, 13, 0.78); padding: 1px 6px; border-radius: 4px; color: var(--text-muted); font-size: 0.68rem; }
 .wave-canvas { width: 100%; height: 100%; display: block; }
-.heart-beat-icon { font-size: 1.25rem; transition: transform 0.10s cubic-bezier(0.22, 1, 0.36, 1), color 0.10s ease, opacity 0.10s ease, text-shadow 0.10s ease; opacity: 0.45; color: #4ade80; }
-.heart-beat-icon.beat { transform: scale(1.42); opacity: 1; color: #ff4d6d; text-shadow: 0 0 10px rgba(255, 77, 109, 0.85); }
-#cardHR { transition: background-color 0.14s ease, box-shadow 0.14s ease; }
-#cardHR.beat { background-color: rgba(34, 197, 94, 0.10); box-shadow: inset 0 0 12px rgba(34, 197, 94, 0.25); }
-.mr-hr-pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #14532d; border: 1px solid #22c55e; margin-right: 4px; vertical-align: middle; transition: background 0.08s ease, transform 0.08s ease, box-shadow 0.08s ease; }
-.mr-hr-pulse-dot.beat { background: #4ade80; transform: scale(1.32); box-shadow: 0 0 8px #22c55e; }
+.heart-beat-icon { font-size: 1.25rem; transition: transform 0.09s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.09s ease; opacity: 0.45; color: #4ade80; }
+.heart-beat-icon.beat { transform: scale(1.38); opacity: 1; color: #ff4d6d; }
+#cardHR { transition: background-color 0.12s ease; contain: layout style paint; }
+#cardHR.beat { background-color: rgba(34, 197, 94, 0.12); }
+.mr-hr-pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #14532d; border: 1px solid #22c55e; margin-right: 4px; vertical-align: middle; transition: transform 0.08s ease, background-color 0.08s ease; }
+.mr-hr-pulse-dot.beat { background: #4ade80; transform: scale(1.32); }
 .mr-live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #475569; flex-shrink: 0; }
 .mr-live-dot.live { background: #22c55e; box-shadow: 0 0 6px #22c55e; animation: mrLiveBlink 1.3s ease-in-out infinite; }
 @keyframes mrLiveBlink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.84); } }
-.mr-spo2-bar { display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 2px; width: 8px; height: 36px; padding: 2px; border-radius: 3px; background: #0b1622; border: 1px solid #164e63; flex-shrink: 0; }
-.mr-spo2-bar span { display: block; width: 100%; flex: 1 1 0; border-radius: 1px; background: #163042; transition: background 0.05s linear; }
+.mr-spo2-bar { display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 2px; width: 8px; height: 36px; padding: 2px; border-radius: 3px; background: #0b1622; border: 1px solid #164e63; flex-shrink: 0; contain: layout style paint; }
+.mr-spo2-bar span { display: block; width: 100%; flex: 1 1 0; border-radius: 1px; background: #163042; }
 .mr-spo2-bar span.lit { background: #22d3ee; }
 .mr-spo2-bar span.lit:nth-child(n+4) { background: #67e8f9; }
-.mr-led.green.operating { animation: mrPowerPulse 1.8s ease-in-out infinite; }
-@keyframes mrPowerPulse { 0%, 100% { box-shadow: 0 0 5px #22c55e; opacity: 1; } 50% { box-shadow: 0 0 10px #4ade80; opacity: 0.72; } }
-.mr-alarm-lamp { transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+.mr-led.green.operating { box-shadow: 0 0 7px #22c55e; animation: mrPowerPulse 1.8s ease-in-out infinite; }
+@keyframes mrPowerPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.58; } }
+.mr-alarm-lamp { transition: background-color 0.15s ease, border-color 0.15s ease; }
 .mindray-chassis.mr-operating .mr-alarm-lamp:not(.warning):not(.critical) { background: #bbf7d0; border-color: #4ade80; }
-.mr-alarm-lamp.warning { background: #f59e0b; border-color: #d97706; animation: hamLampWarn 1s infinite; }
-.mr-alarm-lamp.critical { background: #ef4444; border-color: #b91c1c; animation: hamLampCrit 0.6s infinite; }
-.ham-alarm-lamp { width: 112px; height: 5px; margin: 0 auto 4px; border-radius: 999px; background: #29332d; border: 1px solid #3f4d44; transition: background 0.15s ease, box-shadow 0.15s ease; }
+.mr-alarm-lamp.warning { background: #f59e0b; border-color: #d97706; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8); animation: hamLampWarn 1s infinite; }
+.mr-alarm-lamp.critical { background: #ef4444; border-color: #b91c1c; box-shadow: 0 0 12px rgba(239, 68, 68, 0.95); animation: hamLampCrit 0.6s infinite; }
+.ham-alarm-lamp { width: 112px; height: 5px; margin: 0 auto 4px; border-radius: 999px; background: #29332d; border: 1px solid #3f4d44; transition: background-color 0.15s ease, border-color 0.15s ease; }
 .ham-chassis.ham-ventilating .ham-alarm-lamp:not(.warning):not(.critical) { background: #22c55e; border-color: #4ade80; box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
-.ham-alarm-lamp.warning { background: #f59e0b; border-color: #fbbf24; animation: hamLampWarn 1s infinite; }
-.ham-alarm-lamp.critical { background: #ef4444; border-color: #f87171; animation: hamLampCrit 0.6s infinite; }
-@keyframes hamLampWarn { 0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8); } 50% { opacity: 0.35; box-shadow: none; } }
-@keyframes hamLampCrit { 0%, 100% { opacity: 1; box-shadow: 0 0 12px rgba(239, 68, 68, 0.95); } 50% { opacity: 0.28; box-shadow: none; } }
+.ham-alarm-lamp.warning { background: #f59e0b; border-color: #fbbf24; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8); animation: hamLampWarn 1s infinite; }
+.ham-alarm-lamp.critical { background: #ef4444; border-color: #f87171; box-shadow: 0 0 12px rgba(239, 68, 68, 0.95); animation: hamLampCrit 0.6s infinite; }
+@keyframes hamLampWarn { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes hamLampCrit { 0%, 100% { opacity: 1; } 50% { opacity: 0.28; } }
+.mindray-chassis .wave-channel, .mindray-chassis .param-card { contain: layout style paint; }
 .ham-mini-lung { display: inline-flex; align-items: center; justify-content: center; color: #64748b; transition: transform 0.10s cubic-bezier(0.22, 1, 0.36, 1), color 0.14s ease, filter 0.14s ease; flex-shrink: 0; }
 .ham-mini-lung.ventilating { color: #38bdf8; }
 .ham-mini-lung.insp { color: #4ade80; filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.75)); }
@@ -194,7 +190,7 @@ body.theme-light .pat-meta-chip.status-crit .pat-meta-icon { color: #dc2626; }
 .knob-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; }
 .knob-name { font-weight: 700; color: #cbd5e1; }
 .knob-unit { font-size: 0.68rem; color: var(--text-dim); }
-.knob-value-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.knob-value-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .knob-val { font-size: 1.2rem; font-weight: 800; color: #ffffff; }
 .step-btn { width: 26px; height: 24px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: #f8fafc; font-size: 0.95rem; font-weight: 700; cursor: pointer; display: grid; place-items: center; }
 .step-btn:hover { background: #25395e; }
@@ -229,7 +225,7 @@ body.theme-light .pat-meta-chip.status-crit .pat-meta-icon { color: #dc2626; }
   .topbar-actions { flex-wrap: wrap; max-width: 100%; justify-content: flex-end; }
   .icu-grid { grid-template-columns: 1fr !important; gap: 12px; }
   .icu-grid > * { grid-column: auto !important; grid-row: auto !important; }
-  .icu-grid .mindray-chassis, .icu-grid .ham-chassis { height: clamp(480px, 72vh, 620px); min-height: 480px; }
+  .icu-grid .mindray-chassis, .icu-grid .c1-chassis { height: clamp(480px, 72vh, 620px); min-height: 460px; }
   .icu-grid .vg-chassis { height: clamp(460px, 68vh, 580px); min-height: 460px; }
   .icu-splitter { display: none; }
   .clinical-footer { grid-template-columns: 1fr; }
@@ -455,10 +451,6 @@ body.theme-light .pat-meta-chip.status-crit .pat-meta-icon { color: #dc2626; }
 .ham-rotary-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .ham-rotary-ring { width: calc(74px * var(--ui-scale, 1)); height: calc(74px * var(--ui-scale, 1)); border-radius: 50%; background: #232931; border: 4px solid #65a30d; box-shadow: 0 0 12px rgba(101, 163, 13, 0.4), inset 0 0 8px rgba(0, 0, 0, 0.8); position: relative; display: grid; place-items: center; }
 .ham-rot-core { width: 34px; height: 34px; border-radius: 50%; background: #3c4450; border: 2px solid #84cc16; transition: transform 0.15s ease; pointer-events: none; }
-.ham-rot-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 36px; background: transparent; border: none; color: #e2e8f0; font-size: 1rem; font-weight: 900; cursor: pointer; }
-.ham-rot-btn.minus { left: 2px; }
-.ham-rot-btn.plus { right: 2px; }
-.ham-rot-btn:hover { color: #84cc16; }
 .ham-rot-target { font-size: 0.68rem; color: #a3e635; font-weight: 700; }
 @media (max-width: 820px) {
   .ham-bezel { grid-template-columns: 1fr; }
@@ -563,7 +555,7 @@ html, body { background: #060907; }
 .mindray-chassis:hover { z-index: 40; }
 .ham-chassis { transform: rotateY(-0.8deg); transform-style: preserve-3d; transform-origin: top right; transition: transform 0.25s ease, box-shadow 0.25s ease; box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.16), inset 0 -6px 10px rgba(0, 0, 0, 0.55), 4px 8px 0 #181d1a, 6px 18px 36px rgba(0, 0, 0, 0.72); }
 .ham-chassis:hover { z-index: 40; }
-.icu-grid.only-mon .mindray-chassis, .icu-grid.only-vent .ham-chassis, .icu-grid.only-pump .icatu-chassis, .icu-grid.only-cardio .vg-chassis { transform-origin: top center; }
+.icu-grid.only-mon .mindray-chassis, .icu-grid.only-vent .c1-chassis, .icu-grid.only-pump .icatu-chassis, .icu-grid.only-cardio .vg-chassis { transform-origin: top center; }
 .mr-screen-bezel { box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -3px 6px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35); }
 .mr-screen, .ham-screen { position: relative; box-shadow: inset 0 6px 18px rgba(0, 0, 0, 0.92), inset 0 0 0 1px rgba(255, 255, 255, 0.05); }
 .mr-screen::after, .ham-screen::after { content: ""; position: absolute; inset: 0; background: transparent; pointer-events: none; z-index: 4; }
@@ -598,10 +590,10 @@ html, body { background: #060907; }
 .standby-badge { font-family: var(--font-mono); font-size: 0.86rem; font-weight: 800; letter-spacing: 0.08em; color: #86efac; padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(52, 211, 153, 0.45); background: rgba(16, 185, 129, 0.14); }
 .device-standby-overlay p { font-size: 0.84rem; color: #a7b4ad; max-width: 280px; }
 .uticomed-logo { width: 34px; height: 34px; display: block; }
-.sim-workspace { display: grid; grid-template-columns: 348px 1fr; gap: 10px; padding: 8px 12px 12px; align-items: start; }
+.sim-workspace { display: grid; grid-template-columns: clamp(445px, 33vw, 505px) 1fr; gap: 10px; padding: 8px 12px 12px; align-items: start; }
 .sim-workspace.sidebar-collapsed { grid-template-columns: 1fr; }
 .sim-workspace.sidebar-collapsed .sim-sidebar { display: none; }
-.sim-sidebar { background: var(--bg-panel); border: 1px solid var(--border-strong); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 76px); overflow-y: auto; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); }
+.sim-sidebar { background: var(--bg-panel); border: 1px solid var(--border-strong); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 76px); overflow-y: auto; overflow-x: hidden; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); }
 .sim-sidebar-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px 8px; border-bottom: 1.5px solid var(--border-strong); background: #0d1624; border-radius: 8px; }
 .sim-sidebar-title h2 { font-size: 1.02rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; color: #f8fafc; }
 .sim-sidebar-sub { font-size: 0.68rem; font-weight: 700; color: var(--flow-sky); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -611,16 +603,13 @@ html, body { background: #060907; }
 .side-section-head h3 { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--flow-sky); font-weight: 800; }
 .side-guidance-text { font-size: 0.72rem; color: var(--text-muted); line-height: 1.35; }
 .side-interventions-grid { display: grid; gap: 6px; }
-.side-interventions-grid .action-btn { width: 100%; justify-content: space-between; font-size: 0.75rem; padding: 6px 8px; }
-.side-vaso { width: 100%; justify-content: space-between; font-size: 0.75rem; padding: 5px 8px; }
-.vaso-stepper { display: inline-flex; align-items: center; gap: 4px; }
 .side-pbw-tag { font-size: 0.68rem; color: var(--text-muted); }
 .side-phys { gap: 8px; margin-bottom: 0; }
-#simSidebar .scenario-tile { padding: 6px; min-height: 0; aspect-ratio: 4 / 3; gap: 4px; }
-#simSidebar .scenario-tile-icon { width: min(153px, 72%); height: auto; aspect-ratio: 1 / 1; }
+#simSidebar .scenario-tile { padding: 6px; min-height: 0; aspect-ratio: 4 / 3; gap: 3px; }
+#simSidebar .scenario-tile-icon { width: min(136px, 60%); height: auto; aspect-ratio: 1 / 1; }
 #simSidebar .scenario-tile-icon svg { width: 88%; height: 88%; }
-#simSidebar .scenario-tile-text strong { font-size: 0.90rem; }
-#simSidebar .scenario-tile-text small { font-size: 0.76rem; }
+#simSidebar .scenario-tile-text strong { font-size: 1.10rem; line-height: 1.08; }
+#simSidebar .scenario-tile-text small { font-size: 0.90rem; line-height: 1.08; }
 #simSidebar .ecg-rhythm-tile { padding: 6px 7.5px; min-height: 72px; gap: 4px; }
 #simSidebar .ecg-tile-wave { height: 32px; }
 #simSidebar .ecg-tile-lbl { font-size: 0.88rem; }
@@ -628,19 +617,24 @@ html, body { background: #060907; }
 #simSidebar .o2-tile-icon { width: 36px; height: 36px; }
 #simSidebar .o2-tile-text strong { font-size: 0.92rem; }
 #simSidebar .o2-tile-text small { font-size: 0.78rem; }
-#simSidebar .side-interventions-grid .action-btn { padding: 9px 12px; min-height: 48px; font-size: 1.02rem; }
 #simSidebar .mini-step { width: 33px; height: 33px; font-size: 1.15rem; }
 #simSidebar .pbw-sex-btn { padding: 4px 10px; min-height: 33px; font-size: 0.95rem; }
 #simSidebar .pbw-apply-btn { padding: 8px 12px !important; min-height: 44px; font-size: 1.00rem !important; }
-@keyframes sidebarBtnIdlePulse { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-1.5px) scale(1.015); } }
-#simSidebar button { will-change: transform; transform-origin: center center; transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background 0.16s ease, border-color 0.16s ease, box-shadow 0.2s ease; animation: sidebarBtnIdlePulse 2.8s ease-in-out infinite; }
-#simSidebar button:nth-of-type(2n) { animation-delay: 0.35s; }
-#simSidebar button:nth-of-type(3n) { animation-delay: 0.7s; }
-#simSidebar button:hover { animation: none; transform: translateY(-2px) scale(1.04); box-shadow: 0 5px 14px rgba(56, 189, 248, 0.28); }
-#simSidebar button:active { animation: none; transform: scale(0.95); }
-@media (prefers-reduced-motion: reduce) {
-  #simSidebar button { animation: none !important; }
+#simSidebar .pbw-sex-btn,
+#simSidebar .pbw-apply-btn,
+#simSidebar .phys-knob-step,
+#simSidebar .o2-dev-tile {
+  transform-origin: center center;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.16s ease, border-color 0.16s ease;
 }
+#simSidebar .pbw-sex-btn:hover,
+#simSidebar .pbw-apply-btn:hover,
+#simSidebar .phys-knob-step:hover,
+#simSidebar .o2-dev-tile:hover { transform: translate3d(0, -1.5px, 0) scale(1.02); }
+#simSidebar .pbw-sex-btn:active,
+#simSidebar .pbw-apply-btn:active,
+#simSidebar .phys-knob-step:active,
+#simSidebar .o2-dev-tile:active { transform: scale(0.96); }
 .phys-knobs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .phys-knob-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 6px; border-radius: 9px; background: #0d1624; border: 1px solid #243652; }
 .phys-knob-lbl { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-align: center; line-height: 1.15; }
@@ -922,7 +916,7 @@ body.theme-light .o2-fio2-chip { background: #ffedd5; color: #9a3412; border-col
 .ecg-tile-lbl { font-size: 0.66rem; font-weight: 800; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .scenario-tile, .pat-status-btn { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 4 / 3; min-height: 0; gap: 4px; padding: 5px 6px; border-radius: 4px; background: #101b2d; border: 1px solid #263a59; color: #e2e8f0; cursor: pointer; text-align: center; transform-origin: center center; transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background 0.16s ease, border-color 0.16s ease, box-shadow 0.2s ease; }
 .scenario-tile { width: 100%; height: auto; }
-.pat-status-btn { width: 100%; max-width: 131px; height: auto; aspect-ratio: 4 / 3; padding: 3px 4px; border-radius: 4px; gap: 2.4px; font-size: 0.72rem; font-weight: 800; will-change: transform; animation: statusBtnIdleFloat 2.8s ease-in-out infinite; }
+.pat-status-btn { width: 100%; max-width: 131px; height: auto; aspect-ratio: 4 / 3; padding: 3px 4px; border-radius: 4px; gap: 2px; font-size: 0.90rem; font-weight: 800; will-change: transform; animation: statusBtnIdleFloat 2.8s ease-in-out infinite; }
 .pat-status-btn:nth-child(2n) { animation-delay: 0.35s; }
 .pat-status-btn:nth-child(3n) { animation-delay: 0.7s; }
 .scenario-tile.active, .pat-status-btn.active { position: relative; transform: scale(1.3); z-index: 48; background: #0c4a6e; border-color: #38bdf8; color: #ffffff; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35), 0 6px 14px rgba(14, 165, 233, 0.28); animation: statusBtnActiveGlow 2.2s ease-in-out infinite; }
@@ -939,10 +933,10 @@ body.theme-light .o2-fio2-chip { background: #ffedd5; color: #9a3412; border-col
 .pat-status-btn .sc-status-dot, .active .sc-status-dot { animation: statusDotBeacon 1.6s ease-in-out infinite; }
 .scenario-tile-icon { display: inline-flex; align-items: center; justify-content: center; width: 117px; height: 117px; border-radius: 4px; background: #0a121f; flex-shrink: 0; transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background 0.18s ease; }
 .scenario-tile-icon svg { width: 90px; height: 90px; }
-.pat-status-btn .scenario-tile-icon { width: min(101px, 60%); height: auto; aspect-ratio: 1 / 1; border-radius: 4px; }
+.pat-status-btn .scenario-tile-icon { width: min(94px, 52%); height: auto; aspect-ratio: 1 / 1; border-radius: 4px; }
 .pat-status-btn .scenario-tile-icon svg { width: 95%; height: 95%; will-change: transform; }
 .pat-status-btn .sc-status-dot { top: 3px; right: 3px; width: 13px; height: 13px; }
-.pat-status-lbl { font-size: 0.72rem; line-height: 1.08; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 800; }
+.pat-status-lbl { font-size: 0.90rem; line-height: 1.06; letter-spacing: -0.01em; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 800; }
 .scenario-tile:hover .scenario-tile-icon, .pat-status-btn:hover .scenario-tile-icon { transform: scale(1.1); }
 .pat-status-btn.sev-severe:hover .scenario-tile-icon, .alarm-strip .pat-status-btn:hover .scenario-tile-icon { transform: none; }
 .sev-stable .scenario-tile-icon { color: #22c55e; }
@@ -962,8 +956,8 @@ body.theme-light .o2-fio2-chip { background: #ffedd5; color: #9a3412; border-col
 .alarm-strip .pat-status-btn.active, .alarm-strip .pat-status-btn.active:hover { background: #0284c7; }
 .alarm-strip .pat-status-btn.sev-critical.active, .alarm-strip .pat-status-btn.sev-critical.active:hover { background: #dc2626; }
 .scenario-tile-text { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; max-width: 100%; line-height: 1.1; }
-.scenario-tile-text strong { font-size: 0.69rem; font-weight: 800; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.scenario-tile-text small { font-size: 0.58rem; font-weight: 700; color: #93c5fd; }
+.scenario-tile-text strong { font-size: 0.88rem; font-weight: 800; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scenario-tile-text small { font-size: 0.74rem; font-weight: 700; color: #93c5fd; }
 @keyframes statusBtnIdleFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 @keyframes statusBtnActiveGlow { 0%, 100% { transform: scale(1.3); } 50% { transform: scale(1.34); } }
 @keyframes statusBtnCritPulse { 0%, 100% { transform: scale(1.3); } 50% { transform: scale(1.37); } }
@@ -1039,9 +1033,8 @@ body.theme-light .ecg-tile-wave { background: #0c1713; border-color: #1f3b30; }
 .ham-hw-btn { font-size: 1.18rem; height: 51px; }
 .ham-hw-silence { font-size: 0.96rem; padding: 11px 6px; min-height: 47px; }
 .ham-hw-power { font-size: 1.62rem; width: 66px; height: 66px; }
-.ham-rotary-ring { width: clamp(84px, calc(114px * var(--ui-scale, 1)), 122px); height: clamp(84px, calc(114px * var(--ui-scale, 1)), 122px); }
-.ham-rot-core { width: 44px; height: 44px; }
-.ham-rot-btn { font-size: 1.50rem; width: 37px; height: 57px; }
+.ham-rotary-ring { width: clamp(84px, calc(114px * var(--ui-scale, 1)), 122px); height: clamp(84px, calc(114px * var(--ui-scale, 1)), 122px); cursor: ns-resize; user-select: none; touch-action: none; }
+.ham-rot-core { width: 64%; height: 64%; }
 .ham-rot-target { font-size: 0.80rem; }
 .knob-name { font-size: 0.84rem; }
 .knob-unit { font-size: 0.76rem; }
@@ -1516,3 +1509,1884 @@ body.theme-light .vg-handle-cutout { background: #f5ede2; }
 .sp-btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .sp-hint { font-size: 0.74rem; color: #94a3b8; }
 body.uticomed-display-only #simSidebar, body.uticomed-display-only #btnToggleSidebar { display: none !important; }
+
+/* === Interações Medicamentosas Ativas === */
+.drug-ix-strip { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.drug-ix-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.71rem; font-weight: 700; padding: 4px 8px; border-radius: 999px; border: 1px solid transparent; line-height: 1.2; }
+.drug-ix-pill.warn { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border-color: rgba(245, 158, 11, 0.45); }
+.drug-ix-pill.crit { background: rgba(239, 68, 68, 0.22); color: #fca5a5; border-color: rgba(239, 68, 68, 0.55); animation: alarmPulse 1.1s infinite; }
+body.theme-light .drug-ix-pill.warn { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+body.theme-light .drug-ix-pill.crit { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+
+/* === Visor Completo das Bombas 1 e 2 (Samtronic Icatu 4.0) centralizadas dentro do Menu Clínico === */
+.side-icatu-dock { margin-top: 10px; padding: 4px 40px 0 0; display: flex; flex-direction: column; align-items: center; gap: 6px; overflow: visible; }
+.sim-sidebar .icatu-chassis {
+  position: relative;
+  width: calc(100% - 24px) !important;
+  max-width: calc(100% - 24px) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 40 / 27 !important;
+  margin: 24px auto 4px auto !important;
+  padding: 1px 5px 0 !important;
+  border-radius: 22px 22px 14px 14px !important;
+  border-width: 2px !important;
+  --pump-scale: 0.66;
+  --ui-scale: 0.66;
+  overflow: visible !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.30), inset 0 2px 0 #ffffff !important;
+  transition: border-color 0.28s ease, box-shadow 0.28s ease;
+}
+.sim-sidebar .icatu-chassis:hover { transform: none !important; z-index: auto !important; }
+.sim-sidebar .icatu-chassis .device-resize-handle { display: none !important; }
+/* Hover tátil contido nos botões internos da bomba na sidebar (evita zoom 1.4x e deslocamento do D-pad) */
+.sim-sidebar .icatu-chassis button:hover:not(:active) { scale: 1.06 !important; z-index: 12; }
+.sim-sidebar .icatu-chassis .icatu-dnav:hover:not(:active),
+.sim-sidebar .icatu-chassis .icatu-dok:hover:not(:active),
+.sim-sidebar .icatu-chassis .icatu-red-clamp:hover:not(:active) { scale: 1 !important; }
+.sim-sidebar .icatu-chassis .icatu-sensor-btn:hover:not(:active) { scale: 1.04 !important; }
+
+/* Tomada Superior + Manípulo de Fixação Vermelho (com feedback tátil) */
+.sim-sidebar .icatu-chassis .icatu-top-plug {
+  display: flex !important;
+  top: -15px !important;
+  left: 24px !important;
+  width: 34px !important;
+  height: 15px !important;
+  border-width: 1.5px !important;
+}
+.sim-sidebar .icatu-chassis .icatu-top-plug span { width: 4px !important; height: 7px !important; }
+.sim-sidebar .icatu-chassis .icatu-red-clamp {
+  display: block !important;
+  top: -23px !important;
+  right: 22px !important;
+  width: 56px !important;
+  height: 23px !important;
+  border-width: 2px !important;
+  border-radius: 10px 10px 3px 3px !important;
+  transition: transform 0.14s ease, filter 0.18s ease;
+}
+.sim-sidebar .icatu-chassis .icatu-red-clamp:hover { filter: brightness(1.08); }
+.sim-sidebar .icatu-chassis .icatu-red-clamp:active { transform: translateY(2px) scaleY(0.92); }
+
+/* Sensor Óptico Lateral Azul ICATU 3ED 4.0 + Cabo Espiralado */
+.sim-sidebar .icatu-chassis .icatu-sensor-assembly {
+  display: flex !important;
+  right: -46px !important;
+  top: 20px !important;
+  transform: scale(0.74);
+  transform-origin: top center;
+  z-index: 4;
+}
+
+/* Corpo Superior: Proporção 3/4 com Asas Simétricas + Visor LCD Flexível */
+.sim-sidebar .icatu-chassis .icatu-upper-body { flex: 1 1 auto !important; min-height: 0 !important; grid-template-columns: 44px minmax(0, 1fr) 44px !important; gap: 5px !important; align-items: stretch; }
+.sim-sidebar .icatu-chassis .icatu-wing {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1px !important;
+  padding: 2px 3px !important;
+  border-radius: 16px !important;
+  min-height: 0 !important;
+}
+.sim-sidebar .icatu-chassis .icatu-circle-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.72rem !important;
+  line-height: 1 !important;
+  border-width: 2px !important;
+  transition: transform 0.12s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.sim-sidebar .icatu-chassis .icatu-circle-btn:active { transform: scale(0.90); }
+.sim-sidebar .icatu-chassis .icatu-circle-btn.startstop {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1.5px !important;
+  font-size: 0.68rem !important;
+  padding-left: 1px !important;
+}
+.icatu-circle-btn.startstop .icatu-ss-green,
+.icatu-circle-btn.startstop .icatu-ss-pink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.icatu-circle-btn.startstop .icatu-ss-pink { font-size: 0.92em; transform: translateY(-0.5px); }
+.sim-sidebar .icatu-chassis .icatu-soft-dot {
+  width: 18px !important;
+  height: 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.54rem !important;
+  padding: 0 !important;
+}
+.sim-sidebar .icatu-chassis .icatu-badge-wing { transform: scale(0.68); transform-origin: center; margin: -2px 0; }
+.sim-sidebar .icatu-chassis .icatu-led-pair { display: flex !important; align-items: center !important; justify-content: center !important; gap: 4px !important; font-size: 0.70rem !important; }
+
+/* Visor LCD Central (+25% altura útil sem alterar a altura total da bomba) */
+.sim-sidebar .icatu-chassis .icatu-lcd-bezel { flex: 1 1 auto !important; min-height: 0 !important; padding: 1px !important; border-radius: 9px !important; }
+.sim-sidebar .icatu-chassis .icatu-lcd { flex: 1 1 auto !important; min-height: 0 !important; height: 100% !important; border-radius: 7px !important; }
+.sim-sidebar .icatu-chassis .icatu-lcd-banner { padding: 2px 6px !important; gap: 4px !important; font-size: 0.66rem !important; }
+.sim-sidebar .icatu-chassis .icatu-banner-drug-btn { font-size: 0.74rem !important; max-width: 142px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sim-sidebar .icatu-chassis .icatu-ders-chip { font-size: 0.54rem !important; padding: 1px 4px !important; }
+.sim-sidebar .icatu-chassis .icatu-clock { font-size: 0.60rem !important; }
+.sim-sidebar .icatu-chassis .icatu-lcd-home { padding: 2px 5px !important; gap: 1px !important; }
+.sim-sidebar .icatu-chassis .icatu-lcd-sub { padding: 2px 4px !important; font-size: 0.64rem !important; gap: 4px !important; }
+.sim-sidebar .icatu-chassis .icatu-bolus-btn,
+.sim-sidebar .icatu-chassis .icatu-sub-proto-btn { font-size: 0.62rem !important; padding: 1px 5px !important; min-height: 18px !important; }
+.sim-sidebar .icatu-chassis .icatu-lcd-main { padding: 2px 5px !important; gap: 6px !important; }
+.sim-sidebar .icatu-chassis .icatu-big-val { font-size: 1.72rem !important; line-height: 0.96 !important; }
+.sim-sidebar .icatu-chassis .icatu-big-unit { font-size: 0.66rem !important; }
+.sim-sidebar .icatu-chassis .icatu-status-pill { font-size: 0.60rem !important; padding: 1px 6px !important; }
+.sim-sidebar .icatu-chassis .icatu-hint { font-size: 0.60rem !important; }
+.sim-sidebar .icatu-chassis .icatu-kpa-col { min-width: 26px !important; gap: 1px !important; }
+.sim-sidebar .icatu-chassis .icatu-kpa-lbl,
+.sim-sidebar .icatu-chassis .icatu-kpa-val { font-size: 0.56rem !important; }
+.sim-sidebar .icatu-chassis .icatu-kpa-bars span { height: 4px !important; }
+.sim-sidebar .icatu-chassis .icatu-context-bar { padding: 1px 0 !important; gap: 3px !important; }
+.sim-sidebar .icatu-chassis .icatu-ctx-pill,
+.sim-sidebar .icatu-chassis .icatu-ctx-btn { font-size: 0.56rem !important; padding: 2px 5px !important; min-height: 18px !important; }
+.sim-sidebar .icatu-chassis .icatu-lcd-metrics { padding: 2px 5px !important; gap: 4px !important; }
+.sim-sidebar .icatu-chassis .icatu-m-lbl { font-size: 0.54rem !important; }
+.sim-sidebar .icatu-chassis .icatu-m-col strong { font-size: 0.76rem !important; }
+.sim-sidebar .icatu-chassis .icatu-m-col small { font-size: 0.56rem !important; }
+.sim-sidebar .icatu-chassis .icatu-drip-chamber svg { width: 15px !important; height: 21px !important; }
+.sim-sidebar .icatu-chassis .icatu-lcd-softkeys { padding: 2px 4px !important; gap: 3px !important; }
+.sim-sidebar .icatu-chassis .icatu-sk { font-size: 0.60rem !important; padding: 2px 3px !important; min-height: 22px !important; white-space: nowrap; }
+.sim-sidebar .icatu-chassis .icatu-lcd-menu { flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto; font-size: 0.68rem !important; padding: 4px !important; }
+
+/* D-Pad Circular Compacto + Botão Verde de Início (⏎) 100% Centralizado (libera +25% altura pro Visor LCD) */
+.sim-sidebar .icatu-chassis .icatu-dpad-row {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin-top: -5px !important;
+  margin-bottom: -8px !important;
+  position: relative;
+  z-index: 6;
+}
+.sim-sidebar .icatu-chassis .icatu-dpad-wheel {
+  position: relative !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  border-width: 1.5px !important;
+}
+.sim-sidebar .icatu-chassis .icatu-dnav {
+  width: 13px !important;
+  height: 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  font-size: 0.44rem !important;
+  line-height: 1 !important;
+  border-radius: 4px !important;
+  transition: transform 0.1s ease, filter 0.15s ease;
+}
+.sim-sidebar .icatu-chassis .icatu-dnav:hover { filter: brightness(1.12); }
+.sim-sidebar .icatu-chassis .icatu-dnav.up { top: 1.5px !important; left: 50% !important; transform: translateX(-50%) !important; }
+.sim-sidebar .icatu-chassis .icatu-dnav.down { bottom: 1.5px !important; left: 50% !important; transform: translateX(-50%) !important; }
+.sim-sidebar .icatu-chassis .icatu-dnav.left { left: 1.5px !important; top: 50% !important; transform: translateY(-50%) !important; }
+.sim-sidebar .icatu-chassis .icatu-dnav.right { right: 1.5px !important; top: 50% !important; transform: translateY(-50%) !important; }
+.sim-sidebar .icatu-chassis .icatu-dok {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  font-size: 0.54rem !important;
+  line-height: 1 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 2px 6px rgba(21, 128, 61, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 0.12s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+.sim-sidebar .icatu-chassis .icatu-dok:active { transform: translate(-50%, -50%) scale(0.90) !important; }
+
+/* Porta Inferior Azul Aço Samtronic + Rotor Peristáltico (esbelta para ampliar visor em +25%) */
+.sim-sidebar .icatu-chassis .icatu-bottom-door {
+  flex: 0 0 auto !important;
+  margin: 0 -5px !important;
+  padding: 6px 8px 2px !important;
+  gap: 5px !important;
+  border-radius: 0 0 11px 11px !important;
+  min-height: 22px !important;
+}
+.sim-sidebar .icatu-chassis .icatu-wordmark { font-size: 1.00rem !important; font-weight: 900 !important; letter-spacing: -0.02em !important; line-height: 0.95 !important; }
+.sim-sidebar .icatu-chassis .icatu-door-hint { font-size: 0.72rem !important; font-weight: 900 !important; padding: 1px 6px !important; line-height: 1 !important; }
+.sim-sidebar .icatu-chassis .icatu-rotor-window { padding: 2px 6px !important; transform: scale(0.64); transform-origin: left center; margin-right: -18px; }
+
+/* === Revisão & Aprimoramento das Animações das Bombas Samtronic Icatu 4.0 === */
+/* 1. Botão Central OK / Início pulsa em verde durante infusão e dourado em Bolus */
+.icatu-chassis.infusing .icatu-dok {
+  background: #22c55e;
+  border-color: #dcfce7;
+  animation: icatuDokPulse var(--icatu-anim-dur, 1.1s) ease-in-out infinite;
+}
+.icatu-chassis.bolus .icatu-dok {
+  background: #facc15;
+  border-color: #fef9c3;
+  color: #422006;
+  animation: icatuDokBolus 0.42s ease-in-out infinite;
+}
+.icatu-chassis.bolus .icatu-circle-btn.startstop {
+  border-color: #facc15;
+  animation: icatuDokBolus 0.42s ease-in-out infinite;
+}
+@keyframes icatuDokPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.70), inset 0 1px 0 rgba(255, 255, 255, 0.6); }
+  65% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0), inset 0 1px 0 rgba(255, 255, 255, 0.6); }
+}
+@keyframes icatuDokBolus {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.85); }
+  65% { box-shadow: 0 0 0 9px rgba(250, 204, 21, 0); }
+}
+
+/* 2. Onda Peristáltica 100% em fase proporcional à velocidade (--icatu-anim-dur) */
+.icatu-chassis.infusing .icatu-peri-dots span:nth-child(1) { animation-delay: 0s; }
+.icatu-chassis.infusing .icatu-peri-dots span:nth-child(2) { animation-delay: calc(var(--icatu-anim-dur, 1s) * -0.84); }
+.icatu-chassis.infusing .icatu-peri-dots span:nth-child(3) { animation-delay: calc(var(--icatu-anim-dur, 1s) * -0.68); }
+.icatu-chassis.infusing .icatu-peri-dots span:nth-child(4) { animation-delay: calc(var(--icatu-anim-dur, 1s) * -0.52); }
+.icatu-chassis.infusing .icatu-peri-dots span:nth-child(5) { animation-delay: calc(var(--icatu-anim-dur, 1s) * -0.36); }
+.icatu-chassis.infusing .icatu-peri-dots span:nth-child(6) { animation-delay: calc(var(--icatu-anim-dur, 1s) * -0.20); }
+.icatu-chassis.bolus .icatu-peri-dots span:nth-child(1) { animation-delay: 0s; }
+.icatu-chassis.bolus .icatu-peri-dots span:nth-child(2) { animation-delay: -0.36s; }
+.icatu-chassis.bolus .icatu-peri-dots span:nth-child(3) { animation-delay: -0.29s; }
+.icatu-chassis.bolus .icatu-peri-dots span:nth-child(4) { animation-delay: -0.22s; }
+.icatu-chassis.bolus .icatu-peri-dots span:nth-child(5) { animation-delay: -0.15s; }
+.icatu-chassis.bolus .icatu-peri-dots span:nth-child(6) { animation-delay: -0.08s; }
+
+/* 3. Track de Fluxo com gradiente luminoso suave */
+.icatu-chassis.infusing .icatu-flow-bead {
+  background: linear-gradient(90deg, transparent, #22c55e 45%, #bbf7d0 85%, transparent);
+  width: 18%;
+}
+.icatu-chassis.bolus .icatu-flow-bead {
+  background: linear-gradient(90deg, transparent, #f59e0b 40%, #fef08a 85%, transparent);
+  width: 22%;
+}
+
+/* 4. Câmara de Gotejamento sincronizada (Infusão Verde / Bolus Dourado / Oclusão Vermelho) */
+.icatu-drip-chamber.bolus .icatu-chamber-drop { fill: #fde047 !important; stroke: #fef9c3 !important; }
+.icatu-drip-chamber.bolus .icatu-chamber-ripple { stroke: #facc15 !important; }
+.icatu-drip-chamber.bolus .icatu-chamber-pool { fill: #eab308 !important; }
+.icatu-drip-chamber.occluding { opacity: 1; }
+.icatu-drip-chamber.occluding .icatu-chamber-pool { fill: #ef4444 !important; }
+.icatu-drip-chamber.occluding svg rect { stroke: #ef4444 !important; animation: samBadgePulse 0.6s infinite; }
+
+/* 5. Sensor Óptico ICATU 3ED 4.0 (laser + gota + tubo + alarme de oclusão) */
+.icatu-sensor-btn.infusing .icatu-sensor-tube {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.4), rgba(74, 222, 128, 0.85), rgba(56, 189, 248, 0.4));
+}
+.icatu-sensor-btn.bolus .icatu-sensor-beam { background: #fde047; box-shadow: 0 0 10px #facc15; }
+.icatu-sensor-btn.bolus .icatu-sensor-drop { background: #fef08a; box-shadow: 0 0 8px #facc15; }
+.icatu-sensor-btn.bolus .icatu-sensor-led { background: #facc15; }
+.icatu-sensor-btn.occluding .icatu-sensor-body {
+  border-color: #ef4444;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.78);
+  animation: samChassisAlarm 0.65s infinite;
+}
+.icatu-sensor-btn.occluding .icatu-sensor-beam {
+  display: block;
+  background: #ef4444;
+  opacity: 0.9;
+  animation: samBadgePulse 0.55s infinite;
+}
+
+/* === Botões Animados & Redimensionados (-25%, Proporção 9/16 altura/largura) — Intervenções & Fármacos === */
+#sideSectionInterventions .side-interventions-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+}
+#sideSectionInterventions .side-interventions-grid .action-btn {
+  position: relative;
+  overflow: hidden;
+  contain: layout style paint;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 16 / 9 !important;
+  padding: 1px 2px !important;
+  border-radius: 11px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0px !important;
+  text-align: center !important;
+  border-width: 2px !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease !important;
+}
+#sideSectionInterventions .side-interventions-grid .action-btn.hidden { display: none !important; }
+
+/* Brilho diagonal animado ao passar o mouse (compositor-only) */
+#sideSectionInterventions .side-interventions-grid .action-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.20) 50%, transparent 75%);
+  transform: translate3d(-130%, 0, 0);
+  transition: transform 0.48s ease;
+  pointer-events: none;
+}
+#sideSectionInterventions .side-interventions-grid .action-btn:hover::after { transform: translate3d(130%, 0, 0); }
+#sideSectionInterventions .side-interventions-grid .action-btn:hover {
+  transform: translate3d(0, -2px, 0) scale(1.03) !important;
+}
+#sideSectionInterventions .side-interventions-grid .action-btn:hover .int-ico {
+  transform: scale(1.10);
+}
+#sideSectionInterventions .side-interventions-grid .action-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* Ícones SVG vetoriais (2x maiores: 44x44px) mantendo dimensões exatas do botão 9/16 (-25%) */
+#sideSectionInterventions .int-ico {
+  width: 46px;
+  height: 40px;
+  border-radius: 8px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease;
+}
+body.theme-light #sideSectionInterventions .int-ico { background: transparent; }
+#sideSectionInterventions .int-ico svg {
+  width: 44px;
+  height: 44px;
+  transform-origin: center;
+}
+#sideSectionInterventions .int-ico .sc-svg-accent {
+  animation: intAccentBlink 2.2s ease-in-out infinite;
+}
+#sideSectionInterventions .bolus-ico {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+#sideSectionInterventions .int-lbl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 0.96;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#sideSectionInterventions .int-lbl small {
+  font-size: 0.56rem;
+  font-weight: 800;
+  line-height: 0.96;
+  opacity: 0.92;
+}
+#sideSectionInterventions .action-btn.fluid .action-badge {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.58rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.45);
+}
+
+/* Cores semânticas dos ícones SVG (mesmo DNA dos cenários clínicos) */
+#sideSectionInterventions .action-btn.fluid .int-ico { color: #38bdf8; }
+#sideSectionInterventions .action-btn.broncho .int-ico { color: #34d399; }
+#sideSectionInterventions .action-btn.recruit .int-ico { color: #22d3ee; }
+#sideSectionInterventions .action-btn.critical .int-ico { color: #f87171; }
+#sideSectionInterventions #btnSyncCardioversion .int-ico { color: #fbbf24; }
+#sideSectionInterventions .action-btn.cpr .int-ico { color: #fbbf24; }
+#sideSectionInterventions .action-btn.prone .int-ico { color: #38bdf8; }
+#sideSectionInterventions .action-btn.warm .int-ico { color: #fb923c; }
+#sideSectionInterventions .action-btn.blood .int-ico { color: #ef4444; }
+#sideSectionInterventions .action-btn.cooling .int-ico { color: #38bdf8; }
+#sideSectionInterventions .action-btn.pacer .int-ico { color: #fbbf24; }
+#sideSectionInterventions .action-btn.osmo .int-ico { color: #a78bfa; }
+#sideSectionInterventions .action-btn.steroid .int-ico { color: #fb923c; }
+#sideSectionInterventions .action-btn.insulin .int-ico { color: #2dd4bf; }
+#sideSectionInterventions .action-btn.uterotonic .int-ico { color: #fb7185; }
+
+body.theme-light #sideSectionInterventions .action-btn.fluid .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.prone .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.cooling .int-ico { color: #0284c7; }
+body.theme-light #sideSectionInterventions .action-btn.broncho .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.insulin .int-ico { color: #0f766e; }
+body.theme-light #sideSectionInterventions .action-btn.recruit .int-ico { color: #0e7490; }
+body.theme-light #sideSectionInterventions .action-btn.critical .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.blood .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.uterotonic .int-ico { color: #dc2626; }
+body.theme-light #sideSectionInterventions #btnSyncCardioversion .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.cpr .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.pacer .int-ico { color: #b45309; }
+body.theme-light #sideSectionInterventions .action-btn.warm .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.steroid .int-ico { color: #c2410c; }
+body.theme-light #sideSectionInterventions .action-btn.osmo .int-ico { color: #6d28d9; }
+
+/* Neutro em repouso: botões de emergência só ficam coloridos quando indicados (.urgent) ou ativos */
+#sideSectionInterventions .action-btn.critical:not(.urgent),
+#sideSectionInterventions .action-btn.cpr:not(.urgent):not([aria-pressed="true"]) {
+  background: #141c17 !important;
+  color: #f4f7f5 !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+body.theme-light #sideSectionInterventions .action-btn.critical:not(.urgent),
+body.theme-light #sideSectionInterventions .action-btn.cpr:not(.urgent):not([aria-pressed="true"]) {
+  background: #fffaf3 !important;
+  color: #291d14 !important;
+  box-shadow: 0 3px 9px rgba(41, 29, 20, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Destaque urgente / ativo (zero box-shadow animado: apenas transform compositor-only!) */
+#sideSectionInterventions .action-btn.urgent .int-ico,
+#sideSectionInterventions .action-btn[aria-pressed="true"] .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.urgent .int-ico,
+body.theme-light #sideSectionInterventions .action-btn[aria-pressed="true"] .int-ico {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+}
+#sideSectionInterventions .action-btn.critical.urgent,
+body.theme-light #sideSectionInterventions .action-btn.critical.urgent {
+  background: #dc2626 !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.55) !important;
+  animation: intUrgentScale 1.0s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.cpr.urgent,
+body.theme-light #sideSectionInterventions .action-btn.cpr.urgent {
+  background: #d97706 !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.50) !important;
+  animation: intUrgentScale 1.1s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.cpr[aria-pressed="true"],
+body.theme-light #sideSectionInterventions .action-btn.cpr[aria-pressed="true"] {
+  background: #d97706 !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(250, 204, 21, 0.55) !important;
+  animation: intCprBeat 0.545s ease-in-out infinite !important;
+}
+
+/* Bordas transparentes (Modo Escuro & Claro) */
+#sideSectionInterventions .action-btn,
+#sideSectionInterventions .action-btn:hover,
+body.theme-light #sideSectionInterventions .action-btn,
+body.theme-light #sideSectionInterventions .action-btn:hover {
+  border-color: transparent !important;
+}
+body.theme-light #sideSectionInterventions .side-interventions-grid .action-btn {
+  box-shadow: 0 3px 9px rgba(41, 29, 20, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* Badges & Destaques inteligentes das 12 intervenções adicionais */
+#sideSectionInterventions .action-btn.blood .action-badge {
+  position: absolute; top: 3px; right: 4px; min-width: 15px; height: 15px; padding: 0 3px;
+  border-radius: 999px; background: #b91c1c; color: #ffffff; font-size: 0.58rem; font-weight: 900;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(185, 28, 28, 0.45);
+}
+#sideSectionInterventions .action-btn.prone.urgent,
+body.theme-light #sideSectionInterventions .action-btn.prone.urgent,
+#sideSectionInterventions .action-btn.cooling.urgent,
+body.theme-light #sideSectionInterventions .action-btn.cooling.urgent {
+  background: #0284c7 !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.50) !important;
+  animation: intUrgentScale 1.15s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.prone[aria-pressed="true"],
+body.theme-light #sideSectionInterventions .action-btn.prone[aria-pressed="true"],
+#sideSectionInterventions .action-btn.pacer[aria-pressed="true"],
+body.theme-light #sideSectionInterventions .action-btn.pacer[aria-pressed="true"],
+#sideSectionInterventions .action-btn.insulin[aria-pressed="true"],
+body.theme-light #sideSectionInterventions .action-btn.insulin[aria-pressed="true"] {
+  background: #0f766e !important; color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(20, 184, 166, 0.45) !important;
+}
+#sideSectionInterventions .action-btn.cooling[aria-pressed="true"],
+body.theme-light #sideSectionInterventions .action-btn.cooling[aria-pressed="true"] {
+  background: #0369a1 !important; color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.50) !important;
+}
+#sideSectionInterventions .action-btn.warm.urgent,
+body.theme-light #sideSectionInterventions .action-btn.warm.urgent {
+  background: #ea580c !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.50) !important;
+  animation: intUrgentScale 1.15s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.warm[aria-pressed="true"],
+body.theme-light #sideSectionInterventions .action-btn.warm[aria-pressed="true"] {
+  background: #c2410c !important; color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(234, 88, 12, 0.50) !important;
+}
+#sideSectionInterventions .action-btn.blood.urgent,
+body.theme-light #sideSectionInterventions .action-btn.blood.urgent {
+  background: #b91c1c !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(185, 28, 28, 0.55) !important;
+  animation: intUrgentScale 1.05s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.pacer.urgent,
+body.theme-light #sideSectionInterventions .action-btn.pacer.urgent {
+  background: #d97706 !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.50) !important;
+  animation: intUrgentScale 1.05s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.osmo.urgent,
+body.theme-light #sideSectionInterventions .action-btn.osmo.urgent {
+  background: #7c3aed !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.50) !important;
+  animation: intUrgentScale 1.1s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.steroid.urgent,
+body.theme-light #sideSectionInterventions .action-btn.steroid.urgent {
+  background: #c2410c !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(194, 65, 12, 0.50) !important;
+  animation: intUrgentScale 1.1s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.insulin.urgent,
+body.theme-light #sideSectionInterventions .action-btn.insulin.urgent {
+  background: #0d9488 !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.50) !important;
+  animation: intUrgentScale 1.15s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.uterotonic.urgent,
+body.theme-light #sideSectionInterventions .action-btn.uterotonic.urgent {
+  background: #be123c !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(190, 18, 60, 0.55) !important;
+  animation: intUrgentScale 1.05s ease-in-out infinite !important;
+}
+
+/* === Animações GPU-Otimizadas (100% compositor: apenas transform + opacity, 6 keyframes enxutos) === */
+#sideSectionInterventions #btnFluidBolus .int-ico svg,
+#sideSectionInterventions #btnTransfusion .int-ico svg,
+#sideSectionInterventions #btnActiveWarming .int-ico svg { animation: intSvgBob 2.4s ease-in-out infinite; }
+
+#sideSectionInterventions #btnBronchodilator .int-ico svg,
+#sideSectionInterventions #btnPericardiocentesis .int-ico svg,
+#sideSectionInterventions #btnPronePosition .int-ico svg,
+#sideSectionInterventions #btnHydrocortisone .int-ico svg,
+#sideSectionInterventions #btnInsulinDrip .int-ico svg,
+#sideSectionInterventions #btnUterotonic .int-ico svg { animation: intSvgSway 2.8s ease-in-out infinite; }
+
+#sideSectionInterventions #btnSuctionRecruit .int-ico svg,
+#sideSectionInterventions #btnThrombolysis .int-ico svg,
+#sideSectionInterventions #btnOsmotherapy .int-ico svg,
+#sideSectionInterventions #btnTranscutPacer .int-ico svg,
+#sideSectionInterventions #btnCprToggle .int-ico svg { animation: intSvgPulse 2.4s ease-in-out infinite; }
+
+#sideSectionInterventions #btnDecompress .int-ico svg,
+#sideSectionInterventions #btnDefib .int-ico svg { animation: intSvgShock 2.4s ease-in-out infinite; }
+
+#sideSectionInterventions #btnSyncCardioversion .int-ico svg { animation: intSvgSpin 5.0s linear infinite; }
+#sideSectionInterventions #btnActiveCooling .int-ico svg { animation: intSvgSpin 7.5s linear infinite; }
+
+/* Ritmo acelerado sob demanda (somente quando urgente ou ativo) */
+#sideSectionInterventions .action-btn.urgent .int-ico svg { animation-duration: 0.95s !important; }
+#sideSectionInterventions .action-btn.urgent .int-ico .sc-svg-accent { animation-duration: 0.85s !important; }
+#sideSectionInterventions #btnCprToggle[aria-pressed="true"] .int-ico svg { animation: intSvgPulse 0.545s ease-in-out infinite !important; }
+#sideSectionInterventions #btnTranscutPacer[aria-pressed="true"] .int-ico svg { animation: intSvgPulse 0.86s ease-in-out infinite !important; }
+#sideSectionInterventions #btnSyncCardioversion.urgent .int-ico svg { animation: intSvgSpin 1.3s linear infinite !important; }
+#sideSectionInterventions #btnActiveCooling[aria-pressed="true"] .int-ico svg { animation: intSvgSpin 2.6s linear infinite !important; }
+#sideSectionInterventions #btnPronePosition[aria-pressed="true"] .int-ico { transform: scaleX(-1); }
+#sideSectionInterventions #btnPronePosition[aria-pressed="true"]:hover .int-ico { transform: scaleX(-1) scale(1.10); }
+
+@keyframes intSvgBob {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -2px, 0) scale(1.08); }
+}
+@keyframes intSvgSway {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(-7deg) scale(1.08); }
+}
+@keyframes intSvgPulse {
+  0%, 100% { transform: scale(0.95); }
+  50% { transform: scale(1.12); }
+}
+@keyframes intSvgShock {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.13) rotate(-6deg); }
+  75% { transform: scale(1.13) rotate(6deg); }
+}
+@keyframes intSvgSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes intUrgentScale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes intCprBeat {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(0.95); }
+}
+@keyframes intAccentBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.42; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sideSectionInterventions .action-btn,
+  #sideSectionInterventions .int-ico svg,
+  #sideSectionInterventions .int-ico .sc-svg-accent { animation: none !important; }
+}
+
+/* === Unificação Visual: Botões dos Cenários Clínicos com o mesmo padrão dos Botões de Intervenção === */
+.patient-status-btns {
+  gap: 5px !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+}
+.pat-status-btn,
+.scenario-tile,
+.alarm-strip .pat-status-btn:not(.active),
+.alarm-strip .pat-status-btn:not(.active):hover {
+  position: relative !important;
+  overflow: hidden !important;
+  contain: layout style paint;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 16 / 9 !important;
+  padding: 1px 3px !important;
+  border-radius: 11px !important;
+  gap: 0px !important;
+  border: 2px solid transparent !important;
+  background: #141c17 !important;
+  color: #f4f7f5 !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  animation: none !important;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease !important;
+}
+body.theme-light .pat-status-btn,
+body.theme-light .scenario-tile,
+body.theme-light .alarm-strip .pat-status-btn:not(.active),
+body.theme-light .alarm-strip .pat-status-btn:not(.active):hover {
+  border-color: transparent !important;
+  background: #fffaf3 !important;
+  color: #291d14 !important;
+  box-shadow: 0 3px 9px rgba(41, 29, 20, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Brilho diagonal & hover/active idênticos às intervenções */
+.pat-status-btn::after,
+.scenario-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.20) 50%, transparent 75%);
+  transform: translate3d(-130%, 0, 0);
+  transition: transform 0.48s ease;
+  pointer-events: none;
+}
+.pat-status-btn:hover::after,
+.scenario-tile:hover::after { transform: translate3d(130%, 0, 0); }
+.pat-status-btn:hover,
+.scenario-tile:hover,
+.alarm-strip .pat-status-btn:hover,
+.pat-status-btn.sev-severe:hover {
+  transform: translate3d(0, -2px, 0) scale(1.03) !important;
+  z-index: 12 !important;
+}
+.pat-status-btn:active,
+.scenario-tile:active {
+  transform: scale(0.95) !important;
+}
+
+/* Ícones SVG ampliados 2x (preenchendo ~78% da altura, mantendo exatamente as mesmas dimensões 9/16 dos botões) */
+.pat-status-btn .scenario-tile-icon,
+.scenario-tile .scenario-tile-icon,
+#simSidebar .scenario-tile-icon {
+  width: auto !important;
+  height: 78% !important;
+  max-width: 82% !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 1 !important;
+  min-height: 0 !important;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease !important;
+}
+.scenario-tile .scenario-tile-icon,
+#simSidebar .scenario-tile-icon {
+  height: 72% !important;
+}
+.pat-status-btn .scenario-tile-icon svg,
+.scenario-tile .scenario-tile-icon svg,
+#simSidebar .scenario-tile-icon svg {
+  width: 100% !important;
+  height: 100% !important;
+  transform-origin: center;
+}
+.pat-status-btn:hover .scenario-tile-icon,
+.scenario-tile:hover .scenario-tile-icon,
+.alarm-strip .pat-status-btn:hover .scenario-tile-icon,
+.pat-status-btn.sev-severe:hover .scenario-tile-icon {
+  transform: scale(1.10) !important;
+}
+.pat-status-btn .sc-status-dot,
+.scenario-tile .sc-status-dot {
+  top: 4px !important;
+  right: 5px !important;
+  width: 7px !important;
+  height: 7px !important;
+}
+.pat-status-lbl {
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  line-height: 1.0 !important;
+  letter-spacing: -0.02em !important;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.scenario-tile-text strong,
+#simSidebar .scenario-tile-text strong {
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  line-height: 0.96 !important;
+  letter-spacing: -0.02em !important;
+}
+.scenario-tile-text small,
+#simSidebar .scenario-tile-text small {
+  font-size: 0.56rem !important;
+  font-weight: 800 !important;
+  line-height: 0.96 !important;
+}
+
+/* Estado ativo dos cenários (mesmo destaque colorido + pulso compositor-only das intervenções) */
+.pat-status-btn.active,
+.scenario-tile.active,
+.alarm-strip .pat-status-btn.active,
+.alarm-strip .pat-status-btn.active:hover,
+body.theme-light .pat-status-btn.active,
+body.theme-light .scenario-tile.active,
+body.theme-light .alarm-strip .pat-status-btn.active,
+body.theme-light .alarm-strip .pat-status-btn.active:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.50) !important;
+  transform: scale(1) !important;
+  z-index: 15 !important;
+  animation: intUrgentScale 1.15s ease-in-out infinite !important;
+}
+.pat-status-btn.sev-moderate.active,
+.scenario-tile.sev-moderate.active,
+.pat-status-btn.sev-severe.active,
+.scenario-tile.sev-severe.active,
+.alarm-strip .pat-status-btn.sev-moderate.active,
+.alarm-strip .pat-status-btn.sev-severe.active,
+body.theme-light .pat-status-btn.sev-moderate.active,
+body.theme-light .scenario-tile.sev-moderate.active,
+body.theme-light .pat-status-btn.sev-severe.active,
+body.theme-light .scenario-tile.sev-severe.active,
+body.theme-light .alarm-strip .pat-status-btn.sev-moderate.active,
+body.theme-light .alarm-strip .pat-status-btn.sev-severe.active {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.50) !important;
+  animation: intUrgentScale 1.1s ease-in-out infinite !important;
+}
+.pat-status-btn.sev-critical.active,
+.scenario-tile.sev-critical.active,
+.alarm-strip .pat-status-btn.sev-critical.active,
+.alarm-strip .pat-status-btn.sev-critical.active:hover,
+body.theme-light .pat-status-btn.sev-critical.active,
+body.theme-light .scenario-tile.sev-critical.active,
+body.theme-light .alarm-strip .pat-status-btn.sev-critical.active,
+body.theme-light .alarm-strip .pat-status-btn.sev-critical.active:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.55) !important;
+  animation: intUrgentScale 1.0s ease-in-out infinite !important;
+}
+.pat-status-btn.active .scenario-tile-icon,
+.scenario-tile.active .scenario-tile-icon,
+body.theme-light .pat-status-btn.active .scenario-tile-icon,
+body.theme-light .scenario-tile.active .scenario-tile-icon {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+}
+/* === Analisador de Gases Seamaty SG1 centralizado dentro do Menu Clínico === */
+.side-sg1-section.hidden { display: none !important; }
+.side-sg1-dock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0 4px;
+  overflow: visible;
+}
+.sim-sidebar .sg1-chassis {
+  position: relative !important;
+  width: min(262px, 88%) !important;
+  max-width: 262px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 252 / 610 !important;
+  margin: 6px auto !important;
+  --sg1-scale: 0.96;
+  --ui-scale: 0.96;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34), inset 0 2px 0 #ffffff !important;
+}
+.sim-sidebar .sg1-chassis:hover {
+  transform: none !important;
+  z-index: auto !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38), inset 0 2px 0 #ffffff !important;
+}
+.sim-sidebar .sg1-chassis button:hover:not(:active) { scale: 1.04 !important; }
+.sim-sidebar .sg1-chassis .sg1-ring { transform: translateX(-50%); }
+.sim-sidebar .sg1-chassis .sg1-ring:hover:not(:active) { scale: 1.06 !important; }
+.sim-sidebar .sg1-chassis .sg1-ring:active { scale: 0.94 !important; }
+.sim-sidebar .sg1-chassis .device-resize-handle { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pat-status-btn, .scenario-tile,
+  .pat-status-btn .scenario-tile-icon svg, .scenario-tile .scenario-tile-icon svg { animation: none !important; }
+}
+
+/* === VENTILADOR HOSPITALAR HAMILTON-C1 & MINI VENTILADORES PORTÁTEIS (APH / VNI) === */
+.c1-chassis {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px 10px;
+  margin-top: 14px;
+  background: linear-gradient(180deg, #f5f7f9 0%, #e4e9ee 62%, #d4dce3 100%);
+  border: 2.5px solid #cbd5e1;
+  border-radius: 28px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42), inset 0 3px 0 #ffffff, inset 0 -4px 8px rgba(15, 23, 42, 0.12);
+  color: #1e293b;
+  overflow: visible;
+  transition: background 0.25s ease, border-color 0.25s ease, max-width 0.25s ease;
+}
+.c1-top-handle {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52%;
+  height: 14px;
+  background: linear-gradient(180deg, #f8fafc, #cfd7df);
+  border: 2px solid #b6c2ce;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  box-shadow: inset 0 2px 0 #ffffff;
+}
+.c1-left-hose {
+  position: absolute;
+  left: -13px;
+  top: 22%;
+  width: 12px;
+  height: 54%;
+  background: linear-gradient(180deg, #1e242b, #0f1318);
+  border-radius: 7px 0 0 7px;
+  box-shadow: -3px 4px 8px rgba(0, 0, 0, 0.35);
+}
+.c1-left-hose span {
+  position: absolute;
+  bottom: -14px;
+  left: 2px;
+  width: 8px;
+  height: 16px;
+  background: #334155;
+  border-radius: 0 0 4px 4px;
+}
+
+/* Abas de Modelo (HAMILTON-C1 / Mini Portátil APH / Mini Portátil VNI) */
+.c1-model-switcher {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 4;
+}
+.c1-model-tab {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(71, 85, 105, 0.35);
+  background: rgba(255, 255, 255, 0.72);
+  color: #334155;
+  font-size: 0.70rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.14s ease;
+}
+.c1-model-tab:hover { background: #ffffff; transform: translateY(-1px); }
+.c1-model-tab.active {
+  background: #4b626b;
+  border-color: #334850;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
+}
+
+/* Moldura Frontal Slate-Teal fiel à foto */
+.c1-front-bezel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 10px;
+  padding: 12px 12px 8px;
+  background: linear-gradient(180deg, #566e77 0%, #465b63 100%);
+  border-radius: 18px;
+  border: 1.5px solid #3c5058;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.22), inset 0 -2px 6px rgba(0, 0, 0, 0.32);
+}
+.c1-screen-wrap { display: flex; flex-direction: column; gap: 5px; min-width: 0; min-height: 0; height: 100%; }
+.c1-model-wordmark {
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #f8fafc;
+  padding-left: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Tela Touch 8.4" HAMILTON-C1 */
+.c1-screen {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 74px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 4px;
+  padding: 5px;
+  background: #0b0f13;
+  border: 2px solid #1e293b;
+  border-radius: 6px;
+  color: #f8fafc;
+  overflow: hidden;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+}
+.c1-num-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 3px;
+  padding: 2px 4px;
+  background: #10161c;
+  border-right: 1px solid #1f2d3a;
+}
+.c1-mode-pill {
+  padding: 3px 4px;
+  border-radius: 4px;
+  border: 1px solid #38bdf8;
+  background: rgba(14, 165, 233, 0.18);
+  color: #e0f2fe;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.c1-mode-pill:hover { background: rgba(14, 165, 233, 0.35); }
+.c1-num-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  padding-bottom: 2px;
+}
+.c1-num-item:last-child { border-bottom: none; }
+.c1-num-item strong { font-size: 1.38rem; font-weight: 900; line-height: 0.98; color: #ffffff; }
+.c1-num-item span { font-size: 0.56rem; color: #94a3b8; font-weight: 700; display: flex; gap: 3px; }
+.c1-num-item small { opacity: 0.78; font-size: 0.50rem; }
+
+/* Coluna Central: Curva Paw + Dynamic Lung */
+.c1-center-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.c1-mini-telemetry {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #16202a;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  font-size: 0.60rem;
+  font-weight: 800;
+}
+.c1-mini-badge { color: #facc15; }
+.c1-mini-chip { color: #bae6fd; background: rgba(14, 165, 233, 0.16); padding: 1px 5px; border-radius: 4px; }
+
+.c1-wave-box {
+  flex: 0 0 36%;
+  display: flex;
+  flex-direction: column;
+  background: #0d1318;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-height: 76px;
+}
+.c1-wave-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #fde047;
+  margin-bottom: 2px;
+}
+.c1-wave-head small { color: #94a3b8; font-weight: 600; }
+.c1-paw-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: #1e293b;
+  overflow: hidden;
+}
+.c1-paw-bar i {
+  display: block;
+  height: 100%;
+  width: 28%;
+  background: linear-gradient(90deg, #22c55e, #facc15, #ef4444);
+  transition: width 0.08s linear;
+}
+#c1PawCanvas { width: 100%; flex: 1 1 0; height: 100%; min-height: 48px; display: block; }
+
+/* Painel Dynamic Lung (azul-petróleo idêntico à foto) */
+.c1-dlung-panel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 7px 5px;
+  background: linear-gradient(180deg, #1d4e66 0%, #143a4d 100%);
+  border: 1px solid #2b6885;
+  border-radius: 5px;
+  min-height: 0;
+}
+.c1-dlung-top {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 4px;
+}
+.c1-dlung-meta, .c1-dlung-right {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.56rem;
+  color: #bae6fd;
+}
+.c1-dlung-meta strong, .c1-dlung-right strong { font-size: 0.70rem; color: #ffffff; }
+.c1-dlung-right { align-items: flex-end; text-align: right; }
+.c1-dlung-svg-wrap { display: flex; align-items: center; justify-content: center; }
+.c1-dlung-svg { width: 100%; max-width: 112px; height: auto; overflow: visible; }
+.c1-lungs-group { transform-origin: 60px 54px; transition: transform 0.14s ease-out; }
+.c1-lung-lobe { fill: #7dd3fc; fill-opacity: 0.85; stroke: #e0f2fe; stroke-width: 1.5; transition: fill 0.3s ease; }
+.c1-dlung-panel.hypoxia .c1-lung-lobe { fill: #fb923c; }
+.c1-dlung-panel.critical .c1-lung-lobe { fill: #f87171; }
+.c1-heart-icon { transform-origin: 60px 60px; transition: transform 0.09s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.12s ease; }
+.c1-heart-icon.beat:not(.arrested) { transform: scale(1.22); }
+.c1-wave-box, .c1-dlung-panel { contain: layout style paint; }
+.vg-status-chip.sync-wait { background: #c2410c !important; border-color: #fb923c !important; color: #ffffff !important; animation: pulseCrit 0.55s infinite; }
+
+.c1-dlung-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(186, 230, 253, 0.25);
+  text-align: center;
+}
+.c1-dlung-stats div { display: flex; flex-direction: column; line-height: 1.05; }
+.c1-dlung-stats span { font-size: 0.48rem; color: #bae6fd; opacity: 0.85; }
+.c1-dlung-stats strong { font-size: 0.72rem; color: #ffffff; font-weight: 900; }
+
+/* Coluna Direita da Tela: Modes + 3 Círculos Touch */
+.c1-ctrl-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 2px;
+  background: #10161c;
+  border-left: 1px solid #1f2d3a;
+}
+.c1-screen-btn {
+  width: 100%;
+  padding: 4px 3px;
+  border-radius: 4px;
+  border: 1px solid #334155;
+  background: #1a232d;
+  color: #e2e8f0;
+  font-size: 0.60rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.c1-screen-btn:hover { background: #263544; border-color: #38bdf8; }
+.c1-screen-btn.active { background: #0369a1; border-color: #38bdf8; color: #ffffff; }
+.c1-screen-btn.alarm { border-color: rgba(239, 68, 68, 0.55); color: #fca5a5; }
+.c1-dial-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #0d131a;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 2px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.14s ease;
+}
+.c1-dial-circle:hover { border-color: #4ade80; transform: scale(1.05); }
+.c1-dial-circle.active {
+  border-color: #4ade80;
+  background: #11241a;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.45);
+}
+.c1-dial-circle strong { font-size: 0.94rem; font-weight: 900; line-height: 1; }
+.c1-dial-circle small { font-size: 0.48rem; color: #94a3b8; font-weight: 700; margin-top: 2px; }
+
+.c1-screen-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  background: #141c24;
+  border-top: 1px solid #22303e;
+  font-size: 0.56rem;
+  color: #94a3b8;
+  font-weight: 700;
+}
+.c1-footer-status { color: #4ade80; font-weight: 800; }
+
+.c1-standby-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  background: rgba(8, 12, 16, 0.94);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 16px;
+}
+.c1-standby-overlay.hidden { display: none !important; }
+.c1-standby-overlay p { font-size: 0.72rem; color: #94a3b8; }
+
+/* Painel Lateral Direito de Hardware (Power + Grade 2x3 + Knob Verde Neon) */
+.c1-hw-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 4px;
+  background: rgba(15, 23, 30, 0.25);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.c1-power-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2.5px solid #4ade80;
+  background: #141c22;
+  color: #4ade80;
+  font-size: 1.0rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.45);
+}
+.c1-power-btn.off { border-color: #f59e0b; color: #f59e0b; box-shadow: none; }
+.c1-hw-leds { display: flex; gap: 6px; align-items: center; }
+.c1-led { width: 6px; height: 6px; border-radius: 50%; background: #334155; }
+.c1-led.green.on { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+.c1-led.amber.active { background: #facc15; box-shadow: 0 0 6px #facc15; }
+.c1-hw-keypad {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+.c1-hw-key {
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #475569;
+  background: #18212a;
+  color: #f1f5f9;
+  font-size: 0.62rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.c1-hw-key:hover { background: #263544; border-color: #38bdf8; }
+.c1-hw-key.silence.wide {
+  grid-column: 1 / -1;
+  background: #3a191c;
+  border-color: #ef4444;
+  color: #fecaca;
+}
+.c1-rotary-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.c1-rotary-knob {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: #141c22;
+  padding: 5px;
+  cursor: ns-resize;
+  user-select: none;
+  touch-action: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.16);
+}
+.c1-rotary-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid #22c55e;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.72), inset 0 0 8px rgba(34, 197, 94, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1e2933;
+}
+.c1-rotary-core {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #2c3844;
+  border: 1.5px solid #64748b;
+  transition: transform 0.14s ease-out;
+}
+.c1-rotary-notch {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3.5px;
+  height: 8px;
+  border-radius: 999px;
+  background: #4ade80;
+}
+.c1-rotary-lbl { font-size: 0.56rem; font-weight: 800; color: #e2e8f0; }
+
+/* Rodapé Branco + Placa Metálica HAMILTON MEDICAL */
+.c1-bottom-chin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 6px 2px;
+}
+.c1-chin-tag { font-size: 0.58rem; font-weight: 800; color: #64748b; letter-spacing: 0.04em; }
+.c1-brand-plate {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #b8c2cc, #94a3b8);
+  border: 1px solid #64748b;
+  box-shadow: inset 0 1px 0 #f1f5f9;
+  line-height: 1;
+}
+.c1-brand-plate strong { font-size: 0.68rem; font-weight: 900; color: #0f172a; letter-spacing: 0.06em; }
+.c1-brand-plate span { font-size: 0.50rem; font-weight: 800; color: #334155; letter-spacing: 0.14em; }
+
+/* === TEMA 2: MINI VENTILADOR PORTÁTIL APH / TRANSPORTE (Compacto Grafite + Amarelo Resgate) === */
+.c1-chassis[data-vent-model="mini-aph"] {
+  max-width: 500px;
+  justify-self: center;
+  background: linear-gradient(180deg, #334155 0%, #1e293b 65%, #0f172a 100%);
+  border-color: #facc15;
+  border-radius: 20px;
+  color: #f8fafc;
+}
+.c1-chassis[data-vent-model="mini-aph"] .c1-top-handle {
+  background: linear-gradient(180deg, #fde047, #eab308);
+  border-color: #ca8a04;
+}
+.c1-chassis[data-vent-model="mini-aph"] .c1-front-bezel {
+  background: linear-gradient(180deg, #1e293b, #0f172a);
+  border-color: rgba(250, 204, 21, 0.55);
+}
+.c1-chassis[data-vent-model="mini-aph"] .c1-model-tab.active { background: #eab308; border-color: #ca8a04; color: #0f172a; }
+.c1-chassis[data-vent-model="mini-aph"] .c1-mini-telemetry { display: flex; }
+.c1-chassis[data-vent-model="mini-aph"] .c1-dlung-panel { background: linear-gradient(180deg, #1e293b, #0f172a); border-color: #334155; }
+.c1-chassis[data-vent-model="mini-aph"] .c1-rotary-ring { border-color: #facc15; box-shadow: 0 0 12px rgba(250, 204, 21, 0.72); }
+.c1-chassis[data-vent-model="mini-aph"] .c1-chin-tag { color: #fde047; }
+.c1-chassis[data-vent-model="mini-aph"] .c1-brand-plate { background: #facc15; border-color: #ca8a04; }
+
+/* === TEMA 3: MINI VENTILADOR PORTÁTIL VNI / CPAP (Ultra-compacto Branco + Azul Clínico) === */
+.c1-chassis[data-vent-model="mini-vni"] {
+  max-width: 500px;
+  justify-self: center;
+  background: linear-gradient(180deg, #ffffff 0%, #e0f2fe 100%);
+  border-color: #38bdf8;
+  border-radius: 22px;
+}
+.c1-chassis[data-vent-model="mini-vni"] .c1-top-handle {
+  background: linear-gradient(180deg, #38bdf8, #0284c7);
+  border-color: #0369a1;
+}
+.c1-chassis[data-vent-model="mini-vni"] .c1-front-bezel {
+  background: linear-gradient(180deg, #0369a1, #0c4a6e);
+  border-color: #0284c7;
+}
+.c1-chassis[data-vent-model="mini-vni"] .c1-model-tab.active { background: #0284c7; border-color: #0369a1; color: #ffffff; }
+.c1-chassis[data-vent-model="mini-vni"] .c1-mini-telemetry { display: flex; border-color: rgba(56, 189, 248, 0.45); }
+.c1-chassis[data-vent-model="mini-vni"] .c1-mini-badge { color: #38bdf8; }
+.c1-chassis[data-vent-model="mini-vni"] .c1-rotary-ring { border-color: #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.72); }
+.c1-chassis[data-vent-model="mini-vni"] .c1-chin-tag { color: #0369a1; }
+.c1-chassis[data-vent-model="mini-vni"] .c1-brand-plate { background: linear-gradient(180deg, #0284c7, #0369a1); border-color: #075985; }
+.c1-chassis[data-vent-model="mini-vni"] .c1-brand-plate strong,
+.c1-chassis[data-vent-model="mini-vni"] .c1-brand-plate span { color: #ffffff; }
+
+@media (max-width: 1180px) {
+  .icu-grid .c1-chassis { grid-column: 1; grid-row: auto; width: 100%; }
+}
+
+/* === Unificação Visual: Botões do Menu Vias Aéreas com o mesmo estilo de Ícones SVG do Menu Clínico === */
+.ham-o2-device-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  padding: 2px !important;
+}
+.ham-o2-device-grid .o2-dev-tile,
+.ham-screen .o2-dev-tile,
+body.theme-light .ham-screen .o2-dev-tile {
+  position: relative !important;
+  overflow: hidden !important;
+  contain: layout style paint;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 16 / 9 !important;
+  padding: 2px 3px !important;
+  gap: 1px !important;
+  border-radius: 11px !important;
+  border: 2px solid transparent !important;
+  background: #141c17 !important;
+  color: #f4f7f5 !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease !important;
+}
+.ham-o2-device-grid .o2-dev-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.20) 50%, transparent 75%);
+  transform: translate3d(-130%, 0, 0);
+  transition: transform 0.48s ease;
+  pointer-events: none;
+}
+.ham-o2-device-grid .o2-dev-tile:hover::after { transform: translate3d(130%, 0, 0); }
+.ham-o2-device-grid .o2-dev-tile:hover,
+.ham-screen .o2-dev-tile:hover,
+body.theme-light .ham-screen .o2-dev-tile:hover {
+  transform: translate3d(0, -2px, 0) scale(1.03) !important;
+  border-color: transparent !important;
+  z-index: 10 !important;
+}
+.ham-o2-device-grid .o2-dev-tile:active { transform: scale(0.95) !important; }
+
+/* Ícone SVG vetorial protagonista (.sc-svg-primary + .sc-svg-accent) igual ao Menu Clínico */
+.ham-o2-device-grid .o2-tile-icon,
+.ham-screen .o2-tile-icon,
+body.theme-light .ham-screen .o2-tile-icon {
+  width: auto !important;
+  height: 58% !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 1 !important;
+  min-height: 0 !important;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease !important;
+}
+.ham-o2-device-grid .o2-tile-icon svg {
+  width: 100% !important;
+  height: 100% !important;
+  transform-origin: center;
+  animation: intSvgPulse 2.6s ease-in-out infinite;
+}
+.ham-o2-device-grid .o2-tile-icon .sc-svg-accent {
+  animation: intAccentBlink 2.2s ease-in-out infinite;
+}
+.ham-o2-device-grid .o2-dev-tile:hover .o2-tile-icon { transform: scale(1.10) !important; }
+
+/* Cores semânticas por nível de suporte de O₂ */
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="room_air"] .o2-tile-icon { color: #34d399 !important; }
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="nasal_cannula"] .o2-tile-icon,
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="venturi"] .o2-tile-icon { color: #38bdf8 !important; }
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="hudson_mask"] .o2-tile-icon,
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="non_rebreather"] .o2-tile-icon { color: #22d3ee !important; }
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="hfnc"] .o2-tile-icon { color: #2dd4bf !important; }
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="niv"] .o2-tile-icon { color: #a78bfa !important; }
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="bvm"] .o2-tile-icon { color: #fbbf24 !important; }
+.ham-o2-device-grid .o2-dev-tile[data-o2-device="ett_vm"] .o2-tile-icon { color: #f87171 !important; }
+
+.ham-o2-device-grid .o2-tile-text {
+  align-items: center !important;
+  text-align: center !important;
+  max-width: 100%;
+  line-height: 0.96 !important;
+}
+.ham-o2-device-grid .o2-tile-text strong {
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em;
+}
+.ham-o2-device-grid .o2-tile-text small {
+  font-size: 0.56rem !important;
+  font-weight: 800 !important;
+  opacity: 0.90;
+}
+
+/* Estado Ativo (mesmo destaque colorido + pulso compositor-only do Menu Clínico) */
+.ham-o2-device-grid .o2-dev-tile.active,
+.ham-screen .o2-dev-tile.active,
+body.theme-light .ham-screen .o2-dev-tile.active {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.55) !important;
+  animation: intUrgentScale 1.15s ease-in-out infinite !important;
+}
+.ham-o2-device-grid .o2-dev-tile.active .o2-tile-icon,
+.ham-screen .o2-dev-tile.active .o2-tile-icon,
+body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+}
+.ham-o2-device-grid .o2-dev-tile.active .o2-tile-icon svg { animation-duration: 1.05s !important; }
+
+/* Ícone SVG limpo no CTA Intubar & Acoplar à VM */
+.device-disconnected-overlay .ham-connect-cta {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  border-color: transparent !important;
+  border-radius: 10px !important;
+}
+.device-disconnected-overlay .ham-connect-cta:hover { transform: translate3d(0, -1.5px, 0) scale(1.04) !important; }
+.o2-cta-ico { display: inline-flex; width: 18px; height: 18px; }
+.o2-cta-ico svg { width: 100%; height: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .ham-o2-device-grid .o2-dev-tile,
+  .ham-o2-device-grid .o2-tile-icon svg,
+  .ham-o2-device-grid .o2-tile-icon .sc-svg-accent { animation: none !important; }
+}
+
+/* === TODOS OS 7 MENUS TOUCH & ANIMAÇÕES AVANÇADAS DO HAMILTON-C1 === */
+/* Lâmpada de Alarme 360° no topo da alça */
+.c1-alarm-lamp {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44%;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+  transition: background-color 0.2s ease;
+}
+.c1-alarm-lamp.warn { background: #facc15; box-shadow: 0 0 12px rgba(250, 204, 21, 0.85); animation: c1LampBlink 1.1s ease-in-out infinite; }
+.c1-alarm-lamp.crit { background: #ef4444; box-shadow: 0 0 14px rgba(239, 68, 68, 0.95); animation: c1LampBlink 0.55s ease-in-out infinite; }
+@keyframes c1LampBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.30; } }
+
+/* Animações avançadas Dynamic Lung: Diafragma, Broncoespasmo, Rigidez SDRA, Nebulização & Knob vivo */
+.c1-airway { transition: stroke 0.25s ease, stroke-width 0.25s ease; }
+.c1-dlung-panel.bronchospasm .c1-airway { stroke: #fb923c; stroke-width: 3.1; }
+.c1-dlung-panel.stiff .c1-lung-lobe { stroke: #fde047; stroke-width: 2.8; }
+.c1-diaphragm { transform-origin: 60px 84px; opacity: 0.45; transition: transform 0.16s ease-out, stroke 0.2s ease, opacity 0.2s ease; }
+.c1-dlung-panel.spont-trigger .c1-diaphragm { opacity: 1; stroke: #4ade80; transform: translateY(4px) scaleY(0.7); }
+.c1-heart-icon.arrested { animation: none !important; opacity: 0.35; fill: #64748b; }
+.c1-neb-mist { opacity: 0; fill: #67e8f9; pointer-events: none; }
+.c1-dlung-panel.nebulizing .c1-neb-mist { opacity: 0.9; animation: c1NebFloat 1.1s ease-in-out infinite; }
+@keyframes c1NebFloat { 0%, 100% { transform: translateY(0) scale(0.9); opacity: 0.4; } 50% { transform: translateY(5px) scale(1.18); opacity: 1; } }
+
+.c1-dlung-tag {
+  margin-top: 2px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.50rem;
+  font-weight: 900;
+  text-align: center;
+  animation: c1LampBlink 0.9s ease-in-out infinite;
+}
+.c1-dlung-tag.hidden { display: none !important; }
+.c1-chassis.c1-ventilating .c1-rotary-ring { animation: c1RingBreathe 1.8s ease-in-out infinite; }
+.c1-chassis.c1-alarm-warn .c1-rotary-ring { border-color: #facc15 !important; }
+.c1-chassis.c1-alarm-crit .c1-rotary-ring { border-color: #ef4444 !important; animation: c1LampBlink 0.65s ease-in-out infinite; }
+@keyframes c1RingBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+
+/* Botões do rodapé da tela do C1 */
+.c1-screen-footer { gap: 3px; padding: 3px 4px; }
+.c1-foot-tab {
+  flex: 1 1 0;
+  padding: 3px 4px;
+  border-radius: 4px;
+  border: 1px solid #263545;
+  background: #18222c;
+  color: #cbd5e1;
+  font-size: 0.56rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+.c1-foot-tab:hover { background: #223242; border-color: #38bdf8; color: #ffffff; }
+.c1-foot-tab.active, .c1-screen-btn.menu-open { background: #0284c7 !important; border-color: #38bdf8 !important; color: #ffffff !important; }
+
+/* Overlay Interno dos 7 Menus Touch */
+.c1-menu-overlay {
+  position: absolute;
+  top: 4px;
+  bottom: 28px;
+  left: 82px;
+  right: 80px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 17, 23, 0.97);
+  border: 1.5px solid #38bdf8;
+  border-radius: 7px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.72);
+  overflow: hidden;
+  animation: c1MenuPop 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.c1-menu-overlay.hidden { display: none !important; }
+@keyframes c1MenuPop { from { opacity: 0; transform: translateY(6px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.c1-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: #142230;
+  border-bottom: 1px solid #253b52;
+  font-size: 0.70rem;
+  font-weight: 900;
+  color: #7dd3fc;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.c1-menu-close {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 0.68rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.c1-menu-close:hover { background: #dc2626; border-color: #ef4444; }
+.c1-menu-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 6px 7px; }
+.c1-menu-pane { display: flex; flex-direction: column; gap: 6px; }
+.c1-menu-pane.hidden { display: none !important; }
+
+/* Menu 1: Modes */
+.c1-modes-grid { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.c1-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #2a3c4e;
+  background: #131e29;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+.c1-mode-card strong { font-size: 0.74rem; font-weight: 900; color: #ffffff; }
+.c1-mode-card small { font-size: 0.56rem; color: #94a3b8; }
+.c1-mode-card:hover { background: #1b2d3e; border-color: #38bdf8; }
+.c1-mode-card.active { background: #0369a1; border-color: #38bdf8; }
+.c1-mode-card.active small { color: #e0f2fe; }
+
+/* Menu 2 & 3: Controls & Alarms Sliders */
+.c1-ctrl-sliders { display: flex; flex-direction: column; gap: 5px; }
+.c1-ctrl-sliders label { display: flex; flex-direction: column; gap: 2px; font-size: 0.60rem; color: #cbd5e1; }
+.c1-ctrl-sliders label span { display: flex; justify-content: space-between; align-items: center; }
+.c1-ctrl-sliders label i { font-style: normal; font-weight: 900; color: #4ade80; }
+.c1-ctrl-sliders input[type="range"] { width: 100%; height: 4px; accent-color: #38bdf8; cursor: pointer; }
+.c1-action-pill {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #0284c7;
+  background: #0369a1;
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.c1-action-pill:hover { background: #0284c7; }
+.c1-action-pill.warn { background: #b45309; border-color: #f59e0b; }
+
+.c1-alarm-list { display: flex; flex-direction: column; gap: 3px; max-height: 64px; overflow-y: auto; }
+.c1-alarm-ok { padding: 4px 6px; border-radius: 4px; background: rgba(22, 163, 74, 0.16); color: #86efac; font-size: 0.58rem; font-weight: 800; }
+.c1-alarm-item { padding: 3px 6px; border-radius: 4px; font-size: 0.58rem; font-weight: 800; }
+.c1-alarm-item.crit { background: rgba(220, 38, 38, 0.28); color: #fecaca; border-left: 3px solid #ef4444; }
+.c1-alarm-item.warn { background: rgba(217, 119, 6, 0.25); color: #fde68a; border-left: 3px solid #f59e0b; }
+
+/* Menu 4: Monitoring */
+.c1-mon-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.c1-mon-cell { display: flex; flex-direction: column; padding: 4px 5px; border-radius: 5px; background: #121d27; border: 1px solid #223446; }
+.c1-mon-cell span { font-size: 0.50rem; color: #94a3b8; }
+.c1-mon-cell strong { font-size: 0.74rem; color: #f8fafc; font-weight: 900; }
+.c1-mon-cell.warn strong { color: #facc15; }
+.c1-mon-cell.crit strong { color: #f87171; }
+
+/* Menu 5: Tools */
+.c1-tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.c1-tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 7px;
+  border-radius: 6px;
+  border: 1px solid #2c4054;
+  background: #14212d;
+  color: #f1f5f9;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+.c1-tool-btn strong { font-size: 0.64rem; font-weight: 900; }
+.c1-tool-btn small { font-size: 0.52rem; color: #94a3b8; }
+.c1-tool-btn:hover { background: #1e3245; border-color: #38bdf8; }
+.c1-tool-btn.accent { background: #0c4a6e; border-color: #38bdf8; }
+
+/* Menu 6: Events */
+.c1-events-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 0.56rem; color: #cbd5e1; }
+.c1-events-list li { padding: 3px 5px; border-radius: 4px; background: #121c26; border-left: 2px solid #38bdf8; line-height: 1.25; }
+.c1-events-list li b { color: #7dd3fc; margin-right: 4px; }
+
+/* Menu 7: System & Auto-Teste */
+.c1-sys-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; font-size: 0.56rem; }
+.c1-sys-info div { display: flex; flex-direction: column; padding: 4px 5px; border-radius: 5px; background: #121d27; border: 1px solid #223446; }
+.c1-sys-info span { color: #94a3b8; font-size: 0.50rem; }
+.c1-sys-info strong { color: #f8fafc; font-size: 0.64rem; }
+.c1-sys-info strong.ok { color: #4ade80; }
+.c1-selftest-box { display: flex; flex-direction: column; gap: 3px; }
+.c1-selftest-bar { height: 7px; border-radius: 999px; background: #1e293b; overflow: hidden; }
+.c1-selftest-bar span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #0284c7, #22c55e); transition: width 0.25s ease; }
+.c1-selftest-meta { display: flex; justify-content: space-between; font-size: 0.54rem; color: #94a3b8; }
+
+/* === Overlay de Vias Aéreas (device-disconnected-overlay) no Visor do HAMILTON-C1 === */
+.c1-disconnected-overlay {
+  inset: 4px !important;
+  z-index: 14 !important;
+  padding: 6px 8px !important;
+  gap: 5px !important;
+  border-radius: 6px !important;
+}
+.c1-disconnected-overlay .ham-disc-title h3 { font-size: 0.78rem !important; }
+.c1-disconnected-overlay .airway-pill { font-size: 0.62rem !important; padding: 2px 7px !important; }
+.c1-disconnected-overlay .ham-connect-cta { padding: 4px 9px !important; font-size: 0.68rem !important; }
+.c1-disconnected-overlay .o2-therapy-box,
+body.theme-light .c1-disconnected-overlay .o2-therapy-box {
+  background: #0f172a !important;
+  border-color: rgba(56, 189, 248, 0.42) !important;
+  color: #f8fafc !important;
+  padding: 5px 6px !important;
+  gap: 5px !important;
+}
+.c1-disconnected-overlay .o2-head-row,
+.c1-disconnected-overlay .o2-flow-lbl,
+body.theme-light .c1-disconnected-overlay .o2-head-row,
+body.theme-light .c1-disconnected-overlay .o2-flow-lbl {
+  color: #e2e8f0 !important;
+  font-size: 0.68rem !important;
+}
+.c1-disconnected-overlay .o2-active-icon,
+body.theme-light .c1-disconnected-overlay .o2-active-icon {
+  width: 24px !important;
+  height: 24px !important;
+  background: #082f49 !important;
+  border-color: #0284c7 !important;
+  color: #38bdf8 !important;
+}
+.c1-disconnected-overlay .o2-fio2-chip,
+body.theme-light .c1-disconnected-overlay .o2-fio2-chip {
+  background: #082f49 !important;
+  border-color: #0284c7 !important;
+  color: #7dd3fc !important;
+  font-size: 0.68rem !important;
+  padding: 2px 6px !important;
+}
+.c1-disconnected-overlay .ham-o2-device-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+}
+.c1-disconnected-overlay .o2-hint-lg,
+body.theme-light .c1-disconnected-overlay .o2-hint-lg {
+  font-size: 0.64rem !important;
+  color: #cbd5e1 !important;
+  line-height: 1.2 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c1-alarm-lamp, .c1-heart-icon, .c1-neb-mist, .c1-dlung-tag, .c1-rotary-ring { animation: none !important; }
+}
+
+/* === BEDSIDE SUPERPOWERS: POCUS, MODO PLANTÃO CEGO, CARRINHO DE PARADA & DEBRIEFING === */
+body.blind-case-mode #patientStatusBtns { display: none !important; }
+.blind-case-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: 8px 12px; margin-top: 4px; border-radius: 9px;
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.25), rgba(14, 165, 233, 0.18));
+  border: 1.5px solid rgba(167, 139, 250, 0.55);
+}
+.blind-case-banner.hidden { display: none !important; }
+.blind-case-lead { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 220px; }
+.blind-pill {
+  padding: 3px 9px; border-radius: 999px; background: #7c3aed; color: #ffffff;
+  font-size: 0.68rem; font-weight: 900; letter-spacing: 0.04em; white-space: nowrap;
+}
+.blind-case-lead p { margin: 0; font-size: 0.84rem; font-weight: 700; color: var(--text-main); line-height: 1.3; }
+.blind-case-actions { display: flex; gap: 6px; }
+
+/* POCUS Modal */
+.pocus-modal-card { max-width: 520px !important; }
+.pocus-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+.pocus-tab {
+  padding: 7px 6px; border-radius: 8px; border: 1px solid var(--border-strong);
+  background: var(--bg-card); color: var(--text-main); font-size: 0.74rem; font-weight: 800; cursor: pointer;
+}
+.pocus-tab.active { background: #0284c7; border-color: #38bdf8; color: #ffffff; }
+.pocus-stage { background: #05080c; border-radius: 10px; border: 1.5px solid #1e293b; overflow: hidden; display: flex; justify-content: center; }
+#pocusCanvas { width: 100%; max-width: 440px; height: auto; display: block; }
+.pocus-report { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; padding: 9px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border-subtle); }
+body.theme-light .pocus-report { background: #f8fafc; }
+.pocus-report p { margin: 0; font-size: 0.82rem; line-height: 1.35; color: var(--text-main); }
+.pocus-badge { padding: 3px 8px; border-radius: 999px; font-size: 0.66rem; font-weight: 900; white-space: nowrap; }
+.pocus-badge.ok { background: #16a34a; color: #ffffff; }
+.pocus-badge.good { background: #0284c7; color: #ffffff; }
+.pocus-badge.warn { background: #d97706; color: #ffffff; }
+.pocus-badge.crit { background: #dc2626; color: #ffffff; }
+
+/* Carrinho de Parada (Crash Cart Ampolas) */
+.cart-modal-card { max-width: 620px !important; }
+.crash-cart-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 580px) { .crash-cart-grid { grid-template-columns: repeat(2, 1fr); } }
+.amp-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 9px 6px; border-radius: 11px; border: 1.5px solid transparent;
+  background: var(--bg-card); color: var(--text-main); cursor: pointer; text-align: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+.amp-card:hover { transform: translateY(-2px) scale(1.03); border-color: var(--amp-col, #38bdf8); }
+.amp-card:active, .amp-card.just-given { transform: scale(0.94); border-color: #4ade80; }
+.amp-badge {
+  position: absolute; top: 5px; right: 6px; min-width: 18px; height: 18px; padding: 0 4px;
+  border-radius: 999px; background: var(--amp-col, #0284c7); color: #ffffff;
+  font-size: 0.64rem; font-weight: 900; display: inline-flex; align-items: center; justify-content: center;
+}
+.amp-badge.hidden { display: none; }
+.amp-vial {
+  width: 24px; height: 34px; border-radius: 5px 5px 7px 7px; border: 2px solid rgba(255, 255, 255, 0.45);
+  background: linear-gradient(180deg, rgba(255,255,255,0.16) 0 32%, var(--amp-col, #0284c7) 32% 100%);
+  position: relative; margin-top: 4px;
+}
+.amp-vial i {
+  position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+  width: 10px; height: 6px; border-radius: 3px 3px 0 0; background: var(--amp-col, #0284c7);
+}
+.amp-card strong { font-size: 0.78rem; font-weight: 900; }
+.amp-card small { font-size: 0.66rem; color: var(--amp-col, #38bdf8); font-weight: 800; }
+.amp-card em { font-style: normal; font-size: 0.60rem; color: var(--text-muted); line-height: 1.1; }
+
+/* Debriefing Modal (Nota 0-100 + Timeline) */
+.debrief-modal-card { max-width: 600px !important; }
+.debrief-hero { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); margin-bottom: 10px; }
+.debrief-score {
+  width: 68px; height: 68px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 2.0rem; font-weight: 900; color: #ffffff; flex-shrink: 0;
+}
+.debrief-score.ok { background: #16a34a; }
+.debrief-score.good { background: #0284c7; }
+.debrief-score.warn { background: #d97706; }
+.debrief-score.crit { background: #dc2626; }
+.debrief-hero-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.debrief-hero-meta strong { font-size: 0.94rem; }
+.debrief-hero-meta p { margin: 0; font-size: 0.74rem; color: var(--text-muted); line-height: 1.3; }
+.debrief-chart-wrap { background: #09111a; border-radius: 9px; border: 1px solid #1e293b; padding: 6px 8px; margin-bottom: 10px; }
+.debrief-legend { display: flex; gap: 12px; font-size: 0.66rem; font-weight: 800; margin-bottom: 4px; }
+#debriefCanvas { width: 100%; height: auto; display: block; }
+.debrief-cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
+.debrief-box { padding: 8px 10px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-subtle); }
+.debrief-box h4 { margin: 0 0 5px; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; color: #4ade80; }
+.debrief-box.warn h4 { color: #fb923c; }
+.debrief-box ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.72rem; }
+.debrief-tl { max-height: 120px; overflow-y: auto; }
+.debrief-tl li.good { color: #4ade80; }
+.debrief-tl li.bad { color: #f87171; }
+.debrief-tl li b { color: #38bdf8; margin-right: 4px; }

@@ -123,7 +123,12 @@
       });
       const rh = clone.querySelector('[data-resize-target]');
       if (rh) rh.setAttribute('data-resize-target', resizeTarget || `pump${idSuffix}`);
-      src.insertAdjacentElement('afterend', clone);
+      const sideDock = document.getElementById('sidePump1Dock');
+      if (sideDock) {
+        sideDock.appendChild(clone);
+      } else {
+        src.insertAdjacentElement('afterend', clone);
+      }
       return clone;
     }
 
@@ -1035,7 +1040,9 @@
       const dropEnabled = ch.dropSensorOn !== false;
       const isInfusing = ((ch.running && !ch.occluded && flowMlH > 0) || (ch.bolusTimer > 0 && !ch.occluded));
       const isBolus = ch.bolusTimer > 0 && !ch.occluded;
-      const animDur = Math.max(0.45, Math.min(1.5, 1.4 - Math.min(40, flowMlH) * 0.022));
+      const effAnimFlow = isBolus ? Math.max(flowMlH, 120) : flowMlH;
+      const animDur = isBolus ? 0.42 : Math.max(0.46, Math.min(1.45, 1.42 - Math.min(45, effAnimFlow) * 0.021));
+      const durStr = `${animDur.toFixed(2)}s`;
 
       const chassis = this.chassisEl;
       const dropAnim = this._el('icatuDropAnim');
@@ -1044,16 +1051,24 @@
       const sensorBtn = this._el('icatuSensorBtn');
 
       if (chassis) {
-        chassis.style.setProperty('--icatu-anim-dur', `${animDur.toFixed(2)}s`);
+        if (this._lastAnimDur !== durStr) {
+          this._lastAnimDur = durStr;
+          chassis.style.setProperty('--icatu-anim-dur', durStr);
+        }
         chassis.classList.toggle('infusing', isInfusing);
         chassis.classList.toggle('bolus', isBolus);
         chassis.classList.toggle('occluding', Boolean(ch.occluded));
       }
-      if (dropAnim) dropAnim.classList.toggle('infusing', isInfusing && dropEnabled);
+      if (dropAnim) {
+        dropAnim.classList.toggle('infusing', isInfusing && dropEnabled);
+        dropAnim.classList.toggle('bolus', isBolus && dropEnabled);
+        dropAnim.classList.toggle('occluding', Boolean(ch.occluded));
+      }
       if (runLed) runLed.classList.toggle('active', isInfusing);
       if (occLed) occLed.classList.toggle('active', Boolean(ch.occluded));
       if (sensorBtn) {
         sensorBtn.classList.toggle('infusing', isInfusing && dropEnabled);
+        sensorBtn.classList.toggle('bolus', isBolus && dropEnabled);
         sensorBtn.classList.toggle('occluding', Boolean(ch.occluded));
       }
     }

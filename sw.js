@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uticomed-v2-47208c0806';
+const CACHE_NAME = 'uticomed-v2-14d5ef51dc';
 const ASSETS = [
   './',
   './index.html',
@@ -9,12 +9,12 @@ const ASSETS = [
   './physiology.js',
   './audio.js',
   './monitor.js',
-  './ventilator.js',
   './defib.js',
   './pump.js',
   './sg1.js',
   './slides.js',
   './features.js',
+  './bedside.js',
   './app.js',
 ];
 

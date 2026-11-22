@@ -22,12 +22,12 @@ JS_ORDER_FULL = [
     'physiology.js',
     'audio.js',
     'monitor.js',
-    'ventilator.js',
     'defib.js',
     'pump.js',
     'sg1.js',
     'slides.js',
     'features.js',
+    'bedside.js',
     'app.js',
 ]
 JS_ORDER_SIM = [f for f in JS_ORDER_FULL if f != 'slides.js']

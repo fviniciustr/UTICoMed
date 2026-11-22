@@ -38,6 +38,22 @@
     svt_unstable: {"id":"svt_unstable","name":"Taquicardia Supraventricular (TSV)","severity":"moderate","severityLabel":"MODERADO-GRAVE","subtitle":"QRS estreito regular (FC 188 bpm) + Enchimento diastólico reduzido","guidance":"TSV por reentrada nodal com frequência de 188 bpm encurta a diástole e reduz o débito cardíaco. Conduta: manobra vagal / Adenosina 6 mg EV rápido se estável; se houver hipotensão, dor torácica ou rebaixamento, realize cardioversão sincronizada (50–100 J) no Vivo Gold.","patient":{"compliance":56,"resistance":7,"shunt":0.08,"vco2":230,"baseExcess":-3,"intrinsicDrive":20,"temp":36.7,"lactate":2.6},"cardiac":{"baseHr":188,"baseSbp":88,"baseDbp":58,"preload":0.85,"svr":1.12,"contractility":0.88,"rhythm":"svt","stDeviation":-0.4,"ectopyProb":0.02},"ventDefaults":{"vtSet":440,"pcSet":13,"psSet":10,"fio2Set":45}},
     pea_arrest: {"id":"pea_arrest","name":"PCR • AESP","severity":"critical","severityLabel":"EMERGÊNCIA PCR","subtitle":"Atividade elétrica organizada sem pulso • Ritmo não chocável","guidance":"Atividade Elétrica Sem Pulso (AESP): há traçado elétrico organizado no monitor, porém sem contração mecânica efetiva (PAI plana, EtCO₂ < 10 mmHg). Conduta: RCP contínua imediata + Adrenalina 1 mg EV precoce e investigar/tratar causas reversíveis (5Hs e 5Ts). NÃO desfibrilar AESP.","patient":{"compliance":46,"resistance":9,"shunt":0.3,"vco2":200,"baseExcess":-10,"intrinsicDrive":0,"temp":36.2,"lactate":7.5,"arrested":true},"cardiac":{"baseHr":58,"baseSbp":14,"baseDbp":10,"preload":0.45,"svr":0.55,"contractility":0.0,"rhythm":"pea","ectopyProb":0.0},"ventDefaults":{"rrSet":10,"fio2Set":100,"flowSet":50,"inspPausePct":0}},
     ards_prone_severe: {"id":"ards_prone_severe","name":"SDRA Extrema (Hipoxemia Refrat.)","severity":"critical","severityLabel":"CRÍTICO","subtitle":"Complacência crítica (20 mL/cmH₂O) + Shunt 42% + Necessidade de Prona","guidance":"SDRA gravíssima com pulmão de bebê (\"baby lung\"), complacência de 20 mL/cmH₂O e shunt intrapulmonar de 42%. Conduta: ventilação ultraprotetora (Vt 4–6 mL/kg, Pplatô ≤ 30, Driving Pressure < 15), PEEP titulada (12–16 cmH₂O), bloqueio neuromuscular e posição prona precoce.","patient":{"compliance":20,"resistance":12,"shunt":0.42,"baseExcess":-6,"intrinsicDrive":24,"temp":37.9,"lactate":3.4},"cardiac":{"baseHr":118,"baseSbp":102,"baseDbp":64,"preload":0.95,"svr":1.05,"contractility":0.88},"ventDefaults":{"mode":"PCV","vtSet":380,"pcSet":18,"psSet":14,"rrSet":24,"peepSet":14,"fio2Set":100,"flowSet":50,"tiSet":0.9}},
+    stemi_anterior: {"id":"stemi_anterior","name":"IAMCSST Anterior Extenso","severity":"critical","severityLabel":"CRÍTICO","subtitle":"Supradesnivelamento ST (+4.2 mm) + Disfunção aguda de VE + Risco de FV","guidance":"Infarto agudo com supra de ST extenso em parede anterior eleva risco de arritmias ventriculares malignas (FV) e choque cardiogênico. Conduta: Trombólise / reperfusão imediata, Nitroglicerina se PA permitir, O₂ apenas se SpO₂ < 90% e evitar excesso de catecolaminas.","patient":{"compliance":42,"resistance":8,"shunt":0.16,"vco2":220,"baseExcess":-4,"intrinsicDrive":20,"temp":36.6,"lactate":3.4},"cardiac":{"baseHr":108,"baseSbp":92,"baseDbp":58,"preload":1.08,"svr":1.24,"contractility":0.68,"rhythm":"stemi","stDeviation":4.2,"ectopyProb":0.12},"ventDefaults":{"vtSet":440,"pcSet":14,"peepSet":6,"fio2Set":40}},
+    torsades_qt: {"id":"torsades_qt","name":"Torsades de Pointes (QT Longo)","severity":"critical","severityLabel":"EMERGÊNCIA PCR","subtitle":"TV polimórfica em pontas torcidas • Desfibrilar + Sulfato de Magnésio 2g","guidance":"Torsades de Pointes é uma taquicardia ventricular polimórfica associada a QT longo que evolui rapidamente sem perfusão. Conduta: Desfibrilação não sincronizada imediata + Sulfato de Magnésio 2g EV em bolus; evitar Amiodarona (prolonga ainda mais o QT).","patient":{"compliance":54,"resistance":7,"shunt":0.14,"vco2":210,"baseExcess":-6,"intrinsicDrive":0,"temp":36.6,"lactate":4.6,"arrested":true},"cardiac":{"baseHr":0,"baseSbp":16,"baseDbp":10,"preload":0.6,"svr":0.7,"contractility":0.0,"rhythm":"torsades","stDeviation":0.0,"ectopyProb":0.0},"ventDefaults":{"rrSet":12,"fio2Set":100,"inspPausePct":0}},
+    wpw_preexcited: {"id":"wpw_preexcited","name":"Síndrome de WPW Pré-Excitada","severity":"severe","severityLabel":"GRAVE","subtitle":"PR curto + Onda Delta (FC 148 bpm) • Evitar bloqueadores nodais!","guidance":"Pré-excitação ventricular por via acessória (WPW) com taquicardia sintomática. Conduta: Cardioversão elétrica sincronizada se instável. ARMADILHA CLÁSSICA: NÃO administrar Adenosina em WPW/FA pré-excitada — bloqueio do nó AV desvia condução pela via acessória e pode precipitar FV!","patient":{"compliance":56,"resistance":7,"shunt":0.08,"vco2":225,"baseExcess":-2,"intrinsicDrive":20,"temp":36.8,"lactate":2.4},"cardiac":{"baseHr":148,"baseSbp":88,"baseDbp":56,"preload":0.88,"svr":1.10,"contractility":0.86,"rhythm":"wpw","stDeviation":-0.4,"ectopyProb":0.06},"ventDefaults":{"vtSet":440,"fio2Set":40}},
+    tce_cushing: {"id":"tce_cushing","name":"TCE Grave • Tríade de Cushing","severity":"critical","severityLabel":"CRÍTICO","subtitle":"Hipertensão (196/108) + Bradicardia (46 bpm) + Hipoventilação (PIC alta)","guidance":"Hipertensão intracraniana grave manifesta pela Tríade de Cushing clássica (hipertensão arterial, bradicardia e depressão respiratória). Conduta: SRI cardioestável (Etomidato), acoplar à VM mantendo normocapnia rigorosa (PaCO₂ 35–38 mmHg), evitar hipóxia e evitar hipotensão (PAM ≥ 80).","patient":{"compliance":56,"resistance":7,"shunt":0.10,"vco2":210,"baseExcess":-2,"intrinsicDrive":7,"temp":37.8,"lactate":2.5},"cardiac":{"baseHr":46,"baseSbp":196,"baseDbp":108,"preload":1.02,"svr":1.52,"contractility":0.95,"rhythm":"sinus_brady","stDeviation":0.0,"ectopyProb":0.03},"ventDefaults":{"vtSet":450,"rrSet":16,"peepSet":5,"fio2Set":60}},
+    neurogenic_shock: {"id":"neurogenic_shock","name":"Choque Neurogênico (TRM Alto)","severity":"severe","severityLabel":"GRAVE","subtitle":"Vasoplegia aguda (74/42) + Bradicardia paradoxal (48 bpm)","guidance":"Trauma raquimedular acima de T6 interrompe o tônus simpático, produzindo hipotensão severa (RVS 0.48) acompanhada de bradicardia paradoxal por predomínio vagal. Conduta: expansão volêmica inicial + Noradrenalina contínua (alvo PAM ≥ 85 mmHg para perfusão medular) + Atropina se bradicardia sintomática.","patient":{"compliance":54,"resistance":7,"shunt":0.10,"vco2":195,"baseExcess":-5,"intrinsicDrive":12,"temp":35.6,"lactate":3.6},"cardiac":{"baseHr":48,"baseSbp":74,"baseDbp":42,"preload":0.76,"svr":0.48,"contractility":0.92,"rhythm":"sinus_brady","stDeviation":0.0,"ectopyProb":0.02},"ventDefaults":{"vtSet":440,"rrSet":14,"peepSet":5,"fio2Set":40}},
+    betablocker_od: {"id":"betablocker_od","name":"Intoxicação por Betabloqueador","severity":"critical","severityLabel":"CRÍTICO","subtitle":"BAV 2º Grau Mobitz II (38 bpm) + Choque Cardiogênico (68/40) + Acidose","guidance":"Superdosagem de betabloqueador / bloqueador de canal de cálcio provoca bradicardia refratária, bloqueio AV e grave depressão inotrópica. Conduta: Adrenalina/Dobutamina em bomba, Gluconato de Cálcio 10% EV, volume cauteloso e Marcapasso Transcutâneo no Vivo Gold.","patient":{"compliance":48,"resistance":9,"shunt":0.14,"vco2":185,"baseExcess":-7,"intrinsicDrive":12,"temp":36.0,"lactate":4.6},"cardiac":{"baseHr":38,"baseSbp":68,"baseDbp":40,"preload":0.94,"svr":0.78,"contractility":0.56,"rhythm":"av_block_2_m2","stDeviation":-0.5,"ectopyProb":0.07},"ventDefaults":{"vtSet":440,"rrSet":14,"peepSet":5,"fio2Set":60}},
+    thyroid_storm: {"id":"thyroid_storm","name":"Tempestade Tireotóxica","severity":"severe","severityLabel":"GRAVE","subtitle":"Hipertermia (40.4 °C) + FA Alta (162 bpm) + Hipermetabolismo (VCO₂ 340)","guidance":"Crise tireotóxica gera hipermetabolismo extremo (VCO₂ 340 mL/min, febre > 40 °C), FA de alta resposta e risco de insuficiência cardíaca de alto débito. Conduta: controle de frequência cardíaca (Amiodarona/Cardioversão se instável), suporte ventilatório com volume-minuto elevado e hidratação.","patient":{"compliance":54,"resistance":8,"shunt":0.12,"vco2":340,"baseExcess":-4,"intrinsicDrive":26,"temp":40.4,"lactate":3.6},"cardiac":{"baseHr":162,"baseSbp":158,"baseDbp":72,"preload":0.95,"svr":0.76,"contractility":1.25,"rhythm":"afib_rvr","stDeviation":-0.8,"ectopyProb":0.09},"ventDefaults":{"vtSet":460,"rrSet":22,"peepSet":5,"fio2Set":60,"flowSet":55}},
+    myasthenic_crisis: {"id":"myasthenic_crisis","name":"Crise Miastênica (Hipoventilação)","severity":"moderate","severityLabel":"MODERADO-GRAVE","subtitle":"Pulmão normal (C 58 / R 7) + Fraqueza diafragmática (Drive 5 irpm)","guidance":"Insuficiência respiratória puramente neuromuscular: mecânica pulmonar normal, porém fraqueza muscular gera hipoventilação progressiva, hipercapnia e acidose respiratória (atenção ao pH caindo!). Conduta: VNI (BiPAP) precoce ou intubação eletiva + VM controlada antes da fadiga total / PCR.","patient":{"compliance":58,"resistance":7,"shunt":0.06,"vco2":220,"baseExcess":0,"intrinsicDrive":5,"temp":36.8,"lactate":1.8},"cardiac":{"baseHr":106,"baseSbp":128,"baseDbp":78,"preload":0.96,"svr":1.08,"contractility":0.96,"rhythm":"sinus_tach","stDeviation":0.0,"ectopyProb":0.02},"ventDefaults":{"vtSet":450,"rrSet":14,"peepSet":5,"fio2Set":35}},
+    myxedema_coma: {"id":"myxedema_coma","name":"Coma Mixedematoso (Endócrino)","severity":"critical","severityLabel":"CRÍTICO","subtitle":"Hipotermia grave (33.2 °C) + Bradicardia (44 bpm) + Hipoventilação central","guidance":"Descompensação extrema do hipotireoidismo com hipotermia severa, hipoventilação central (hipercapnia progressiva), bradicardia e choque cardiogênico-vasoplégico. Conduta: Reaquecimento ativo gradual, proteção de via aérea + VM, Noradrenalina se PAM < 65 e reposição hormonal (Levotiroxina + Hidrocortisona EV).","patient":{"compliance":52,"resistance":8,"shunt":0.12,"vco2":155,"baseExcess":-4,"intrinsicDrive":6,"temp":33.2,"lactate":3.4},"cardiac":{"baseHr":44,"baseSbp":82,"baseDbp":50,"preload":0.86,"svr":0.92,"contractility":0.72,"rhythm":"sinus_brady","stDeviation":-0.3,"ectopyProb":0.05},"ventDefaults":{"vtSet":440,"rrSet":14,"peepSet":5,"fio2Set":50}},
+    adrenal_crisis: {"id":"adrenal_crisis","name":"Crise Adrenal Aguda (Endócrino)","severity":"critical","severityLabel":"CRÍTICO","subtitle":"Choque refratário (68/40) + Vasoplegia + Acidose metabólica + Febre","guidance":"Insuficiência adrenal aguda gera choque distributivo-hipovolêmico resistente a catecolaminas por perda de sensibilidade vascular aos receptores adrenérgicos, além de hiponatremia, hipoglicemia e acidose. Conduta: expansão volêmica vigorosa com SF 0,9%, Hidrocortisona 100 mg EV imediata e Noradrenalina/Vasopressina.","patient":{"compliance":54,"resistance":7,"shunt":0.12,"vco2":230,"baseExcess":-9,"intrinsicDrive":22,"temp":38.4,"lactate":4.8},"cardiac":{"baseHr":126,"baseSbp":68,"baseDbp":40,"preload":0.62,"svr":0.56,"contractility":0.86,"rhythm":"sinus_tach","stDeviation":-0.5,"ectopyProb":0.05},"ventDefaults":{"vtSet":440,"rrSet":18,"peepSet":5,"fio2Set":50}},
+    hhs_hyperosmolar: {"id":"hhs_hyperosmolar","name":"Estado Hiperosmolar • EHH (Endócrino)","severity":"severe","severityLabel":"GRAVE","subtitle":"Desidratação extrema (Pré-carga 0.52) + Taquicardia (132) + Hipoperfusão","guidance":"Estado Hiperglicêmico Hiperosmolar (glicemia > 600 mg/dL, osmolaridade > 320 mOsm/kg) causa diurese osmótica maciça, déficit hídrico severo (8–10 L), hipotensão e rebaixamento de consciência sem cetoacidose grave. Conduta: expansão volêmica vigorosa com SF 0,9%, proteção de via aérea se coma e insulina/K⁺ graduais.","patient":{"compliance":56,"resistance":7,"shunt":0.09,"vco2":220,"baseExcess":-5,"intrinsicDrive":18,"temp":37.6,"lactate":4.2},"cardiac":{"baseHr":132,"baseSbp":78,"baseDbp":48,"preload":0.52,"svr":1.34,"contractility":0.92,"rhythm":"sinus_tach","stDeviation":-0.4,"ectopyProb":0.04},"ventDefaults":{"vtSet":450,"rrSet":16,"peepSet":5,"fio2Set":40}},
+    pheochromocytoma_crisis: {"id":"pheochromocytoma_crisis","name":"Crise de Feocromocitoma (Endócrino)","severity":"critical","severityLabel":"CRÍTICO","subtitle":"PA 226/132 mmHg + Descarga adrenérgica (FC 144 bpm) + Isquemia ST","guidance":"Liberação maciça de catecolaminas desencadeia emergência hipertensiva extrema (RVS 1.72), taquicardia severa, ectopias e risco de EAP/AVC/FV. Conduta: vasodilatador titulável imediato em bomba (Nitroprussiato / alfa-bloqueio) para reduzir PA com segurança. ARMADILHA: evitar betabloqueio isolado sem alfa-bloqueio prévio!","patient":{"compliance":42,"resistance":9,"shunt":0.14,"vco2":285,"baseExcess":-4,"intrinsicDrive":24,"temp":38.2,"lactate":3.9},"cardiac":{"baseHr":144,"baseSbp":226,"baseDbp":132,"preload":1.08,"svr":1.72,"contractility":1.18,"rhythm":"sinus_tach","stDeviation":-1.4,"ectopyProb":0.14},"ventDefaults":{"vtSet":440,"rrSet":18,"peepSet":6,"fio2Set":50}},
+    eclampsia_hellp: {"id":"eclampsia_hellp","name":"Eclâmpsia / Sínd. HELLP (Obstetrícia)","severity":"critical","severityLabel":"CRÍTICO","subtitle":"PA 204/118 mmHg + Vasoespasmo + Hipermetabolismo convulsivo • MgSO₄","guidance":"Emergência hipertensiva gestacional com risco de convulsão eclâmptica, AVC hemorrágico, rotura hepática (HELLP) e edema pulmonar. Conduta: Sulfato de Magnésio EV imediato (droga de escolha contra convulsões), vasodilatador titulável para PA < 160/110 e restrição hídrica (evitar EAP). Contraindicação absoluta à trombólise!","patient":{"label":"Gestante • 68 kg (PBW)","weightKg":68,"compliance":42,"resistance":9,"shunt":0.14,"vco2":275,"baseExcess":-5,"intrinsicDrive":22,"temp":37.6,"lactate":3.8},"cardiac":{"baseHr":122,"baseSbp":204,"baseDbp":118,"preload":1.12,"svr":1.62,"contractility":1.04,"rhythm":"sinus_tach","stDeviation":-0.7,"ectopyProb":0.06},"ventDefaults":{"vtSet":410,"rrSet":18,"peepSet":6,"fio2Set":55}},
+    postpartum_hemorrhage: {"id":"postpartum_hemorrhage","name":"Hemorragia Pós-Parto • HPP (Obstetrícia)","severity":"critical","severityLabel":"CRÍTICO","subtitle":"Choque hemorrágico grau IV (Pré-carga 0.44) + PA 64/38 + Acidose lática","guidance":"Principal causa de morte materna aguda (atonia uterina / laceração). Perda sanguínea maciça derruba rapidamente pré-carga e débito cardíaco. Conduta: protocolo de transfusão maciça (Concentrado de Hemácias imediato), expansão volêmica aquecida, uterotônicos/ácido tranexâmico e Noradrenalina ponte se PAM < 65. NUNCA trombolisar!","patient":{"label":"Puérpera • 66 kg (PBW)","weightKg":66,"compliance":56,"resistance":6,"shunt":0.09,"vco2":215,"baseExcess":-11,"intrinsicDrive":24,"temp":35.6,"lactate":6.2},"cardiac":{"baseHr":142,"baseSbp":64,"baseDbp":38,"preload":0.44,"svr":1.48,"contractility":0.95,"rhythm":"sinus_tach","stDeviation":-0.6,"ectopyProb":0.05},"ventDefaults":{"vtSet":410,"rrSet":18,"peepSet":4,"fio2Set":80}},
+    amniotic_embolism: {"id":"amniotic_embolism","name":"Embolia Líq. Amniótico • ELA (Obstetrícia)","severity":"critical","severityLabel":"CRÍTICO","subtitle":"Hipoxemia súbita (Shunt 36%) + Choque obstrutivo/anafilactoide (66/40)","guidance":"Catástrofe obstétrica periparto com hipertensão pulmonar aguda, hipoxemia severa (Shunt 36%, C 28), falência de VD/VE e coagulopatia (CIVD). Conduta: IOT imediata com FiO₂ 100%, suporte vasopressor/inotrópico (Noradrenalina + Dobutamina/Adrenalina), transfusão de hemocomponentes (CIVD) e PEEP titulada sem colapsar o VD.","patient":{"label":"Gestante • 68 kg (PBW)","weightKg":68,"compliance":28,"resistance":14,"shunt":0.36,"vco2":235,"baseExcess":-10,"intrinsicDrive":26,"temp":36.3,"lactate":6.5},"cardiac":{"baseHr":138,"baseSbp":66,"baseDbp":40,"preload":0.58,"svr":0.62,"contractility":0.55,"rhythm":"sinus_tach","stDeviation":-1.3,"ectopyProb":0.11},"ventDefaults":{"mode":"PCV","vtSet":390,"pcSet":17,"rrSet":22,"peepSet":8,"fio2Set":100}},
+    peripartum_cardiomyopathy: {"id":"peripartum_cardiomyopathy","name":"Cardiomiopatia Periparto (Obstetrícia)","severity":"severe","severityLabel":"GRAVE","subtitle":"Falência sistólica aguda (Contratil. 0.46) + EAP grave (Shunt 30%, C 28)","guidance":"Insuficiência cardíaca sistólica aguda no final da gestação ou puerpério com congestão pulmonar intensa (C 28, Shunt 30%) e baixo débito (PA 82/54). Conduta: Dobutamina contínua para suporte inotrópico, VNI/PEEP (10–12 cmH₂O) para melhorar oxigenação e reduzir pós-carga, Furosemida cautelosa se congestão; evitar bolus excessivo de cristaloide.","patient":{"label":"Puérpera • 66 kg (PBW)","weightKg":66,"compliance":28,"resistance":12,"shunt":0.30,"vco2":215,"baseExcess":-6,"intrinsicDrive":26,"temp":36.5,"lactate":4.4},"cardiac":{"baseHr":126,"baseSbp":82,"baseDbp":54,"preload":1.26,"svr":1.36,"contractility":0.46,"rhythm":"sinus_tach","stDeviation":-1.1,"ectopyProb":0.10},"ventDefaults":{"mode":"PCV","vtSet":400,"pcSet":16,"psSet":14,"rrSet":20,"peepSet":10,"fio2Set":80}},
   }).map(([k, v]) => [k, _mDeep(_SC_BASE, v)]));
   const ECG_RHYTHMS = [
     {
@@ -624,7 +640,9 @@
     { id: 'amiodarona_bolus', name: 'Amiodarona 300 mg EV', role: 'Antiarrítmico p/ FV/TV refratária ou taquiarritmias' },
     { id: 'atropina', name: 'Atropina 1 mg EV', role: 'Anticolinérgico p/ bradicardia sinusal sintomática' },
     { id: 'adenosina', name: 'Adenosina 6 mg EV (Bolus rápido)', role: 'Reversão de TPSV estável (evitar em FA c/ WPW!)' },
-    { id: 'gluconato_calcio', name: 'Gluconato de Cálcio 10% 10 mL EV', role: 'Estabilização de membrana imediata na Hipercalemia' }
+    { id: 'gluconato_calcio', name: 'Gluconato de Cálcio 10% 10 mL EV', role: 'Estabilização de membrana imediata na Hipercalemia' },
+    { id: 'bicarbonato', name: 'Bicarbonato de Sódio 8,4% 100 mEq EV', role: 'Tamponamento em acidose metabólica grave (pH < 7.15) / hipercalemia' },
+    { id: 'sulfato_magnesio', name: 'Sulfato de Magnésio 2g EV', role: 'Estabilizador p/ Torsades de Pointes & broncoespasmo grave' }
   ];
 
   const BOLUS_DRUG_MAP = BOLUS_DRUGS.reduce((acc, d) => {
@@ -849,6 +867,150 @@
       recommendedO2: 'niv',
       avoid: 'Evitar Vt > 6 mL/kg, Pplatô > 30 cmH₂O e desconexões desnecessárias do circuito.',
       rationale: 'Manter recrutamento alveolar com PEEP adequada e posição prona reduz shunt intrapulmonar.'
+    },
+    stemi_anterior: {
+      bestDrug: 'Trombólise / Reperfusão imediata + Nitroglicerina (se PAS > 90)',
+      recommendedBolusId: 'nitroglicerina',
+      recommendedPumpDrug: 'noradrenalina',
+      recommendedPumpRate: 0.08,
+      recommendedO2: 'nasal_cannula',
+      avoid: 'Evitar excesso de Adrenalina/Dobutamina (eleva consumo de O₂ e precipita FV).',
+      rationale: 'Reperfusão precoce reduz área de necrose e previne degeneração para fibrilação ventricular.'
+    },
+    torsades_qt: {
+      bestDrug: 'Sulfato de Magnésio 2g EV + Desfibrilação não sincronizada',
+      recommendedBolusId: 'sulfato_magnesio',
+      recommendedPumpDrug: 'adrenalina',
+      recommendedPumpRate: 0.05,
+      recommendedO2: 'bvm',
+      avoid: 'NÃO administrar Amiodarona na Torsades (prolonga ainda mais o intervalo QT!).',
+      rationale: 'O magnésio estabiliza a membrana miocárdica e suprime pós-despolarizações precoces.'
+    },
+    wpw_preexcited: {
+      bestDrug: 'Cardioversão Elétrica Sincronizada (100 J) — evitar bloqueadores nodais',
+      recommendedBolusId: 'etomidato_sri',
+      recommendedPumpDrug: 'noradrenalina',
+      recommendedPumpRate: 0.05,
+      recommendedO2: 'nasal_cannula',
+      avoid: 'CONTRAINDICADO: Adenosina em WPW pré-excitado pode degenerar em FV!',
+      rationale: 'Cardioversão sincronizada restaura ritmo sinusal com segurança sem bloquear o nó AV.'
+    },
+    tce_cushing: {
+      bestDrug: 'Etomidato (SRI cardioestável) + VM em Normocapnia (PaCO₂ 35–38)',
+      recommendedBolusId: 'etomidato_sri',
+      recommendedPumpDrug: 'fentanil',
+      recommendedPumpRate: 1.5,
+      recommendedO2: 'non_rebreather',
+      avoid: 'Evitar hipercapnia (vasodilatação cerebral eleva PIC), hipóxia e hipotensão (PAM < 80).',
+      rationale: 'Controle da via aérea e PaCO₂ previne herniação cerebral mantendo pressão de perfusão.'
+    },
+    neurogenic_shock: {
+      bestDrug: 'Noradrenalina (alvo PAM ≥ 85 mmHg) + Atropina se bradicardia sintomática',
+      recommendedBolusId: 'atropina',
+      recommendedPumpDrug: 'noradrenalina',
+      recommendedPumpRate: 0.25,
+      recommendedO2: 'nasal_cannula',
+      avoid: 'Evitar Propofol em bolus alto ou vasodilatadores (colapso vasoplégico imediato).',
+      rationale: 'Restaurar tônus simpático α1/β1 reverte vasoplegia e protege a perfusão medular.'
+    },
+    betablocker_od: {
+      bestDrug: 'Adrenalina/Dobutamina em bomba + Gluconato de Cálcio + Marcapasso',
+      recommendedBolusId: 'gluconato_calcio',
+      recommendedPumpDrug: 'adrenalina',
+      recommendedPumpRate: 0.20,
+      recommendedO2: 'hudson_mask',
+      avoid: 'Evitar Amiodarona, Dexmedetomidina ou outros agentes bradicardizantes.',
+      rationale: 'Suporte adrenérgico contínuo + cálcio + marcapasso superam o bloqueio β/Ca²⁺.'
+    },
+    thyroid_storm: {
+      bestDrug: 'Controle de FC (Amiodarona / Cardioversão) + Hidratação + Alto Volume-Minuto',
+      recommendedBolusId: 'amiodarona_bolus',
+      recommendedPumpDrug: 'amiodarona',
+      recommendedPumpRate: 1.0,
+      recommendedO2: 'hudson_mask',
+      avoid: 'Evitar Adrenalina, Cetamina e Reaquecimento (pioram hipertermia e taquiarritmia).',
+      rationale: 'Reduzir resposta ventricular e atender à alta produção de CO₂ previne colapso.'
+    },
+    myasthenic_crisis: {
+      bestDrug: 'Suporte Ventilatório Precoce (VNI BiPAP ou IOT + VM controlada)',
+      recommendedBolusId: 'etomidato_sri',
+      recommendedPumpDrug: 'dexmedetomidina',
+      recommendedPumpRate: 0.3,
+      recommendedO2: 'niv',
+      avoid: 'Evitar sedativos/opioides sem via aérea garantida e Sulfato de Magnésio (piora fraqueza).',
+      rationale: 'A hipoventilação neuromuscular responde imediatamente à ventilação com pressão positiva.'
+    },
+    myxedema_coma: {
+      bestDrug: 'Reaquecimento Ativo + VM + Noradrenalina (e Levotiroxina/Hidrocortisona EV)',
+      recommendedBolusId: 'etomidato_sri',
+      recommendedPumpDrug: 'noradrenalina',
+      recommendedPumpRate: 0.2,
+      recommendedO2: 'hudson_mask',
+      avoid: 'Evitar sedativos depressores do drive respiratório sem intubação e reaquecimento abrupto com vasodilatação.',
+      rationale: 'Reverter hipotermia e hipoventilação alveolar impede progressão para assistolia/FV.'
+    },
+    adrenal_crisis: {
+      bestDrug: 'Expansão Volêmica + Noradrenalina/Vasopressina (+ Hidrocortisona 100 mg EV)',
+      recommendedBolusId: 'adrenalina_bolus',
+      recommendedPumpDrug: 'noradrenalina',
+      recommendedPumpRate: 0.35,
+      recommendedO2: 'hudson_mask',
+      avoid: 'Evitar Etomidato (inibe síntese de cortisol na adrenal!) e diuréticos.',
+      rationale: 'Reposição volêmica e vasopressor sustentam PAM enquanto o corticoide restaura o tônus vascular.'
+    },
+    hhs_hyperosmolar: {
+      bestDrug: 'Expansão Volêmica Vigorosa (SF 0,9%) + Proteção de Via Aérea',
+      recommendedBolusId: 'etomidato_sri',
+      recommendedPumpDrug: 'noradrenalina',
+      recommendedPumpRate: 0.15,
+      recommendedO2: 'nasal_cannula',
+      avoid: 'Evitar Furosemida (agrava hipovolemia/hiperosmolaridade) e vasodilatadores.',
+      rationale: 'Restaurar o volume intravascular corrige a hipoperfusão e o déficit osmolar antes da insulina.'
+    },
+    pheochromocytoma_crisis: {
+      bestDrug: 'Nitroprussiato de Sódio EV titulável em bomba (controle da RVS)',
+      recommendedBolusId: 'nitroglicerina',
+      recommendedPumpDrug: 'nitroprussiato',
+      recommendedPumpRate: 1.5,
+      recommendedO2: 'hudson_mask',
+      avoid: 'Evitar catecolaminas (Noradrenalina/Adrenalina/Dobutamina) e betabloqueador isolado sem alfa-bloqueio.',
+      rationale: 'Vasodilatação arterial direta alivia pós-carga extrema e previne EAP, AVC ou FV.'
+    },
+    eclampsia_hellp: {
+      bestDrug: 'Sulfato de Magnésio 2–4g EV + Nitroprussiato em bomba para controle pressórico',
+      recommendedBolusId: 'sulfato_magnesio',
+      recommendedPumpDrug: 'nitroprussiato',
+      recommendedPumpRate: 1.2,
+      recommendedO2: 'hudson_mask',
+      avoid: 'Contraindicação absoluta à Trombólise (risco de AVC/rotura hepática) e evitar sobrecarga hídrica.',
+      rationale: 'MgSO₄ controla/previne eclâmpsia e reduz vasoespasmo cerebral enquanto vasodilatador protege órgãos-alvo.'
+    },
+    postpartum_hemorrhage: {
+      bestDrug: 'Transfusão de Hemácias (Protocolo Maciço) + Expansão + Noradrenalina ponte',
+      recommendedBolusId: 'adrenalina_bolus',
+      recommendedPumpDrug: 'noradrenalina',
+      recommendedPumpRate: 0.25,
+      recommendedO2: 'non_rebreather',
+      avoid: 'Contraindicação absoluta à Trombólise e evitar Furosemida/vasodilatadores.',
+      rationale: 'Restaurar volume eritrocitário e pré-carga reverte o choque hemorrágico grau IV e a acidose lática.'
+    },
+    amniotic_embolism: {
+      bestDrug: 'IOT + FiO₂ 100% + Noradrenalina/Dobutamina + Transfusão de Hemácias (CIVD)',
+      recommendedBolusId: 'adrenalina_bolus',
+      recommendedPumpDrug: 'noradrenalina',
+      recommendedPumpRate: 0.35,
+      recommendedO2: 'non_rebreather',
+      avoid: 'Evitar sobrecarga volêmica excessiva (piora falência aguda de VD) e PEEP excessiva.',
+      rationale: 'Suporte ventilatório imediato e hemodinâmico biventricular mantém perfusão durante o colapso obstrutivo.'
+    },
+    peripartum_cardiomyopathy: {
+      bestDrug: 'Dobutamina contínua + VNI/PEEP elevada + Furosemida cautelosa',
+      recommendedBolusId: 'furosemida',
+      recommendedPumpDrug: 'dobutamina',
+      recommendedPumpRate: 8.0,
+      recommendedO2: 'niv',
+      avoid: 'Evitar bolus de SF 500 mL repetidos (pioram congestão alveolar e EAP).',
+      rationale: 'Inotropismo positivo + pressão positiva reduz pré/pós-carga e melhora rapidamente a relação PaO₂/FiO₂.'
     }
   };
 
@@ -978,8 +1140,48 @@
         roscAchieved: false,
         bolusSvrDelta: 0,
         bolusHrDelta: 0,
-        bolusTimer: 0
+        bolusTimer: 0,
+        naloxoneTimer: 0,
+        calciumProtectionTimer: 0,
+        magnesiumProtectionTimer: 0,
+        adrenalineBolusTimer: 0,
+        amiodaroneBolusTimer: 0,
+        nitroBolusTimer: 0,
+        ketamineBolusTimer: 0,
+        etomidateBolusTimer: 0,
+        atropineBolusTimer: 0,
+        proneActive: false,
+        warmingActive: false,
+        coolingActive: false,
+        insulinActive: false,
+        bloodUnits: 0,
+        pericardiocentesisDone: false,
+        thrombolysisGiven: false,
+        osmotherapyGiven: false,
+        hydrocortisoneGiven: false,
+        uterotonicGiven: false
       };
+
+      // Concentrações no sítio efetor (farmacocinética suavizada das bombas)
+      this.drugCe = {};
+      this.drugInteractions = [];
+      this._interactionLogCooldown = {};
+
+      // Motor de Deterioração Clínica & Progressão para Parada Cardíaca (5Hs & 5Ts)
+      this.deterioration = {
+        risk: this.patient.arrested ? 100 : 0, // 0..100%
+        stage: this.patient.arrested ? 'arrested' : 'stable', // 'stable' | 'warning' | 'imminent' | 'arrested'
+        causes: [],
+        primaryCause: null,
+        targetRhythm: 'pea',
+        lastArrestReason: null,
+        cprRecoveryProgress: 0,
+        _warnLogged: false,
+        _imminentLogged: false
+      };
+      this._baseEctopyProb = sc.cardiac && typeof sc.cardiac.ectopyProb === 'number' ? sc.cardiac.ectopyProb : 0;
+      this._baseLactate = sc.patient && typeof sc.patient.lactate === 'number' ? sc.patient.lactate : 1.1;
+      this._baseBE = sc.patient && typeof sc.patient.baseExcess === 'number' ? sc.patient.baseExcess : 0;
 
       // O paciente NÃO inicia acoplado ao ventilador mecânico (começa em respiração espontânea / ar ambiente)
       this.airway = {
@@ -999,7 +1201,8 @@
           holdInspTimer: 0,
           holdExpTimer: 0,
           o2FlushTimer: 0,
-          backupActive: false
+          backupActive: false,
+          standby: false
         },
         sc.ventDefaults
       );
@@ -1018,6 +1221,7 @@
         volumeL: 0, // Volume acima da CRF em Litros
         flowLs: 0, // Fluxo em L/s (+ insp, - exp)
         paw: 0,
+        shockPawTimer: 0,
         peakFlowInsp: 0,
         currentBreathPeakPaw: 0,
         currentBreathPlatPaw: 0,
@@ -1099,19 +1303,24 @@
       return clamp(pao2Sat + dissolvedBonus, 26, 580);
     }
 
-    /** Curva de Dissociação da Oxihemoglobina (Severinghaus aproximada) */
+    /** Curva de Dissociação da Oxihemoglobina (Severinghaus + Efeito Bohr por pH e Temperatura) */
     _dissociationSpO2(pao2) {
-      const p3 = Math.pow(pao2, 3);
+      const ph = this.vitals ? (this.vitals.ph || 7.4) : 7.4;
+      const temp = this.patient ? (this.patient.temp || 36.7) : 36.7;
+      // Acidemia e febre deslocam a curva para a direita (aumentam P50 -> menor afinidade Hb-O2)
+      const bohrShift = Math.pow(10, 0.48 * (7.4 - ph) + 0.024 * (temp - 37.0));
+      const pEff = clamp(pao2 / clamp(bohrShift, 0.72, 1.48), 8, 600);
+      const p3 = Math.pow(pEff, 3);
       const sat = (100 * p3) / (p3 + 23400);
-      return clamp(sat, 35, 100);
+      return clamp(sat, 30, 100);
     }
 
     _updateAcidBase() {
-      const paco2 = clamp(this.vitals.paco2, 15, 120);
-      const hco3 = clamp(24 + this.patient.baseExcess + 0.15 * (paco2 - 40), 7, 45);
+      const paco2 = clamp(this.vitals.paco2, 15, 130);
+      const hco3 = clamp(24 + this.patient.baseExcess + 0.15 * (paco2 - 40), 5, 45);
       const ph = 6.1 + Math.log10(hco3 / (0.03 * paco2));
       this.vitals.hco3 = hco3;
-      this.vitals.ph = clamp(ph, 6.75, 7.75);
+      this.vitals.ph = clamp(ph, 6.70, 7.75);
     }
 
     /** Passo de simulação em segundos (chamado a 60Hz pelo loop principal; suporta timeScale 1x..10x) */
@@ -1128,33 +1337,83 @@
     _stepOnce(clampedDt) {
       this.simTime += clampedDt;
 
-      // Temporizadores de manobras
+      // Temporizadores de manobras ventilatórias
       if (this.vent.holdInspTimer > 0) this.vent.holdInspTimer = Math.max(0, this.vent.holdInspTimer - clampedDt);
       if (this.vent.holdExpTimer > 0) this.vent.holdExpTimer = Math.max(0, this.vent.holdExpTimer - clampedDt);
       if (this.vent.o2FlushTimer > 0) this.vent.o2FlushTimer = Math.max(0, this.vent.o2FlushTimer - clampedDt);
 
+      const iv = this.interventions;
+      // Temporizadores farmacocinéticos de bolus ativos
+      const bolusTimers = [
+        'naloxoneTimer', 'calciumProtectionTimer', 'magnesiumProtectionTimer',
+        'adrenalineBolusTimer', 'amiodaroneBolusTimer', 'nitroBolusTimer',
+        'ketamineBolusTimer', 'etomidateBolusTimer', 'atropineBolusTimer'
+      ];
+      for (let i = 0; i < bolusTimers.length; i++) {
+        const k = bolusTimers[i];
+        if (iv[k] > 0) iv[k] = Math.max(0, iv[k] - clampedDt);
+      }
+
       // Efeito progressivo de broncodilatador e volume
-      if (this.interventions.bronchodilatorTargetRes !== null) {
-        this.patient.resistance = lerp(this.patient.resistance, this.interventions.bronchodilatorTargetRes, clampedDt * 0.18);
-        if (Math.abs(this.patient.resistance - this.interventions.bronchodilatorTargetRes) < 0.25) {
-          this.interventions.bronchodilatorTargetRes = null;
+      if (iv.bronchodilatorTargetRes !== null) {
+        this.patient.resistance = lerp(this.patient.resistance, iv.bronchodilatorTargetRes, clampedDt * 0.18);
+        if (Math.abs(this.patient.resistance - iv.bronchodilatorTargetRes) < 0.25) {
+          iv.bronchodilatorTargetRes = null;
         }
       }
-      if (this.interventions.fluidBoost > 0) {
-        // Decaimento muito lento (distribuição no terceiro espaço em sepse)
-        this.interventions.fluidBoost = Math.max(0, this.interventions.fluidBoost - clampedDt * 0.0012);
+      if (iv.fluidBoost > 0) {
+        // Decaimento lento (distribuição no terceiro espaço em sepse)
+        iv.fluidBoost = Math.max(0, iv.fluidBoost - clampedDt * 0.0012);
       }
-      if (this.interventions.bolusTimer > 0) {
-        this.interventions.bolusTimer = Math.max(0, this.interventions.bolusTimer - clampedDt);
-        if (this.interventions.bolusTimer <= 0) {
-          this.interventions.bolusSvrDelta = 0;
-          this.interventions.bolusHrDelta = 0;
+      if (iv.warmingActive) {
+        // Reaquecimento ativo (manta térmica + fluidos aquecidos): eleva temperatura até 36.6°C
+        if (this.patient.temp < 36.6) {
+          this.patient.temp = Math.min(36.6, this.patient.temp + clampedDt * 0.14);
+          if (this.cardiac.rhythm === 'sinus_brady' && this.patient.temp >= 34.5) {
+            this.cardiac.baseHr = Math.min(76, this.cardiac.baseHr + clampedDt * 1.4);
+            this.cardiac.contractility = Math.min(0.96, this.cardiac.contractility + clampedDt * 0.012);
+            if (this.patient.temp >= 35.4) {
+              this.cardiac.rhythm = 'sinus';
+              this.vitals.rhythm = 'sinus';
+            }
+          }
+        }
+      }
+      if (iv.coolingActive) {
+        // Resfriamento ativo (manta térmica fria / controle de hipertermia): reduz temperatura até 36.8°C
+        if (this.patient.temp > 36.8) {
+          this.patient.temp = Math.max(36.8, this.patient.temp - clampedDt * 0.14);
+          if (this.patient.vco2 > 220) {
+            this.patient.vco2 = Math.max(220, this.patient.vco2 - clampedDt * 3.2);
+          }
+          if (this.cardiac.baseHr > 110) {
+            this.cardiac.baseHr = Math.max(110, this.cardiac.baseHr - clampedDt * 1.5);
+          }
+        }
+      }
+      if (iv.insulinActive) {
+        // Insulina Regular EV contínua: corrige cetoacidose (CAD) e melhora lactato/osmolaridade (EHH)
+        if (this.scenarioId === 'dka_acidosis' || this.patient.baseExcess < -6) {
+          this.patient.baseExcess = Math.min(-1, this.patient.baseExcess + clampedDt * 0.24);
+          this.patient.lactate = Math.max(1.2, this.patient.lactate - clampedDt * 0.05);
+        } else if (this.scenarioId === 'hhs_hyperosmolar') {
+          this.patient.lactate = Math.max(1.2, this.patient.lactate - clampedDt * 0.05);
+          this.cardiac.baseHr = Math.max(96, this.cardiac.baseHr - clampedDt * 0.6);
+        }
+      }
+      if (iv.bolusTimer > 0) {
+        iv.bolusTimer = Math.max(0, iv.bolusTimer - clampedDt);
+        if (iv.bolusTimer <= 0) {
+          iv.bolusSvrDelta = 0;
+          iv.bolusHrDelta = 0;
         }
       }
 
       this._stepPumps(clampedDt);
+      this._stepPharmacology(clampedDt);
       this._stepVentilator(clampedDt);
       this._stepCardioAndGases(clampedDt);
+      this._stepDeteriorationAndArrest(clampedDt);
       this._evaluateAlarms();
     }
 
@@ -1228,74 +1487,225 @@
       const p = this.patient;
       const c = this.cardiac;
       const iv = this.interventions;
+      const ce = this.drugCe || {};
+      let extraNote = '';
 
       switch (drugId) {
         case 'salbutamol_mgso4':
           this.giveBronchodilator();
           p.resistance = Math.max(6, Math.round(p.resistance * 0.72));
+          iv.magnesiumProtectionTimer = Math.max(iv.magnesiumProtectionTimer || 0, 75);
+          // Efeito beta2: leve taquicardia reflexa + risco de ectopia se já em catecolaminas
+          iv.bolusHrDelta = (iv.bolusHrDelta || 0) + 10;
+          iv.bolusTimer = Math.max(iv.bolusTimer || 0, 16);
           if (c.rhythm === 'torsades') {
             this.setRhythm('sinus_tach', true);
+            extraNote = ' → Torsades estabilizada por MgSO₄!';
           }
           break;
-        case 'furosemida':
-          c.preload = Math.max(0.75, Number((c.preload - 0.18).toFixed(2)));
-          p.shunt = Math.max(0.06, Number((p.shunt * 0.78).toFixed(2)));
-          p.compliance = Math.min(62, Math.round(p.compliance * 1.15));
+
+        case 'sulfato_magnesio':
+          this.giveBronchodilator();
+          iv.magnesiumProtectionTimer = 120;
+          iv.bolusSvrDelta = (iv.bolusSvrDelta || 0) - 0.08;
+          iv.bolusTimer = Math.max(iv.bolusTimer || 0, 14);
+          if (c.rhythm === 'torsades') {
+            this.setRhythm('sinus', true);
+            extraNote = ' → Torsades de Pointes revertida para ritmo sinusal!';
+          } else if (this.scenarioId === 'eclampsia_hellp') {
+            c.svr = Math.max(1.12, Number((c.svr * 0.84).toFixed(2)));
+            c.baseSbp = Math.max(146, Math.round(c.baseSbp - 28));
+            c.baseDbp = Math.max(90, Math.round(c.baseDbp - 16));
+            c.baseHr = Math.max(92, Math.round(c.baseHr - 18));
+            p.vco2 = Math.max(205, Math.round(p.vco2 - 55));
+            this.deterioration.risk = Math.max(0, (this.deterioration.risk || 0) - 35);
+            extraNote = ' → Controle neuroprotetor da Eclâmpsia: vasoespasmo e atividade convulsiva reduzidos!';
+          } else if (this.scenarioId === 'myasthenic_crisis') {
+            p.intrinsicDrive = Math.max(2, p.intrinsicDrive - 3);
+            extraNote = ' → ⚠ ALERTA MIASTENIA: Magnésio agravou bloqueio neuromuscular e hipoventilação!';
+          } else {
+            extraNote = ' → Membrana estabilizada contra Torsades (120s)';
+          }
           break;
-        case 'nitroglicerina':
-          c.svr = Math.max(0.65, Number((c.svr * 0.82).toFixed(2)));
-          c.preload = Math.max(0.72, Number((c.preload * 0.88).toFixed(2)));
-          iv.bolusSvrDelta = -0.15;
-          iv.bolusTimer = 18;
+
+        case 'furosemida': {
+          const isHypovolemic = (c.preload + iv.fluidBoost) < 0.86 || this.vitals.map < 65;
+          c.preload = Math.max(0.50, Number((c.preload - 0.18).toFixed(2)));
+          if (isHypovolemic) {
+            // Uso inadequado em choque/hipovolemia: piora hipoperfusão e lactato!
+            p.lactate = clamp(p.lactate + 0.6, 0.5, 18);
+            extraNote = ' → ⚠ ALERTA: paciente hipovolêmico/hipotenso — queda de pré-carga e PAM!';
+          } else {
+            p.shunt = Math.max(0.06, Number((p.shunt * 0.78).toFixed(2)));
+            p.compliance = Math.min(62, Math.round(p.compliance * 1.15));
+            extraNote = ' → Redução de congestão pulmonar e melhora da complacência.';
+          }
           break;
-        case 'naloxona':
+        }
+
+        case 'nitroglicerina': {
+          const lowPreload = (c.preload + iv.fluidBoost) < 0.88 || p.pneumothoraxActive;
+          const onPropofol = (ce.propofol || 0) > 1.0;
+          const svrDrop = lowPreload || onPropofol ? 0.74 : 0.84;
+          c.svr = Math.max(0.52, Number((c.svr * svrDrop).toFixed(2)));
+          c.preload = Math.max(0.55, Number((c.preload * (lowPreload ? 0.80 : 0.88)).toFixed(2)));
+          iv.bolusSvrDelta = -0.18 - (onPropofol ? 0.10 : 0);
+          iv.bolusHrDelta = (iv.bolusHrDelta || 0) + 8;
+          iv.bolusTimer = 22;
+          iv.nitroBolusTimer = 25;
+          if (c.rhythm === 'stemi' || c.rhythm === 'de_winter') {
+            c.stDeviation = Math.max(0.5, Number((c.stDeviation - 0.5).toFixed(1)));
+          }
+          if (lowPreload) extraNote = ' → ⚠ ALERTA: vasodilatação em pré-carga baixa — hipotensão acentuada!';
+          else if (onPropofol) extraNote = ' → ⚠ Interação Nitroglicerina + Propofol: queda somada de PAM!';
+          break;
+        }
+
+        case 'naloxona': {
+          const opioidLoad = (ce.fentanil || 0) + (ce.remifentanil || 0) * 10 + (ce.sufentanil || 0) * 4 + (ce.morfina || 0) * 0.5;
+          iv.naloxoneTimer = 90;
           p.intrinsicDrive = Math.max(14, p.intrinsicDrive + 14);
           this.breath.apneaTimer = 0;
+          if (opioidLoad > 0.8) {
+            // Reversão brusca de opioide alto -> descarga simpática rebote!
+            iv.bolusHrDelta = (iv.bolusHrDelta || 0) + 18;
+            iv.bolusSvrDelta = (iv.bolusSvrDelta || 0) + 0.16;
+            iv.bolusTimer = 18;
+            extraNote = ' → Antagonismo opioide ativo (90s) + rebote simpático (+FC/+PAM)!';
+          } else {
+            extraNote = ' → Drive respiratório restaurado (bloqueio μ-opioide 90s).';
+          }
           break;
+        }
+
         case 'cetamina_sri':
-          p.resistance = Math.max(6, Math.round(p.resistance * 0.80));
-          iv.bolusSvrDelta = 0.14;
-          iv.bolusHrDelta = 12;
-          iv.bolusTimer = 15;
-          break;
-        case 'etomidato_sri':
-          // Cardioestável — reduz drive se sem VM mantendo PAM estável
-          p.intrinsicDrive = Math.max(0, p.intrinsicDrive - 6);
-          break;
-        case 'adrenalina_bolus':
-          iv.bolusSvrDelta = 0.45;
-          iv.bolusHrDelta = 28;
-          iv.bolusTimer = 18;
           p.resistance = Math.max(6, Math.round(p.resistance * 0.78));
+          iv.bolusSvrDelta = (iv.bolusSvrDelta || 0) + 0.16;
+          iv.bolusHrDelta = (iv.bolusHrDelta || 0) + 14;
+          iv.bolusTimer = 20;
+          iv.ketamineBolusTimer = 30;
+          if (c.rhythm === 'stemi' || c.rhythm === 'de_winter') {
+            c.stDeviation = Number((c.stDeviation + 0.4).toFixed(1));
+            extraNote = ' → ⚠ Aumento de consumo miocárdico de O₂ em paciente isquêmico!';
+          }
           break;
+
+        case 'etomidato_sri':
+          p.intrinsicDrive = Math.max(0, p.intrinsicDrive - 8);
+          iv.etomidateBolusTimer = 25;
+          extraNote = ' → Indução cardioestável (atenção à apneia se fora da VM!).';
+          break;
+
+        case 'adrenalina_bolus': {
+          // Acidemia grave reduz resposta alfa/beta da adrenalina
+          const acidScale = this.vitals.ph < 7.20 ? clamp(1 - (7.20 - this.vitals.ph) * 1.4, 0.48, 1.0) : 1.0;
+          iv.bolusSvrDelta = (iv.bolusSvrDelta || 0) + 0.48 * acidScale;
+          iv.bolusHrDelta = (iv.bolusHrDelta || 0) + 30 * acidScale;
+          iv.bolusTimer = 22;
+          iv.adrenalineBolusTimer = 35;
+          p.resistance = Math.max(6, Math.round(p.resistance * 0.76));
+          p.lactate = clamp(p.lactate + 0.45, 0.5, 18); // glicogenólise beta2
+          if (this.patient.arrested && !iv.roscAchieved && (c.rhythm === 'pea' || c.rhythm === 'asystole')) {
+            this.deterioration.cprRecoveryProgress = Math.min(100, (this.deterioration.cprRecoveryProgress || 0) + 28);
+            extraNote = ' → Perfusão coronariana aumentada durante RCP!';
+          } else if (c.rhythm === 'stemi' || c.rhythm === 'de_winter' || c.rhythm === 'vtach') {
+            this.deterioration.risk = Math.min(99, (this.deterioration.risk || 0) + 18);
+            extraNote = ' → ⚠ Sobrecarga adrenérgica em miocárdio isquêmico/arritmogênico!';
+          } else if (acidScale < 0.85) {
+            extraNote = ` → Resposta atenuada (${Math.round(acidScale * 100)}%) pela acidose (pH ${this.vitals.ph.toFixed(2)}).`;
+          }
+          break;
+        }
+
         case 'amiodarona_bolus':
           c.ectopyProb = 0.01;
-          iv.bolusHrDelta = -18;
-          iv.bolusTimer = 20;
-          if (c.rhythm === 'vtach') this.setRhythm('sinus_tach', true);
+          iv.bolusHrDelta = (iv.bolusHrDelta || 0) - 20;
+          iv.bolusSvrDelta = (iv.bolusSvrDelta || 0) - 0.14; // vasodilatação pelo veículo/bloqueio alfa
+          iv.bolusTimer = 25;
+          iv.amiodaroneBolusTimer = 60;
+          if (c.rhythm === 'vtach') {
+            this.setRhythm('sinus_tach', true);
+            extraNote = ' → TV monomórfica controlada!';
+          } else if (c.rhythm === 'av_block_3' || c.rhythm === 'sinus_brady') {
+            c.baseHr = Math.max(26, (c.baseHr || 40) - 10);
+            extraNote = ' → ⚠ ALERTA: Amiodarona em bradiarritmia/BAV agrava bloqueio e hipotensão!';
+          } else if (c.rhythm === 'torsades') {
+            extraNote = ' → ⚠ ALERTA: Amiodarona prolonga QT — prefira Sulfato de Magnésio na Torsades!';
+          }
           break;
+
         case 'atropina':
-          c.baseHr = clamp((c.baseHr || 55) + 24, 65, 115);
-          if (c.rhythm === 'sinus_brady') this.setRhythm('sinus', true);
+          iv.atropineBolusTimer = 45;
+          if (c.rhythm === 'av_block_3' || c.rhythm === 'av_block_2_m2') {
+            // Bloqueio infranodal responde mal à atropina!
+            c.baseHr = clamp((c.baseHr || 36) + 4, 32, 46);
+            extraNote = ' → Resposta mínima (bloqueio infranodal): considerar Marcapasso Transcutâneo ou Adrenalina!';
+          } else {
+            c.baseHr = clamp((c.baseHr || 55) + 26, 68, 122);
+            if (c.rhythm === 'sinus_brady') this.setRhythm('sinus', true);
+            extraNote = ' → Bloqueio vagal efetivo — elevação da FC.';
+          }
           break;
+
         case 'adenosina':
           if (c.rhythm === 'svt') {
             this.setRhythm('sinus', true);
+            extraNote = ' → Bloqueio nodal transitório → TPSV revertida para sinusal!';
           } else if (c.rhythm === 'wpw') {
-            this.setRhythm('sinus', true);
+            // Armadilha clássica de emergência: Adenosina em WPW/FA pré-excitada pode degenerar!
+            if (this.vitals.hr > 130 || this.vitals.map < 75) {
+              this.setRhythm('vf', true);
+              this.deterioration.risk = 100;
+              this.deterioration.stage = 'arrested';
+              this.deterioration.lastArrestReason = 'Adenosina em síndrome de pré-excitação (WPW) instável → condução pela via acessória → FV!';
+              extraNote = ' → 🚨 PERIGO CLÁSSICO: Adenosina bloqueou o nó AV no WPW → condução rápida pela via acessória → FV! DESFIBRILAR!';
+            } else {
+              this.setRhythm('afib_rvr', true);
+              extraNote = ' → ⚠ ALERTA WPW: Adenosina precipitou FA de alta resposta pela via acessória!';
+            }
+          } else if (c.rhythm === 'vtach') {
+            iv.bolusSvrDelta = (iv.bolusSvrDelta || 0) - 0.10;
+            iv.bolusTimer = 10;
+            extraNote = ' → Sem resposta na TV monomórfica (use Cardioversão SINC ou Amiodarona).';
           }
           break;
+
         case 'gluconato_calcio':
+          iv.calciumProtectionTimer = 95;
           if (c.rhythm === 'hyperkalemia') {
             this.setRhythm('sinus', true);
+            this.deterioration.risk = Math.max(0, (this.deterioration.risk || 0) - 45);
+            extraNote = ' → Membrana miocárdica estabilizada na Hipercalemia (proteção 95s)!';
+          } else if (this.scenarioId === 'betablocker_od') {
+            c.contractility = Math.min(0.95, Number((c.contractility + 0.14).toFixed(2)));
+            c.baseSbp = Math.min(108, Math.round(c.baseSbp + 12));
+            c.baseDbp = Math.min(68, Math.round(c.baseDbp + 7));
+            c.baseHr = Math.min(72, Math.round(c.baseHr + 10));
+            this.deterioration.risk = Math.max(0, (this.deterioration.risk || 0) - 25);
+            extraNote = ' → Melhora inotrópica e da condução AV na intoxicação por betabloqueador!';
+          } else {
+            extraNote = ' → Estabilização de membrana ativa (95s).';
           }
           break;
+
+        case 'bicarbonato':
+          p.baseExcess = clamp(p.baseExcess + 3.8, -22, 14);
+          // Reação HCO3- + H+ -> H2O + CO2 gera discreto aumento transitório de PaCO2
+          this.vitals.paco2 = clamp(this.vitals.paco2 + 3.0, 18, 120);
+          this._updateAcidBase();
+          this.deterioration.risk = Math.max(0, (this.deterioration.risk || 0) - 20);
+          if (this.patient.arrested && (c.rhythm === 'pea' || c.rhythm === 'asystole') && this.vitals.ph < 7.25) {
+            this.deterioration.cprRecoveryProgress = Math.min(100, (this.deterioration.cprRecoveryProgress || 0) + 22);
+          }
+          extraNote = ` → Tamponamento ácido-básico: pH agora ${this.vitals.ph.toFixed(2)} (atenção ao CO₂ gerado).`;
+          break;
+
         default:
           break;
       }
 
       if (this.onLog) {
-        this.onLog(`Fármaco administrado: ${d.name} (${d.role})`);
+        this.onLog(`Fármaco administrado: ${d.name}${extraNote || ` (${d.role})`}`);
       }
     }
 
@@ -1497,102 +1907,265 @@
       this._syncNoraFromPumps();
     }
 
+    /** Farmacocinética de sítio efetor (Ce) com constantes de equilíbrio (ke0) por fármaco */
+    _stepPharmacology(dt) {
+      if (!this.drugCe) this.drugCe = {};
+      const ke0Map = {
+        noradrenalina: 0.24,
+        vasopressina: 0.14,
+        adrenalina: 0.30,
+        dobutamina: 0.18,
+        nitroprussiato: 0.32,
+        fentanil: 0.09,
+        propofol: 0.20,
+        midazolam: 0.08,
+        dexmedetomidina: 0.08,
+        remifentanil: 0.34,
+        sufentanil: 0.12,
+        morfina: 0.06,
+        amiodarona: 0.06
+      };
+
+      const targets = {};
+      if (Array.isArray(this.pumps)) {
+        for (let i = 0; i < this.pumps.length; i++) {
+          const ch = this.pumps[i];
+          const effRate = this._getEffectivePumpRate(ch);
+          const active = !ch.occluded && (effRate > 0 || ch.bolusTimer > 0);
+          if (!active) continue;
+          const bolusAdd = ch.bolusTimer > 0 ? (ch.drugId === 'propofol' ? 1.5 : ch.drugId === 'fentanil' ? 2.0 : ch.drugId === 'midazolam' ? 0.12 : ch.drugId === 'remifentanil' ? 0.15 : ch.drugId === 'amiodarona' ? 0.6 : 0.3) : 0;
+          targets[ch.drugId] = (targets[ch.drugId] || 0) + effRate + bolusAdd;
+        }
+      }
+
+      const allKeys = new Set([...Object.keys(this.drugCe), ...Object.keys(targets)]);
+      allKeys.forEach((id) => {
+        const cur = this.drugCe[id] || 0;
+        const tgt = targets[id] || 0;
+        const ke0 = ke0Map[id] || 0.15;
+        // Eliminação um pouco mais lenta que o onset (histerese farmacológica real)
+        const rate = tgt >= cur ? ke0 : ke0 * 0.65;
+        const next = lerp(cur, tgt, clamp(dt * rate, 0, 1));
+        this.drugCe[id] = next < 0.0005 ? 0 : next;
+      });
+    }
+
+    _logInteractionOnce(key, msg) {
+      if (!this.onLog) return;
+      if (!this._interactionLogCooldown) this._interactionLogCooldown = {};
+      const last = this._interactionLogCooldown[key] || -999;
+      if (this.simTime - last >= 45) {
+        this._interactionLogCooldown[key] = this.simTime;
+        this.onLog(msg);
+      }
+    }
+
     _getPumpPharmacology() {
+      const ce = this.drugCe || {};
+      const iv = this.interventions || {};
+      const ph = this.vitals ? (this.vitals.ph || 7.4) : 7.4;
+
       const fx = {
         svrFactor: 1.0,
         contractilityFactor: 1.0,
+        preloadFactor: 1.0,
         hrDelta: 0,
         drivePenalty: 0,
         resScale: 1.0,
-        ectopyReduction: 0
+        ectopyDelta: 0,
+        ectopyReduction: 0,
+        stPenalty: 0,
+        lactateRate: 0,
+        catecholamineScale: 1.0,
+        proArrhythmiaStress: 0
       };
 
-      this.pumps.forEach((ch) => {
-        const effRate = this._getEffectivePumpRate(ch);
-        const active = !ch.occluded && (effRate > 0 || ch.bolusTimer > 0);
-        if (!active) return;
-        const bolusBoost = ch.bolusTimer > 0 ? 0.35 : 0;
-        const r = effRate;
+      const interactions = [];
 
-        switch (ch.drugId) {
-          case 'noradrenalina':
-            // Já aplicado em noraFactor via interventions.noraDose; apenas leve reflexo beta1
-            fx.hrDelta += r * 8;
-            break;
-          case 'vasopressina':
-            fx.svrFactor += r * 14.0; // 0.03 U/min -> +0.42
-            break;
-          case 'adrenalina':
-            fx.svrFactor += r * 1.1;
-            fx.contractilityFactor += r * 0.85;
-            fx.hrDelta += r * 42;
-            fx.resScale *= Math.max(0.58, 1 - r * 0.7);
-            break;
-          case 'dobutamina':
-            fx.contractilityFactor += r * 0.032; // 10 -> +0.32
-            fx.hrDelta += r * 1.4;
-            fx.svrFactor -= Math.min(0.14, r * 0.008);
-            break;
-          case 'nitroprussiato':
-            fx.svrFactor -= Math.min(0.55, r * 0.085);
-            fx.hrDelta += r * 2.6;
-            break;
-          case 'fentanil': {
-            const eff = r + bolusBoost * 2.0;
-            fx.drivePenalty += Math.min(12, eff * 2.4);
-            fx.hrDelta -= Math.min(14, eff * 1.8);
-            fx.svrFactor -= Math.min(0.12, eff * 0.015);
-            break;
-          }
-          case 'propofol': {
-            const eff = r + bolusBoost * 1.5;
-            fx.drivePenalty += Math.min(14, eff * 3.0);
-            fx.svrFactor -= Math.min(0.28, eff * 0.065);
-            fx.hrDelta -= Math.min(10, eff * 1.5);
-            break;
-          }
-          case 'midazolam': {
-            const eff = r + bolusBoost * 0.12;
-            fx.drivePenalty += Math.min(10, eff * 35);
-            fx.svrFactor -= Math.min(0.12, eff * 0.3);
-            break;
-          }
-          case 'dexmedetomidina': {
-            const eff = r + bolusBoost * 0.3;
-            fx.hrDelta -= Math.min(18, eff * 14);
-            fx.svrFactor -= Math.min(0.16, eff * 0.12);
-            break;
-          }
-          case 'remifentanil': {
-            const eff = r + bolusBoost * 0.15;
-            fx.drivePenalty += Math.min(14, eff * 32);
-            fx.hrDelta -= Math.min(16, eff * 28);
-            fx.svrFactor -= Math.min(0.14, eff * 0.25);
-            break;
-          }
-          case 'sufentanil': {
-            const eff = r + bolusBoost * 0.25;
-            fx.drivePenalty += Math.min(11, eff * 10);
-            fx.hrDelta -= Math.min(10, eff * 8);
-            break;
-          }
-          case 'morfina': {
-            const eff = r + bolusBoost * 2.0;
-            fx.drivePenalty += Math.min(8, eff * 0.9);
-            fx.svrFactor -= Math.min(0.10, eff * 0.015);
-            break;
-          }
-          case 'amiodarona':
-            fx.hrDelta -= Math.min(26, (r + bolusBoost) * 14);
-            fx.ectopyReduction += 0.8;
-            break;
-          default:
-            break;
+      // 1. Acidemia reduz sensibilidade dos receptores alfa1/beta1 a catecolaminas (Vasopressina V1 preservada!)
+      const acidCatecholScale = ph < 7.25 ? clamp(1 - (7.25 - ph) * 1.8, 0.45, 1.0) : 1.0;
+      fx.catecholamineScale = acidCatecholScale;
+
+      const nora = Math.max(ce.noradrenalina || 0, iv.noraDose || 0);
+      const vaso = ce.vasopressina || 0;
+      const adr = ce.adrenalina || 0;
+      const dobu = ce.dobutamina || 0;
+      const nps = ce.nitroprussiato || 0;
+      const fenta = ce.fentanil || 0;
+      const prop = ce.propofol || 0;
+      const mida = ce.midazolam || 0;
+      const dex = ce.dexmedetomidina || 0;
+      const remi = ce.remifentanil || 0;
+      const sufe = ce.sufentanil || 0;
+      const morf = ce.morfina || 0;
+      const amio = ce.amiodarona || 0;
+
+      // Efeitos individuais (modulados por acidemia nas catecolaminas)
+      if (nora > 0) {
+        fx.hrDelta += nora * 9 * acidCatecholScale;
+        if (nora > 0.6) fx.ectopyDelta += (nora - 0.6) * 0.08;
+      }
+      if (vaso > 0) {
+        // Receptor V1 mantém eficácia mesmo em acidose grave!
+        fx.svrFactor += vaso * 14.5;
+        fx.hrDelta -= Math.min(8, vaso * 90); // leve bradicardia barorreflexa
+      }
+      if (adr > 0) {
+        fx.svrFactor += adr * 1.15 * acidCatecholScale;
+        fx.contractilityFactor += adr * 0.9 * acidCatecholScale;
+        fx.hrDelta += adr * 44 * acidCatecholScale;
+        fx.resScale *= Math.max(0.56, 1 - adr * 0.72);
+        fx.ectopyDelta += adr * 0.14;
+        fx.stPenalty += adr * 1.2;
+        fx.lactateRate += adr * 0.035; // glicogenólise beta2 -> hiperlactatemia
+      }
+      if (dobu > 0) {
+        fx.contractilityFactor += dobu * 0.034 * acidCatecholScale;
+        fx.hrDelta += dobu * 1.6 * acidCatecholScale;
+        fx.svrFactor -= Math.min(0.16, dobu * 0.009);
+        if (dobu > 8) fx.ectopyDelta += (dobu - 8) * 0.009;
+        if (dobu > 10) fx.stPenalty += (dobu - 10) * 0.06;
+      }
+      if (nps > 0) {
+        fx.svrFactor -= Math.min(0.58, nps * 0.09);
+        fx.preloadFactor -= Math.min(0.18, nps * 0.025);
+        fx.hrDelta += nps * 2.8;
+        if (nps > 3.5) {
+          fx.lactateRate += (nps - 3.5) * 0.018; // toxicidade por cianeto em dose alta
         }
-      });
+      }
 
-      fx.svrFactor = clamp(fx.svrFactor, 0.38, 2.2);
-      fx.contractilityFactor = clamp(fx.contractilityFactor, 0.65, 1.85);
+      // Opioides & Antagonismo competitivo por Naloxona
+      const naloxoneBlock = iv.naloxoneTimer > 0 ? clamp(0.12 + 0.88 * (1 - Math.min(1, iv.naloxoneTimer / 20)), 0.08, 1.0) : 1.0;
+      let opioidDrive = 0;
+      let opioidHrDrop = 0;
+      if (fenta > 0) {
+        opioidDrive += Math.min(12, fenta * 2.4);
+        opioidHrDrop += Math.min(14, fenta * 1.8);
+        fx.svrFactor -= Math.min(0.12, fenta * 0.015) * naloxoneBlock;
+      }
+      if (remi > 0) {
+        opioidDrive += Math.min(14, remi * 34);
+        opioidHrDrop += Math.min(18, remi * 30);
+        fx.svrFactor -= Math.min(0.15, remi * 0.28) * naloxoneBlock;
+      }
+      if (sufe > 0) {
+        opioidDrive += Math.min(11, sufe * 10);
+        opioidHrDrop += Math.min(10, sufe * 8);
+      }
+      if (morf > 0) {
+        opioidDrive += Math.min(8, morf * 0.95);
+        fx.svrFactor -= Math.min(0.11, morf * 0.016) * naloxoneBlock;
+      }
+      opioidDrive *= naloxoneBlock;
+      opioidHrDrop *= naloxoneBlock;
+
+      // Hipnóticos / Sedativos
+      let sedativeDrive = 0;
+      if (prop > 0) {
+        sedativeDrive += Math.min(14, prop * 3.1);
+        fx.svrFactor -= Math.min(0.30, prop * 0.068);
+        fx.contractilityFactor -= Math.min(0.16, prop * 0.032);
+        fx.hrDelta -= Math.min(10, prop * 1.6);
+      }
+      if (mida > 0) {
+        sedativeDrive += Math.min(10, mida * 36);
+        fx.svrFactor -= Math.min(0.13, mida * 0.30);
+      }
+      if (dex > 0) {
+        fx.hrDelta -= Math.min(20, dex * 15);
+        fx.svrFactor -= Math.min(0.16, dex * 0.12);
+      }
+      if (amio > 0) {
+        fx.hrDelta -= Math.min(26, amio * 15);
+        fx.svrFactor -= Math.min(0.12, amio * 0.06);
+        fx.ectopyReduction += 0.8;
+      }
+
+      fx.drivePenalty += opioidDrive + sedativeDrive;
+      fx.hrDelta -= opioidHrDrop;
+
+      // ================= INTERAÇÕES MEDICAMENTOSAS CLÍNICAS =================
+
+      // INTERAÇÃO 1: Sinergia supra-aditiva Sedativo + Opioide (depressão respiratória + hipotensão pós-indução)
+      const hasSedative = prop > 0.6 || mida > 0.04 || (iv.etomidateBolusTimer || 0) > 0;
+      const hasOpioid = opioidDrive > 1.8;
+      if (hasSedative && hasOpioid) {
+        const synScale = clamp((sedativeDrive + ((iv.etomidateBolusTimer || 0) > 0 ? 4 : 0)) * opioidDrive * 0.035, 0.2, 1.0);
+        fx.drivePenalty += 4.5 * synScale;
+        fx.svrFactor -= 0.14 * synScale;
+        interactions.push({
+          level: this.airway && !this.airway.connectedToVent ? 'critical' : 'warning',
+          tag: 'Sinergia Sedativo + Opioide',
+          msg: 'INTERAÇÃO: Sinergia Hipnótico + Opioide (risco de apneia e hipotensão)'
+        });
+        this._logInteractionOnce('sed_opioid', '💊 Interação detectada: Sinergia Sedativo + Opioide — depressão respiratória e queda de PAM potencializadas.');
+      }
+
+      // INTERAÇÃO 2: Catecolaminorresistência por Acidose Grave (pH < 7.20)
+      const totalCatechol = nora + adr * 2.2 + dobu * 0.04;
+      if (acidCatecholScale < 0.86 && totalCatechol > 0.15) {
+        const pctEff = Math.round(acidCatecholScale * 100);
+        interactions.push({
+          level: ph < 7.12 ? 'critical' : 'warning',
+          tag: `Acidose reduz catecolamina (${pctEff}%)`,
+          msg: `INTERAÇÃO: Acidose (pH ${ph.toFixed(2)}) reduz eficácia de catecolaminas para ${pctEff}% — considere Vasopressina / corrigir pH`
+        });
+        this._logInteractionOnce('acid_catechol', `💊 Interação fisiológica: Acidemia (pH ${ph.toFixed(2)}) reduzindo resposta a catecolaminas (${pctEff}%). Vasopressina (V1) preserva efeito.`);
+      }
+
+      // INTERAÇÃO 3: Tempestade Adrenérgica / Sobrecarga Catecolaminérgica (Adrenalina + Dobutamina / Nora alta)
+      const adrBurden = adr * 3.0 + dobu * 0.065 + Math.max(0, nora - 0.5) * 0.8 + ((iv.adrenalineBolusTimer || 0) > 0 ? 0.6 : 0);
+      if (adrBurden > 0.85) {
+        fx.ectopyDelta += clamp((adrBurden - 0.85) * 0.18, 0, 0.35);
+        fx.proArrhythmiaStress += clamp((adrBurden - 0.85) * 1.4, 0, 2.5);
+        interactions.push({
+          level: adrBurden > 1.4 ? 'critical' : 'warning',
+          tag: 'Sobrecarga Catecolaminérgica',
+          msg: 'INTERAÇÃO: Sobrecarga Adrenérgica (risco de TV/FV, isquemia e hiperlactatemia)'
+        });
+        this._logInteractionOnce('adr_storm', '💊 Interação: Sobrecarga catecolaminérgica — aumento de ectopias ventriculares e risco de TV/FV.');
+      }
+
+      // INTERAÇÃO 4: Sinergia Bradicardizante / Bloqueio AV (Amiodarona + Dexmedetomidina / Remifentanil)
+      const bradyAgents = (amio > 0.3 || (iv.amiodaroneBolusTimer || 0) > 0 ? 1 : 0) + (dex > 0.3 ? 1 : 0) + (remi > 0.12 || fenta > 3 ? 1 : 0);
+      if (bradyAgents >= 2) {
+        fx.hrDelta -= 14;
+        interactions.push({
+          level: 'warning',
+          tag: 'Sinergia Bradicardizante',
+          msg: 'INTERAÇÃO: Sinergia Bradicardizante / Bloqueio AV (monitorar FC e condução)'
+        });
+        this._logInteractionOnce('brady_syn', '💊 Interação: Associação bradicardizante (Amiodarona / Dexmedetomidina / Opioide) — risco de bradicardia grave ou BAV.');
+      }
+
+      // INTERAÇÃO 5: Colapso Vasodilatador (Nitroprussiato/Nitroglicerina + Propofol ou Hipovolemia)
+      const vasoDil = nps > 0.5 || (iv.nitroBolusTimer || 0) > 0;
+      const lowPreload = this.cardiac && (this.cardiac.preload + (iv.fluidBoost || 0)) < 0.86;
+      if (vasoDil && (prop > 1.2 || lowPreload || (this.patient && this.patient.pneumothoraxActive))) {
+        fx.svrFactor -= 0.14;
+        fx.preloadFactor -= 0.10;
+        interactions.push({
+          level: 'critical',
+          tag: 'Colapso Vasodilatador',
+          msg: 'INTERAÇÃO: Vasodilatador + Propofol/Hipovolemia — risco de colapso hemodinâmico!'
+        });
+        this._logInteractionOnce('vaso_collapse', '💊 Interação crítica: Vasodilatador associado a Propofol ou pré-carga baixa — queda grave da PAM!');
+      }
+
+      // INTERAÇÃO 6: Nitroprussiato em dose alta prolongada (risco de toxicidade por cianeto)
+      if (nps > 4.0) {
+        interactions.push({
+          level: 'warning',
+          tag: 'Nitroprussiato Dose Alta (Cianeto)',
+          msg: `INTERAÇÃO: Nitroprussiato ${nps.toFixed(1)} mcg/kg/min — risco de acidose lática (cianeto)`
+        });
+      }
+
+      this.drugInteractions = interactions;
+      fx.svrFactor = clamp(fx.svrFactor, 0.32, 2.35);
+      fx.contractilityFactor = clamp(fx.contractilityFactor, 0.55, 1.95);
+      fx.preloadFactor = clamp(fx.preloadFactor, 0.65, 1.15);
       return fx;
     }
 
@@ -1799,7 +2372,24 @@
       const drive = Math.max(0, this.patient.intrinsicDrive - pumpFx.drivePenalty);
 
       if (!this.airway || !this.airway.connectedToVent) {
+        if (b.shockPawTimer > 0) b.shockPawTimer = Math.max(0, b.shockPawTimer - dt);
         this._stepSpontaneousAirway(dt, C, R, tau, drive);
+        return;
+      }
+
+      if (v.standby) {
+        if (b.shockPawTimer > 0) b.shockPawTimer = Math.max(0, b.shockPawTimer - dt);
+        b.phase = 'EXP';
+        b.flowLs = -b.volumeL / Math.max(0.25, tau);
+        b.volumeL = Math.max(0, b.volumeL + b.flowLs * dt);
+        b.paw = 0;
+        b.lastPeakPaw = 0;
+        b.lastPlatPaw = 0;
+        b.lastMeanPaw = 0;
+        b.lastAutoPeep = 0;
+        b.lastRrTotal = 0;
+        b.lastVteMl = 0;
+        b.lastVeLmin = 0;
         return;
       }
 
@@ -2019,6 +2609,13 @@
         b.paw = v.peepSet + Math.max(0, -b.flowLs * 1.4);
       }
 
+      // Contração muscular torácica breve durante descarga elétrica do cardioversor (pico transitório em Paw)
+      if (b.shockPawTimer > 0) {
+        b.shockPawTimer = Math.max(0, b.shockPawTimer - dt);
+        const jolt = Math.sin((b.shockPawTimer / 0.32) * Math.PI) * 11.5;
+        b.paw += jolt;
+      }
+
       b.pawIntegral += b.paw;
       b.pawSamples += 1;
       this._recordLoopPoint();
@@ -2161,14 +2758,38 @@
       const excessPmean = Math.max(0, b.lastMeanPaw - 10) + b.lastAutoPeep * 0.9;
       const preloadPenalty = clamp(1 - excessPmean * (0.018 / Math.max(0.45, c.preload)), 0.45, 1.05);
 
-      // Efeito de Volume + Noradrenalina + Drogas das Bombas de Infusão Contínua
+      // Efeito de Volume + Noradrenalina + Drogas das Bombas de Infusão Contínua (com farmacocinética & interações)
       const pumpFx = this._getPumpPharmacology();
-      const effectivePreload = c.preload + iv.fluidBoost;
-      const noraFactor = 1 + iv.noraDose * 0.95; // até +0.95 em 1.0 ug/kg/min
+      const effectivePreload = (c.preload + iv.fluidBoost) * (pumpFx.preloadFactor || 1.0);
+      const noraFactor = 1 + iv.noraDose * 0.95 * (pumpFx.catecholamineScale || 1.0);
+      const acidContractility = vit.ph < 7.22 ? clamp(1 - (7.22 - vit.ph) * 1.15, 0.54, 1.0) : 1.0;
 
-      // Efeito da hipoxemia / acidemia na FC
+      // Acidose lática dinâmica por hipoperfusão, hipoxemia ou sobrecarga adrenérgica/cianeto
+      const hypoperfusion = Math.max(0, 60 - vit.map);
+      const hypoxemia = Math.max(0, 86 - vit.spo2);
+      const lacProd = hypoperfusion * 0.0026 + hypoxemia * 0.0022 + (pumpFx.lactateRate || 0);
+      if (lacProd > 0.004) {
+        const dLac = lacProd * dt;
+        p.lactate = clamp(p.lactate + dLac, 0.5, 18.0);
+        p.baseExcess = clamp(p.baseExcess - dLac * 0.82, -22, 14);
+      } else if (vit.map >= 68 && vit.spo2 >= 92 && p.lactate > Math.max(1.0, this._baseLactate || 1.1)) {
+        const targetLac = Math.max(1.0, this._baseLactate || 1.1);
+        const prevLac = p.lactate;
+        p.lactate = lerp(p.lactate, targetLac, dt * 0.014);
+        const cleared = Math.max(0, prevLac - p.lactate);
+        if (p.baseExcess < (this._baseBE || 0)) {
+          p.baseExcess = Math.min(this._baseBE || 0, p.baseExcess + cleared * 0.75);
+        }
+      }
+
+      // Efeito da hipoxemia / acidemia na FC + bradicardia terminal pré-PCR
+      const det = this.deterioration || { risk: 0, primaryCause: null };
       const hypoxiaDrive = Math.max(0, 92 - vit.spo2) * 1.1;
       const acidosisDrive = Math.max(0, 7.30 - vit.ph) * 95;
+      const terminalBradyPenalty =
+        det.risk > 60 && (det.primaryCause === 'Hipóxia grave' || det.primaryCause === 'Acidose grave')
+          ? (det.risk - 60) * 1.15
+          : 0;
 
       const pacerOn = Boolean(this.externalPacer && this.externalPacer.active);
       const paceableRhythm =
@@ -2178,17 +2799,26 @@
         c.rhythm === 'av_block_2_m2' ||
         c.rhythm === 'av_block_3';
 
-      let targetHr = c.baseHr + hypoxiaDrive + acidosisDrive * 0.5 + excessPmean * 1.1 - iv.fluidBoost * 18 + pumpFx.hrDelta + (iv.bolusHrDelta || 0);
+      let targetHr =
+        c.baseHr +
+        hypoxiaDrive +
+        acidosisDrive * 0.5 +
+        excessPmean * 1.1 -
+        iv.fluidBoost * 18 +
+        pumpFx.hrDelta +
+        (iv.bolusHrDelta || 0) -
+        terminalBradyPenalty;
+
       if (pacerOn && paceableRhythm) {
         targetHr = this.externalPacer.rate || 70;
       } else if (c.rhythm === 'sinus_brady') {
-        targetHr = clamp(targetHr, 38, 59);
+        targetHr = clamp(targetHr, 28, 59);
       } else if (c.rhythm === 'av_block_3') {
-        targetHr = clamp(c.baseHr + hypoxiaDrive * 0.15, 30, 44);
+        targetHr = clamp(c.baseHr + hypoxiaDrive * 0.15 - terminalBradyPenalty * 0.25, 24, 44);
       } else if (c.rhythm === 'av_block_2_m2') {
-        targetHr = clamp(c.baseHr + hypoxiaDrive * 0.25, 38, 62);
+        targetHr = clamp(c.baseHr + hypoxiaDrive * 0.25 - terminalBradyPenalty * 0.3, 30, 62);
       } else if (c.rhythm === 'av_block_2_m1') {
-        targetHr = clamp(c.baseHr + hypoxiaDrive * 0.3, 46, 78);
+        targetHr = clamp(c.baseHr + hypoxiaDrive * 0.3, 40, 78);
       } else if (c.rhythm === 'paced') {
         targetHr = c.baseHr || 70;
       } else if (c.rhythm === 'svt') {
@@ -2198,23 +2828,37 @@
       } else if (c.rhythm === 'aflutter') {
         targetHr = clamp(c.baseHr + hypoxiaDrive * 0.2, 75, 150);
       } else if (c.rhythm === 'afib_rvr') {
-        targetHr = clamp(targetHr, 115, 168);
+        targetHr = clamp(targetHr, 110, 172);
       } else {
-        targetHr = clamp(targetHr, 45, 165);
+        targetHr = clamp(targetHr, 32, 172);
       }
 
+      // Acoplamento dinâmico de ectopias ventriculares (catecolaminas + estresse pré-PCR - antiarrítmico)
+      const stressEctopy = det.risk > 38 ? (det.risk - 38) * 0.0032 : 0;
+      c.ectopyProb = clamp(
+        (this._baseEctopyProb || 0) + (pumpFx.ectopyDelta || 0) + stressEctopy - (pumpFx.ectopyReduction || 0) * 0.15,
+        0,
+        0.45
+      );
+
+      // Queda pré-parada de contratilidade quando deterioração > 70%
+      const preArrestDecomp = det.risk > 70 ? clamp(1 - (det.risk - 70) * 0.011, 0.65, 1.0) : 1.0;
+
       const pressureScale = clamp(
-        effectivePreload * preloadPenalty * (c.svr * noraFactor * pumpFx.svrFactor + (iv.bolusSvrDelta || 0)) * (c.contractility * pumpFx.contractilityFactor),
-        0.35,
-        1.85
+        effectivePreload *
+          preloadPenalty *
+          (c.svr * noraFactor * pumpFx.svrFactor + (iv.bolusSvrDelta || 0)) *
+          (c.contractility * pumpFx.contractilityFactor * acidContractility * preArrestDecomp),
+        0.24,
+        1.90
       );
       // Como baseSbp já reflete baseline do cenário, aplicamos delta relativo ao baseline
       const baselineFactor = clamp(c.preload * c.svr * c.contractility, 0.25, 1.8);
       const relScale = pressureScale / baselineFactor;
 
       const pacerBoost = pacerOn && c.rhythm === 'av_block_3' ? 1.18 : 1.0;
-      const targetSbp = clamp(c.baseSbp * relScale * pacerBoost, 42, 220);
-      const targetDbp = clamp(c.baseDbp * relScale * (1 + iv.noraDose * 0.12) * (pacerOn && c.rhythm === 'av_block_3' ? 1.12 : 1.0), 24, 130);
+      const targetSbp = clamp(c.baseSbp * relScale * pacerBoost, 34, 225);
+      const targetDbp = clamp(c.baseDbp * relScale * (1 + iv.noraDose * 0.12 * (pumpFx.catecholamineScale || 1)) * (pacerOn && c.rhythm === 'av_block_3' ? 1.12 : 1.0), 18, 132);
 
       vit.hr = lerp(vit.hr, targetHr, dt * 0.45);
       vit.sbp = lerp(vit.sbp, targetSbp, dt * 0.45);
@@ -2223,9 +2867,245 @@
       vit.rhythm = c.rhythm;
 
       // Índice de Perfusão depende da PAM e vasoconstrição
-      const piTarget = clamp((vit.map / 85) * 3.2 - iv.noraDose * 1.1, 0.35, 6.5);
+      const piTarget = clamp((vit.map / 85) * 3.2 - iv.noraDose * 1.1 - ((this.drugCe && this.drugCe.vasopressina) || 0) * 14, 0.25, 6.5);
       vit.perfusionIndex = lerp(vit.perfusionIndex, piTarget, dt * 0.4);
-      vit.stDeviation = c.stDeviation - Math.max(0, 90 - vit.spo2) * 0.04;
+      const stDrugShift = c.rhythm === 'stemi' || c.rhythm === 'de_winter' ? (pumpFx.stPenalty || 0) : -(pumpFx.stPenalty || 0) * 0.35;
+      vit.stDeviation = c.stDeviation - Math.max(0, 90 - vit.spo2) * 0.04 + stDrugShift;
+    }
+
+    /**
+     * Motor de Deterioração Clínica & Progressão para Parada Cardíaca (5Hs & 5Ts + Interações)
+     * Pacientes NÃO inicialmente em PCR podem evoluir progressivamente para AESP, FV, Assistolia ou Torsades
+     * se mantidos sob hipóxia grave, acidose, choque extremo, hipercalemia, isquemia ou toxicidade medicamentosa.
+     */
+    _stepDeteriorationAndArrest(dt) {
+      const p = this.patient;
+      const c = this.cardiac;
+      const vit = this.vitals;
+      const b = this.breath;
+      const iv = this.interventions;
+      const det = this.deterioration;
+      if (!det) return;
+
+      // Caso já esteja em PCR: acumula lactato + permite RCE em AESP/Assistolia se RCP + causa revertida!
+      if (p.arrested && !iv.roscAchieved) {
+        det.risk = 100;
+        det.stage = 'arrested';
+        p.lactate = clamp(p.lactate + dt * 0.032, 0.5, 18.0);
+        p.baseExcess = clamp(p.baseExcess - dt * 0.025, -22, 14);
+
+        if ((c.rhythm === 'pea' || c.rhythm === 'asystole') && iv.cprActive) {
+          const o2Info = this.getEffectiveO2Info();
+          const airwayOk = (this.airway && this.airway.connectedToVent && o2Info.fio2 >= 50) || o2Info.fio2 >= 80;
+          const noTensionPneumo = !p.pneumothoraxActive;
+          const drugSupport = (iv.adrenalineBolusTimer || 0) > 0 || iv.noraDose >= 0.1 || iv.fluidBoluses > 0 || (iv.calciumProtectionTimer || 0) > 0 || vit.ph >= 7.12;
+          if (airwayOk && noTensionPneumo && drugSupport) {
+            det.cprRecoveryProgress = Math.min(100, (det.cprRecoveryProgress || 0) + dt * 5.2);
+            if (det.cprRecoveryProgress >= 100) {
+              iv.roscAchieved = true;
+              iv.cprActive = false;
+              p.arrested = false;
+              det.risk = 28;
+              det.stage = 'stable';
+              det._warnLogged = false;
+              det._imminentLogged = false;
+              c.rhythm = 'sinus_tach';
+              c.baseHr = 112;
+              c.baseSbp = Math.max(92, c.baseSbp);
+              c.baseDbp = Math.max(58, c.baseDbp);
+              c.preload = Math.max(0.86, c.preload);
+              c.svr = Math.max(0.88, c.svr);
+              c.contractility = Math.max(0.82, c.contractility);
+              if (p.intrinsicDrive <= 0) p.intrinsicDrive = 8;
+              vit.rhythm = 'sinus_tach';
+              vit.hr = 112;
+              vit.sbp = c.baseSbp;
+              vit.dbp = c.baseDbp;
+              vit.map = Math.round((vit.sbp + 2 * vit.dbp) / 3);
+              if (this.onLog) {
+                this.onLog('✅ RCE ALCANÇADO EM AESP/ASSISTOLIA! RCP eficaz + Adrenalina + reversão das causas 5H/5T restauraram pulso!');
+              }
+            }
+          }
+        }
+        return;
+      }
+
+      // Avaliação das causas reversíveis (5Hs & 5Ts + Arritmias + Toxicidades)
+      const pumpFx = this._getPumpPharmacology();
+      const ce = this.drugCe || {};
+      const causes = [];
+      let totalRate = 0;
+      let maxWeight = 0;
+      let primaryCause = null;
+      let targetRhythm = 'pea';
+
+      const addCause = (label, rate, rhythmHint) => {
+        if (rate <= 0) return;
+        causes.push(label);
+        totalRate += rate;
+        if (rate > maxWeight) {
+          maxWeight = rate;
+          primaryCause = label;
+          targetRhythm = rhythmHint;
+        }
+      };
+
+      // 1. HIPÓXIA SUSTENTADA (H)
+      const apneicNoVent = (!this.airway || !this.airway.connectedToVent) && b.lastRrTotal <= 0;
+      if (vit.spo2 < 88 || apneicNoVent) {
+        let r = 0;
+        if (vit.spo2 < 68) r = 4.2;
+        else if (vit.spo2 < 76) r = 2.6;
+        else if (vit.spo2 < 85) r = 1.25;
+        else r = 0.65; // hipoxemia sustentada 85-87%
+        if (apneicNoVent) r += 1.4;
+        const hypRhythm = (c.rhythm === 'stemi' || c.rhythm === 'de_winter') ? 'vf' : (vit.hr < 42 ? 'asystole' : 'pea');
+        addCause(`Hipóxia sustentada (SpO₂ ${Math.round(vit.spo2)}%)`, r, hypRhythm);
+      }
+
+      // 2. ACIDOSE SUSTENTADA (H - Acidose respiratória ou metabólica/lática)
+      if (vit.ph < 7.22) {
+        let r = 0;
+        if (vit.ph < 7.00) r = 3.8;
+        else if (vit.ph < 7.10) r = 2.2;
+        else if (vit.ph < 7.18) r = 1.15;
+        else r = 0.65;
+        const acidRhythm = (c.rhythm === 'stemi' || c.rhythm === 'de_winter' || pumpFx.proArrhythmiaStress > 0.6) ? 'vf' : 'pea';
+        addCause(`Acidose sustentada (pH ${vit.ph.toFixed(2)})`, r, acidRhythm);
+      }
+
+      // 3. CHOQUE / HIPOPERFUSÃO / OBSTRUTIVO (Hipovolemia, Séptico, Cardiogênico, Tamponamento, TEP, Pneumotórax)
+      const effPreloadNow = c.preload + (iv.fluidBoost || 0);
+      if (vit.map < 52) {
+        let r = vit.map < 38 ? 4.3 : vit.map < 45 ? 2.6 : 1.35;
+        if (p.pneumothoraxActive) r += 1.5;
+        addCause(p.pneumothoraxActive ? 'Pneumotórax hipertensivo + Choque' : `Choque refratário (PAM ${vit.map} mmHg)`, r, 'pea');
+      } else if (vit.map < 64 && (effPreloadNow <= 0.62 || p.lactate >= 4.0 || p.shunt >= 0.24)) {
+        // Choque obstrutivo/distributivo sustentado (Tamponamento cardíaco, TEP maciço, choque inicial não tratado)
+        const label = effPreloadNow <= 0.62
+          ? `Choque obstrutivo / restrição de enchimento (PAM ${vit.map} mmHg)`
+          : p.shunt >= 0.24
+          ? `Sobrecarga de VD / TEP maciço (PAM ${vit.map} mmHg)`
+          : `Hipoperfusão sustentada (PAM ${vit.map} mmHg • Lac ${p.lactate.toFixed(1)})`;
+        addCause(label, effPreloadNow <= 0.62 ? 2.4 : 1.9, 'pea');
+      } else if (p.pneumothoraxActive && b.lastMeanPaw > 14) {
+        addCause('Pneumotórax hipertensivo sob pressão positiva', 1.8, 'pea');
+      }
+
+      // 4. CONGESTÃO PULMONAR GRAVE / EAP DESCOMPENSADO
+      if (p.shunt >= 0.26 && p.compliance <= 36 && vit.spo2 <= 91) {
+        addCause(`Congestão alveolar grave / EAP (SpO₂ ${Math.round(vit.spo2)}%)`, 1.85, 'pea');
+      }
+
+      // 5. BRONCOESPASMO GRAVE / FADIGA RESPIRATÓRIA (Asma grave / DPOC exacerbado sem broncodilatação)
+      if (p.resistance >= 18) {
+        const resRate = clamp(1.15 + (p.resistance - 18) * 0.06, 1.15, 2.0);
+        addCause(`Broncoespasmo grave / fadiga respiratória (Raw ${Math.round(p.resistance)})`, resRate, 'pea');
+      }
+
+      // 6. EMERGÊNCIA HIPERTENSIVA EXTREMA (Sobrecarga aguda de VE / lesão de órgão-alvo sem vasodilatador)
+      const hasVasodilator = (ce.nitroprussiato || 0) >= 0.25 || (iv.nitroBolusTimer || 0) > 0;
+      if (vit.sbp >= 195 || vit.map >= 140 || (!hasVasodilator && c.svr >= 1.45 && c.baseSbp >= 200 && det.risk >= 60)) {
+        const htRate = vit.sbp >= 210 || vit.map >= 150 ? 1.95 : 1.75;
+        addCause(`Emergência hipertensiva sustentada (PA ${Math.round(vit.sbp)}/${Math.round(vit.dbp)})`, htRate, 'vf');
+      }
+
+      // 7. HIPERCALEMIA NÃO ESTABILIZADA (H)
+      if (c.rhythm === 'hyperkalemia' && (iv.calciumProtectionTimer || 0) <= 0) {
+        addCause('Hipercalemia grave sem Gluconato de Cálcio', 2.4, 'pea');
+      }
+
+      // 8. ISQUEMIA AGUDA INSTÁVEL / TV NÃO TRATADA / TAQUIARRITMIA EXTREMA / WPW / TEMPESTADE ADRENÉRGICA (T)
+      if (c.rhythm === 'vtach') {
+        addCause('TV monomórfica sustentada não revertida', 3.4, 'vf');
+      } else if ((c.rhythm === 'stemi' || c.rhythm === 'de_winter') && (vit.spo2 < 88 || vit.map < 60 || pumpFx.proArrhythmiaStress > 0.35 || (!iv.thrombolysisGiven && c.stDeviation >= 3.5 && c.contractility <= 0.72))) {
+        const stemiRate = (vit.spo2 < 88 || vit.map < 60) ? (2.2 + pumpFx.proArrhythmiaStress) : 2.15;
+        addCause('IAMCSST extenso com instabilidade elétrica/isquêmica', stemiRate, 'vf');
+      } else if ((c.rhythm === 'svt' || c.rhythm === 'afib_rvr' || c.rhythm === 'wpw') && (vit.hr >= 140 && (vit.map < 78 || vit.hr >= 175))) {
+        const tachRate = vit.hr >= 175 ? 2.0 : c.rhythm === 'wpw' ? 1.85 : 1.45;
+        addCause(c.rhythm === 'wpw' ? `WPW pré-excitada instável (FC ${Math.round(vit.hr)} bpm)` : `Taquiarritmia instável sustentada (FC ${Math.round(vit.hr)} bpm)`, tachRate, 'vf');
+      } else if (pumpFx.proArrhythmiaStress > 0.85) {
+        addCause('Toxicidade / sobrecarga catecolaminérgica', pumpFx.proArrhythmiaStress * 1.4, 'vf');
+      }
+
+      // 9. HIPOTERMIA MODERADA / GRAVE (H) OU TEMPESTADE TIREOTÓXICA / HIPERTERMIA EXTREMA
+      if (p.temp < 33.0) {
+        const hypoTRate = p.temp < 30.0 ? clamp(2.4 + (30.0 - p.temp) * 0.55, 2.4, 4.0) : clamp(1.5 + (33.0 - p.temp) * 0.35, 1.5, 2.4);
+        addCause(`Hipotermia sustentada (${p.temp.toFixed(1)}°C)`, hypoTRate, 'vf');
+      } else if (p.temp >= 39.8 && vit.hr >= 145) {
+        const stormRate = clamp(1.9 + (p.temp - 39.8) * 1.1, 1.9, 3.2);
+        addCause(`Tempestade tireotóxica / hipertermia (${p.temp.toFixed(1)}°C • FC ${Math.round(vit.hr)})`, stormRate, 'vf');
+      }
+
+      // 10. BRADICARDIA EXTREMA / BAV TOTAL (3º GRAU) DESCOMPENSADO
+      const pacerOn = Boolean(this.externalPacer && this.externalPacer.active);
+      if (!pacerOn && ((c.rhythm === 'av_block_3') || (vit.hr > 0 && vit.hr < 42 && vit.map < 62))) {
+        const bRate = c.rhythm === 'av_block_3' ? 2.6 : 1.9;
+        addCause(c.rhythm === 'av_block_3' ? `BAV Total sem marcapasso (${Math.round(vit.hr)} bpm)` : `Bradiarritmia instável (${Math.round(vit.hr)} bpm)`, bRate, 'asystole');
+      }
+
+      // 11. RISCO DE TORSADES DE POINTES (QT longo: Amiodarona + bradicardia + acidose/hipóxia sem MgSO4)
+      if (
+        (iv.magnesiumProtectionTimer || 0) <= 0 &&
+        vit.hr > 0 && vit.hr < 52 &&
+        ((ce.amiodarona || 0) > 0.4 || (iv.amiodaroneBolusTimer || 0) > 0) &&
+        (vit.ph < 7.25 || vit.spo2 < 88)
+      ) {
+        addCause('Prolongamento de QT (Amiodarona + bradicardia/acidose)', 2.4, 'torsades');
+      }
+
+      // Prioridade eletrofisiológica do ritmo final de PCR quando há arritmia maligna, hipotermia ou bloqueio total
+      if (c.rhythm === 'vtach' || c.rhythm === 'wpw' || p.temp < 33.0 || (p.temp >= 39.8 && vit.hr >= 145)) targetRhythm = 'vf';
+      else if ((c.rhythm === 'av_block_3' || (c.rhythm === 'av_block_2_m2' && vit.hr < 42)) && !pacerOn) targetRhythm = 'asystole';
+
+      det.causes = causes;
+      det.primaryCause = primaryCause ? primaryCause.split(' (')[0] : null;
+      det.targetRhythm = targetRhythm;
+
+      if (totalRate > 0) {
+        // Calibrado para raciocínio clínico confortável (~65-75s em apneia/catástrofe; ~2-4 min em causa isolada)
+        det.risk = clamp(det.risk + Math.min(1.65, totalRate * 0.34) * dt, 0, 100);
+      } else {
+        // Recuperação fisiológica gradual quando o clínico corrige as causas
+        det.risk = clamp(det.risk - 4.8 * dt, 0, 100);
+      }
+
+      if (det.risk >= 100) {
+        const rhythmNames = { vf: 'FIBRILAÇÃO VENTRICULAR (FV)', pea: 'AESP', asystole: 'ASSISTOLIA', torsades: 'TORSADES DE POINTES' };
+        det.stage = 'arrested';
+        det.cprRecoveryProgress = 0;
+        det.lastArrestReason = causes.join(' + ') || 'Deterioração hemodinâmica/metabólica refratária';
+        this.setRhythm(targetRhythm, true);
+        if (this.onLog) {
+          this.onLog(`🚨 PARADA CARDÍACA (${rhythmNames[targetRhythm] || 'PCR'}) PRECIPITADA POR: ${det.lastArrestReason}! Iniciar RCP e tratar causa reversível!`);
+        }
+        return;
+      }
+
+      if (det.risk >= 70) {
+        det.stage = 'imminent';
+        if (!det._imminentLogged) {
+          det._imminentLogged = true;
+          if (this.onLog) {
+            this.onLog(`🚨 PCR IMINENTE (${Math.round(det.risk)}%): ${causes.join(' + ')} — intervenha imediatamente!`);
+          }
+        }
+      } else if (det.risk >= 40) {
+        det.stage = 'warning';
+        if (!det._warnLogged) {
+          det._warnLogged = true;
+          if (this.onLog) {
+            this.onLog(`⚠ Deterioração clínica progressiva (${Math.round(det.risk)}%): ${causes.join(' + ')} — risco de evolução para PCR.`);
+          }
+        }
+      } else {
+        det.stage = 'stable';
+        if (det.risk < 22) {
+          det._warnLogged = false;
+          det._imminentLogged = false;
+        }
+      }
     }
 
     _evaluateAlarms() {
@@ -2238,10 +3118,26 @@
         const arrestMsgs = {
           vf: 'PCR • FIBRILAÇÃO VENTRICULAR — SEM PULSO!',
           torsades: 'PCR • TORSADES DE POINTES — CHOQUE + MAGNÉSIO!',
-          pea: 'PCR • ATIVIDADE ELÉTRICA SEM PULSO (AESP) — INICIAR RCP!',
-          asystole: 'PCR • ASSISTOLIA — CHECAR CABOS + INICIAR RCP!'
+          pea: 'PCR • ATIVIDADE ELÉTRICA SEM PULSO (AESP) — INICIAR RCP + TRATAR 5H/5T!',
+          asystole: 'PCR • ASSISTOLIA — CHECAR CABOS + INICIAR RCP + ADRENALINA!'
         };
-        list.push({ level: 'critical', msg: arrestMsgs[v.rhythm] || arrestMsgs.vf });
+        const causeSuffix = this.deterioration && this.deterioration.lastArrestReason ? ` [${this.deterioration.lastArrestReason}]` : '';
+        list.push({ level: 'critical', msg: (arrestMsgs[v.rhythm] || arrestMsgs.vf) + causeSuffix });
+      } else if (this.deterioration && this.deterioration.risk >= 40) {
+        const pct = Math.round(this.deterioration.risk);
+        const causesTxt = (this.deterioration.causes || []).slice(0, 2).join(' + ');
+        list.push({
+          level: this.deterioration.risk >= 70 ? 'critical' : 'warning',
+          msg: this.deterioration.risk >= 70
+            ? `🚨 PCR IMINENTE (${pct}%): ${causesTxt} — INTERVIR JÁ!`
+            : `⚠ DETERIORAÇÃO (${pct}%): ${causesTxt} — RISCO DE PCR`
+        });
+      }
+
+      if (Array.isArray(this.drugInteractions) && this.drugInteractions.length > 0) {
+        this.drugInteractions.forEach((ix) => {
+          list.push({ level: ix.level || 'warning', msg: ix.msg });
+        });
       }
       if (v.rhythm === 'av_block_3') {
         list.push({ level: 'critical', msg: 'BAV TOTAL (3º GRAU) — DISSOCIAÇÃO AV / MARCAPASSO!' });
@@ -2265,6 +3161,11 @@
             msg: 'APNEIA SEM VENTILADOR MECÂNICO — VENTILAR C/ BVM OU INTUBAR/ACOPLAR À VM!'
           });
         }
+      } else if (this.vent.standby) {
+        list.push({
+          level: 'critical',
+          msg: 'VENTILADOR EM STANDBY COM PACIENTE INTUBADO — INICIAR VENTILAÇÃO!'
+        });
       } else if (this.vent.mode === 'PSV' && this.patient.intrinsicDrive <= 0) {
         list.push({
           level: 'critical',
@@ -2346,6 +3247,13 @@
           this.patient.arrested = false;
           this.interventions.cprActive = false;
           this.interventions.roscAchieved = false;
+          if (this.deterioration) {
+            this.deterioration.risk = 0;
+            this.deterioration.stage = 'stable';
+            this.deterioration.lastArrestReason = null;
+            this.deterioration._warnLogged = false;
+            this.deterioration._imminentLogged = false;
+          }
           if (this.patient.intrinsicDrive <= 0) this.patient.intrinsicDrive = 14;
           if (this.cardiac.baseSbp < 75) {
             this.cardiac.baseSbp = 118;
@@ -2431,7 +3339,10 @@
     }
 
     decompressChest() {
-      if (!this.patient.pneumothoraxActive) return;
+      if (!this.patient.pneumothoraxActive) {
+        if (this.onLog) this.onLog('Toracocentese: sem sinais de pneumotórax hipertensivo ativo neste momento.');
+        return;
+      }
       this.patient.pneumothoraxActive = false;
       this.patient.compliance = 52;
       this.patient.resistance = 8;
@@ -2442,6 +3353,245 @@
       this.cardiac.baseDbp = 70;
       this.cardiac.stDeviation = 0.0;
       if (this.onLog) this.onLog('SUCESSO: Descompressão torácica + Drenagem aliviou choque obstrutivo!');
+    }
+
+    performPericardiocentesis() {
+      const isTamponade = this.scenarioId === 'cardiac_tamponade' || (this.cardiac.preload <= 0.58 && !this.patient.pneumothoraxActive && !this.interventions.pericardiocentesisDone);
+      if (!isTamponade) {
+        if (this.onLog) this.onLog('Pericardiocentese: sem evidência de tamponamento cardíaco ativo no momento.');
+        return false;
+      }
+      this.interventions.pericardiocentesisDone = true;
+      this.cardiac.preload = Math.max(0.96, this.cardiac.preload);
+      this.cardiac.baseSbp = Math.max(114, this.cardiac.baseSbp);
+      this.cardiac.baseDbp = Math.max(72, this.cardiac.baseDbp);
+      this.cardiac.baseHr = Math.min(94, this.cardiac.baseHr);
+      this.cardiac.contractility = Math.max(0.94, this.cardiac.contractility);
+      if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 40);
+      if (this.onLog) this.onLog('SUCESSO: Pericardiocentese guiada por USG drenou derrame pericárdico — enchimento ventricular e PAM restaurados!');
+      return true;
+    }
+
+    giveThrombolysis() {
+      if (this.scenarioId === 'hemorrhagic_shock' || this.scenarioId === 'postpartum_hemorrhage' || this.scenarioId === 'eclampsia_hellp') {
+        // Armadilha clínica real: trombolítico em hemorragia ativa ou eclâmpsia/HELLP agrava sangramento!
+        this.cardiac.preload = Math.max(0.38, Number((this.cardiac.preload - 0.16).toFixed(2)));
+        this.patient.lactate = clamp(this.patient.lactate + 1.4, 0.5, 18);
+        if (this.onLog) this.onLog('🚨 CONTRAINDICAÇÃO ABSOLUTA: Trombolítico em hemorragia ativa / HELLP provocou sangramento catastrófico!');
+        return false;
+      }
+      const isPe = this.scenarioId === 'pulmonary_embolism';
+      const isStemi = this.cardiac.rhythm === 'stemi' || this.cardiac.rhythm === 'de_winter';
+      if (!isPe && !isStemi) {
+        if (this.onLog) this.onLog('Trombólise/Anticoagulação plena: sem indicação primária de TEP maciço ou IAMCSST neste cenário.');
+        return false;
+      }
+      this.interventions.thrombolysisGiven = true;
+      if (isPe) {
+        this.patient.shunt = Math.max(0.08, Number((this.patient.shunt * 0.42).toFixed(2)));
+        this.cardiac.preload = Math.max(0.96, this.cardiac.preload);
+        this.cardiac.contractility = Math.max(0.94, this.cardiac.contractility);
+        this.cardiac.baseSbp = Math.max(112, this.cardiac.baseSbp);
+        this.cardiac.baseDbp = Math.max(70, this.cardiac.baseDbp);
+        this.cardiac.baseHr = Math.min(98, this.cardiac.baseHr);
+        if (this.onLog) this.onLog('SUCESSO: Trombólise sistêmica (Alteplase) no TEP Maciço — recanalização pulmonar, queda da pós-carga de VD e melhora da PAM!');
+      } else {
+        this.cardiac.stDeviation = Math.max(0.4, Number((this.cardiac.stDeviation * 0.35).toFixed(1)));
+        this.cardiac.contractility = Math.min(1.0, Number((this.cardiac.contractility + 0.16).toFixed(2)));
+        if (this.cardiac.rhythm === 'stemi' || this.cardiac.rhythm === 'de_winter') {
+          this.cardiac.rhythm = 'sinus';
+          this.vitals.rhythm = 'sinus';
+        }
+        if (this.onLog) this.onLog('SUCESSO: Reperfusão coronariana (Trombólise/Heparina) — regressão do supra ST e estabilização miocárdica!');
+      }
+      if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 35);
+      return true;
+    }
+
+    togglePronePosition() {
+      const iv = this.interventions;
+      iv.proneActive = !iv.proneActive;
+      if (iv.proneActive) {
+        this._pronePrevShunt = this.patient.shunt;
+        this._pronePrevComp = this.patient.compliance;
+        if (this.patient.shunt >= 0.18) {
+          this.patient.shunt = Math.max(0.08, Number((this.patient.shunt * 0.66).toFixed(2)));
+          this.patient.compliance = Math.min(62, Math.round(this.patient.compliance * 1.18));
+          if (this.onLog) this.onLog('Posição Prona ATIVADA: recrutamento dorsal reduziu shunt pulmonar e elevou PaO₂/FiO₂!');
+        } else {
+          if (this.onLog) this.onLog('Posição Prona ativada (ganho limitado pois shunt basal já é baixo).');
+        }
+      } else {
+        if (typeof this._pronePrevShunt === 'number') {
+          this.patient.shunt = Number(((this.patient.shunt + this._pronePrevShunt) * 0.5).toFixed(2));
+        }
+        if (this.onLog) this.onLog('Paciente retornado à posição supina.');
+      }
+      return iv.proneActive;
+    }
+
+    toggleActiveWarming() {
+      const iv = this.interventions;
+      iv.warmingActive = !iv.warmingActive;
+      if (iv.warmingActive) {
+        iv.coolingActive = false;
+        if (this.patient.temp >= 38.0) {
+          if (this.onLog) this.onLog('⚠ Atenção: paciente já está febril/hipertérmico — reaquecimento ativo não indicado!');
+        } else {
+          if (this.onLog) this.onLog(`Reaquecimento Ativo LIGADO (Temp atual ${this.patient.temp.toFixed(1)}°C → aquecendo para 36.6°C).`);
+        }
+      } else {
+        if (this.onLog) this.onLog('Reaquecimento Ativo desligado.');
+      }
+      return iv.warmingActive;
+    }
+
+    toggleActiveCooling() {
+      const iv = this.interventions;
+      iv.coolingActive = !iv.coolingActive;
+      if (iv.coolingActive) {
+        iv.warmingActive = false;
+        if (this.patient.temp < 36.2) {
+          if (this.onLog) this.onLog('⚠ Atenção: paciente normo/hipotérmico — resfriamento ativo pode induzir hipotermia e arritmia!');
+        } else {
+          if (this.onLog) this.onLog(`Resfriamento Ativo LIGADO (Temp ${this.patient.temp.toFixed(1)}°C → resfriando para 36.8°C e reduzindo hipermetabolismo).`);
+        }
+      } else {
+        if (this.onLog) this.onLog('Resfriamento Ativo desligado.');
+      }
+      return iv.coolingActive;
+    }
+
+    toggleQuickPacer(rateBpm = 70) {
+      const currentlyOn = Boolean(this.externalPacer && this.externalPacer.active);
+      const next = !currentlyOn;
+      this.setExternalPacer(next, rateBpm);
+      if (next && !this.patient.arrested) {
+        this.cardiac.baseSbp = Math.max(this.cardiac.baseSbp, 96);
+        this.cardiac.baseDbp = Math.max(this.cardiac.baseDbp, 60);
+        if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 30);
+      }
+      return next;
+    }
+
+    giveOsmotherapy() {
+      const iv = this.interventions;
+      if (this.scenarioId === 'tce_cushing') {
+        iv.osmotherapyGiven = true;
+        this.cardiac.svr = Math.max(1.08, Number((this.cardiac.svr * 0.78).toFixed(2)));
+        this.cardiac.baseSbp = Math.max(138, Math.round(this.cardiac.baseSbp - 44));
+        this.cardiac.baseDbp = Math.max(82, Math.round(this.cardiac.baseDbp - 22));
+        this.cardiac.baseHr = Math.max(68, Math.round(this.cardiac.baseHr + 22));
+        this.patient.intrinsicDrive = Math.max(13, Math.round(this.patient.intrinsicDrive + 6));
+        if (this.cardiac.rhythm === 'sinus_brady') {
+          this.cardiac.rhythm = 'sinus';
+          this.vitals.rhythm = 'sinus';
+        }
+        if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 38);
+        if (this.onLog) this.onLog('SUCESSO: Osmoterapia (Salina Hipertônica 3% / Manitol) reduziu a PIC — reversão da Tríade de Cushing e melhora do drive respiratório!');
+        return true;
+      }
+      if ((this.cardiac.preload + (iv.fluidBoost || 0)) < 0.75) {
+        this.cardiac.preload = Math.max(0.45, Number((this.cardiac.preload - 0.08).toFixed(2)));
+        if (this.onLog) this.onLog('⚠ Osmoterapia em paciente hipovolêmico sem HIC: diurese osmótica piorou pré-carga!');
+        return false;
+      }
+      iv.osmotherapyGiven = true;
+      if (this.onLog) this.onLog('Osmoterapia (NaCl 3% / Manitol) infundida — efeito discreto fora de hipertensão intracraniana.');
+      return true;
+    }
+
+    giveHydrocortisone() {
+      const iv = this.interventions;
+      iv.hydrocortisoneGiven = true;
+      if (this.scenarioId === 'adrenal_crisis') {
+        this.cardiac.svr = Math.min(1.05, Number((this.cardiac.svr + 0.30).toFixed(2)));
+        this.cardiac.preload = Math.min(0.95, Number((this.cardiac.preload + 0.12).toFixed(2)));
+        this.cardiac.baseSbp = Math.min(116, Math.round(this.cardiac.baseSbp + 24));
+        this.cardiac.baseDbp = Math.min(72, Math.round(this.cardiac.baseDbp + 14));
+        this.patient.baseExcess = Math.min(-2, Number((this.patient.baseExcess + 3.0).toFixed(1)));
+        if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 42);
+        if (this.onLog) this.onLog('SUCESSO: Hidrocortisona 100 mg EV na Crise Adrenal — sensibilidade vascular restaurada e reversão do choque refratário!');
+        return true;
+      }
+      if (this.scenarioId === 'septic_shock' || this.scenarioId === 'myxedema_coma' || this.scenarioId === 'anaphylaxis' || this.scenarioId === 'asthma_severe' || this.scenarioId === 'copd') {
+        this.cardiac.svr = Math.min(1.12, Number((this.cardiac.svr + 0.14).toFixed(2)));
+        this.cardiac.baseSbp = Math.min(118, Math.round(this.cardiac.baseSbp + 10));
+        this.patient.resistance = Math.max(6, Math.round(this.patient.resistance * 0.88));
+        if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 22);
+        if (this.onLog) this.onLog('Hidrocortisona 100 mg EV administrada — melhora da resposta vasopressora e efeito anti-inflamatório/broncodilatador!');
+        return true;
+      }
+      if (this.onLog) this.onLog('Hidrocortisona 100 mg EV administrada (corticoide de estresse — sem déficit adrenal agudo neste cenário).');
+      return true;
+    }
+
+    toggleInsulinTherapy() {
+      const iv = this.interventions;
+      iv.insulinActive = !iv.insulinActive;
+      if (iv.insulinActive) {
+        if (this.cardiac.rhythm === 'hyperkalemia') {
+          this.setRhythm('sinus', true);
+          if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 32);
+          if (this.onLog) this.onLog('SUCESSO: Solução Polarizante (Insulina + Glicose) promoveu shift intracelular de K⁺ — ritmo sinusal restaurado!');
+        } else if (this.scenarioId === 'dka_acidosis' || this.scenarioId === 'hhs_hyperosmolar') {
+          if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 20);
+          if (this.onLog) this.onLog('Insulina Regular EV contínua LIGADA — bloqueando cetogênese e corrigindo acidose/hiperosmolaridade progressivamente!');
+        } else {
+          if (this.onLog) this.onLog('⚠ Atenção: Insulina EV ligada fora de CAD/EHH/Hipercalemia — monitore glicemia capilar (risco de hipoglicemia)!');
+        }
+      } else {
+        if (this.onLog) this.onLog('Infusão de Insulina EV pausada.');
+      }
+      return iv.insulinActive;
+    }
+
+    giveUterotonicTxa() {
+      const iv = this.interventions;
+      if (this.scenarioId === 'postpartum_hemorrhage') {
+        iv.uterotonicGiven = true;
+        this.cardiac.preload = Math.min(1.0, Number((this.cardiac.preload + 0.18).toFixed(2)));
+        this.cardiac.baseSbp = Math.min(118, Math.round(this.cardiac.baseSbp + 16));
+        this.cardiac.baseDbp = Math.min(72, Math.round(this.cardiac.baseDbp + 10));
+        this.patient.lactate = Math.max(1.4, Number((this.patient.lactate - 1.2).toFixed(1)));
+        if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 36);
+        if (this.onLog) this.onLog('SUCESSO: Ocitocina + Ácido Tranexâmico 1 g EV — involução uterina efetiva e controle da Hemorragia Pós-Parto!');
+        return true;
+      }
+      if (this.scenarioId === 'hemorrhagic_shock' || this.scenarioId === 'amniotic_embolism') {
+        iv.uterotonicGiven = true;
+        this.cardiac.preload = Math.min(0.95, Number((this.cardiac.preload + 0.08).toFixed(2)));
+        if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 14);
+        if (this.onLog) this.onLog('Ácido Tranexâmico (TXA 1 g EV) infundido — suporte antifibrinolítico na hemorragia/CIVD!');
+        return true;
+      }
+      if (this.scenarioId === 'eclampsia_hellp' || this.scenarioId === 'hypertensive_crisis') {
+        this.cardiac.baseSbp = Math.min(240, Math.round(this.cardiac.baseSbp + 8));
+        if (this.onLog) this.onLog('⚠ Atenção: uterotônico sem HPP ativa em paciente hipertensa pode agravar pico pressórico!');
+        return false;
+      }
+      if (this.onLog) this.onLog('Uterotônico + TXA: sem indicação de hemorragia obstétrica neste cenário.');
+      return false;
+    }
+
+    giveBloodTransfusion() {
+      const iv = this.interventions;
+      iv.bloodUnits = (iv.bloodUnits || 0) + 1;
+      // Hemácias restauram pré-carga sustentada (sem decaimento rápido de cristaloide) e melhoram oferta de O2!
+      const overloaded = this.cardiac.preload >= 1.12;
+      this.cardiac.preload = clamp(Number((this.cardiac.preload + 0.15).toFixed(2)), 0.4, 1.32);
+      if (overloaded) {
+        // Risco de sobrecarga volêmica (TACO) se paciente já congesto (EAP)
+        this.patient.shunt = clamp(Number((this.patient.shunt + 0.05).toFixed(2)), 0.04, 0.7);
+        if (this.onLog) this.onLog(`⚠ Transfusão CH #${iv.bloodUnits}: paciente já hipervolêmico — risco de sobrecarga (TACO)!`);
+      } else {
+        this.cardiac.baseSbp = Math.min(126, Math.round(this.cardiac.baseSbp + 10));
+        this.cardiac.baseDbp = Math.min(78, Math.round(this.cardiac.baseDbp + 6));
+        this.patient.lactate = Math.max(1.0, Number((this.patient.lactate - 0.7).toFixed(1)));
+        this.patient.baseExcess = Math.min(0, Number((this.patient.baseExcess + 1.2).toFixed(1)));
+        if (this.onLog) this.onLog(`Transfusão: Concentrado de Hemácias (#${iv.bloodUnits}) infundido — melhora da pré-carga, PAM e oferta de O₂!`);
+      }
+      return iv.bloodUnits;
     }
 
     toggleCpr() {
@@ -2458,6 +3608,7 @@
       const r = this.cardiac.rhythm;
 
       if (r === 'asystole' || r === 'pea') {
+        if (this.breath) this.breath.shockPawTimer = 0.32;
         if (this.onLog) {
           this.onLog('ATENÇÃO: Ritmo NÃO chocável (Assistolia/AESP) — manter RCP contínua + Adrenalina!');
         }
@@ -2471,7 +3622,10 @@
         return { delivered: false, converted: false, reason: 'no_r_wave' };
       }
 
-      if (sync && (r === 'afib_rvr' || r === 'aflutter' || r === 'svt' || r === 'vtach')) {
+      // Choque efetivamente entregue ao tórax -> contração torácica breve na Paw do ventilador
+      if (this.breath) this.breath.shockPawTimer = 0.32;
+
+      if (sync && (r === 'afib_rvr' || r === 'aflutter' || r === 'svt' || r === 'vtach' || r === 'wpw')) {
         if (energyJ < 50) {
           if (this.onLog) {
             this.onLog(`Cardioversão sincronizada (${energyJ}J) insuficiente — tente ≥ 50–100J.`);
@@ -2499,6 +3653,19 @@
 
       const isShockableArrest = (this.patient.arrested && !this.interventions.roscAchieved) || r === 'vtach' || r === 'torsades' || r === 'vf';
       if (!isShockableArrest) {
+        // Fenômeno R-sobre-T: choque NÃO sincronizado de alta energia sobre ritmo organizado pode induzir FV!
+        if (!sync && energyJ >= 100 && (r === 'afib_rvr' || r === 'svt' || r === 'aflutter' || r === 'wpw' || r === 'stemi' || r === 'de_winter' || (this.deterioration && this.deterioration.risk > 20))) {
+          this.setRhythm('vf', true);
+          if (this.deterioration) {
+            this.deterioration.risk = 100;
+            this.deterioration.stage = 'arrested';
+            this.deterioration.lastArrestReason = `Fenômeno R-sobre-T (choque NÃO sincronizado de ${energyJ}J sobre ritmo organizado)`;
+          }
+          if (this.onLog) {
+            this.onLog(`🚨 FENÔMENO R-SOBRE-T! Choque NÃO sincronizado (${energyJ}J) sobre ${r} induziu FIBRILAÇÃO VENTRICULAR (FV)! Desfibrilar imediatamente!`);
+          }
+          return { delivered: true, converted: false, reason: 'r_on_t_vf' };
+        }
         if (this.onLog) {
           this.onLog(`Choque ${energyJ}J aplicado — ritmo já organizado (${r}). Para taquiarritmias use modo SINC.`);
         }
@@ -2508,6 +3675,12 @@
       this.interventions.roscAchieved = true;
       this.interventions.cprActive = false;
       this.patient.arrested = false;
+      if (this.deterioration) {
+        this.deterioration.risk = 22;
+        this.deterioration.stage = 'stable';
+        this.deterioration._warnLogged = false;
+        this.deterioration._imminentLogged = false;
+      }
       if (this.patient.intrinsicDrive <= 0) this.patient.intrinsicDrive = 8;
       this.cardiac.rhythm = 'sinus_tach';
       this.cardiac.baseHr = 108;

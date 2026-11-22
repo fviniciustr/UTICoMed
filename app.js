@@ -18,7 +18,6 @@
     PhysiologyEngine,
     MedicalAudio,
     MultiparameterMonitor,
-    VentilatorDisplay,
     VivoGoldCardioverter,
     SamtronicIcatuPump,
     SeamatySG1,
@@ -52,8 +51,18 @@
   const engine = new PhysiologyEngine();
   const audio = new MedicalAudio();
   const monitor = new MultiparameterMonitor(engine, audio);
-  const ventDisplay = new VentilatorDisplay(engine);
-  const vivoGold = VivoGoldCardioverter ? new VivoGoldCardioverter(engine, monitor, audio, () => { refreshScenarioUI(); }) : null;
+  monitor.keepSamplingInStandby = true;
+  function handleCrossDeviceShock(res, energyJ) {
+    if (res && res.delivered) {
+      monitor.triggerShockArtifact(energyJ);
+      if (hamC1Panel && hamC1Panel.onDefibShock) hamC1Panel.onDefibShock(res, energyJ);
+    }
+    refreshScenarioUI();
+  }
+  const vivoGold = VivoGoldCardioverter ? new VivoGoldCardioverter(engine, monitor, audio, handleCrossDeviceShock) : null;
+  monitor.onBeat = (vit, isPvc) => {
+    if (vivoGold && vivoGold.onMonitorBeat) vivoGold.onMonitorBeat(vit, isPvc);
+  };
   const icatuPump = SamtronicIcatuPump ? new SamtronicIcatuPump(engine, IV_DRUGS, IV_DRUG_MAP, audio, () => { updateNumericUI(); }, { pumpIndex: 0, idSuffix: '', chassisId: 'icatuChassis' }) : null;
   const icatuPump2 = SamtronicIcatuPump ? new SamtronicIcatuPump(engine, IV_DRUGS, IV_DRUG_MAP, audio, () => { updateNumericUI(); }, { pumpIndex: 1, idSuffix: '2', chassisId: 'icatuChassis2' }) : null;
   const sg1Analyzer = SeamatySG1 ? new SeamatySG1(engine, audio, (m) => addLog(m)) : null;
@@ -63,13 +72,13 @@
   if (simulatorEl) {
     simulatorEl.addEventListener('pointerdown', () => audio._ensureContext(), { passive: true });
     simulatorEl.addEventListener('click', (e) => {
-      const devBtn = e.target.closest('.mindray-chassis button, #hamChassis button, #vgChassis button, .icatu-chassis button, #sg1Chassis button');
+      const devBtn = e.target.closest('.mindray-chassis button, #hamC1Chassis button, #vgChassis button, .icatu-chassis button, #sg1Chassis button');
       if (devBtn) {
         audio.playUiClick('_auto');
       }
     });
     simulatorEl.addEventListener('change', (e) => {
-      if (e.target.closest('.mindray-chassis select, #hamChassis select, #vgChassis select, .icatu-chassis select, #sg1Chassis select')) {
+      if (e.target.closest('.mindray-chassis select, #hamC1Chassis select, #vgChassis select, .icatu-chassis select, #sg1Chassis select')) {
         audio.playUiClick('soft');
       }
     });
@@ -107,7 +116,6 @@
   engine.onLog = addLog;
 
   // ================= ELEMENTOS DA INTERFACE =================
-  const scenarioSelect = document.getElementById('scenarioSelect');
   const severityBadge = document.getElementById('severityBadge');
   const scenarioSubtitle = document.getElementById('scenarioSubtitle');
   const scenarioGuidance = document.getElementById('scenarioGuidance');
@@ -118,361 +126,35 @@
   const btnDecompress = document.getElementById('btnDecompress');
   const btnDefib = document.getElementById('btnDefib');
   const btnCprToggle = document.getElementById('btnCprToggle');
+  const btnPericardiocentesis = document.getElementById('btnPericardiocentesis');
+  const btnThrombolysis = document.getElementById('btnThrombolysis');
+  const btnPronePosition = document.getElementById('btnPronePosition');
+  const btnActiveWarming = document.getElementById('btnActiveWarming');
+  const btnSyncCardioversion = document.getElementById('btnSyncCardioversion');
+  const btnTransfusion = document.getElementById('btnTransfusion');
+  const btnActiveCooling = document.getElementById('btnActiveCooling');
+  const btnTranscutPacer = document.getElementById('btnTranscutPacer');
+  const btnOsmotherapy = document.getElementById('btnOsmotherapy');
+  const btnHydrocortisone = document.getElementById('btnHydrocortisone');
+  const btnInsulinDrip = document.getElementById('btnInsulinDrip');
+  const btnUterotonic = document.getElementById('btnUterotonic');
 
-  // ================= CONFIGURAÇÃO DOS CONTROLES DO VENTILADOR =================
-  function getModeControlSchema(mode) {
-    const pbw = engine.patient.weightKg;
-    const protectiveVt = Math.round(pbw * 6);
-    if (mode === 'VCV') {
-      return {
-        primary: {
-          key: 'vtSet',
-          label: 'Vt (Volume Corrente)',
-          unit: 'mL',
-          min: 200,
-          max: 800,
-          step: 10,
-          hint: `Alvo protetor: ${protectiveVt} mL (6 mL/kg)`
-        },
-        secondary: {
-          key: 'rrSet',
-          label: 'FR (Freq. Resp)',
-          unit: 'irpm',
-          min: 6,
-          max: 40,
-          step: 1,
-          hint: 'Controla lavagem de CO₂'
-        },
-        timing: {
-          key: 'flowSet',
-          label: 'Fluxo Insp.',
-          unit: 'L/min',
-          min: 15,
-          max: 90,
-          step: 1,
-          hint: 'Maior fluxo = menor Ti, maior Te'
-        },
-        extra: {
-          key: 'inspPausePct',
-          label: 'Pausa Insp.',
-          unit: '%',
-          min: 0,
-          max: 30,
-          step: 5,
-          hint: 'Revela Pplatô a cada ciclo'
-        }
-      };
-    }
-    if (mode === 'PCV') {
-      return {
-        primary: {
-          key: 'pcSet',
-          label: 'ΔP (Pressão Controlada)',
-          unit: 'cmH₂O',
-          min: 5,
-          max: 35,
-          step: 1,
-          hint: 'Acima da PEEP • Vt varia c/ Crs'
-        },
-        secondary: {
-          key: 'rrSet',
-          label: 'FR (Freq. Resp)',
-          unit: 'irpm',
-          min: 6,
-          max: 40,
-          step: 1,
-          hint: 'Controla volume minuto'
-        },
-        timing: {
-          key: 'tiSet',
-          label: 'Tempo Insp. (Ti)',
-          unit: 's',
-          min: 0.5,
-          max: 2.5,
-          step: 0.1,
-          hint: 'Ajusta relação I:E'
-        },
-        extra: {
-          key: 'triggerSens',
-          label: 'Trigger (Sensib.)',
-          unit: 'cmH₂O',
-          min: 1,
-          max: 5,
-          step: 0.5,
-          hint: 'Esforço p/ ciclo assistido'
-        }
-      };
-    }
-    // PSV
-    return {
-      primary: {
-        key: 'psSet',
-        label: 'PS (Pressão de Suporte)',
-        unit: 'cmH₂O',
-        min: 4,
-        max: 30,
-        step: 1,
-        hint: 'Suporte acima da PEEP'
-      },
-      secondary: {
-        key: 'triggerSens',
-        label: 'Trigger (Disparo)',
-        unit: 'cmH₂O',
-        min: 1,
-        max: 5,
-        step: 0.5,
-        hint: 'Sensibilidade do esforço'
-      },
-      timing: {
-        key: 'etsPct',
-        label: 'Ciclagem (ETS)',
-        unit: '% pico',
-        min: 15,
-        max: 50,
-        step: 5,
-        hint: '% do fluxo de pico p/ expirar'
-      },
-      extra: {
-        key: 'rrSet',
-        label: 'FR Backup (Apneia)',
-        unit: 'irpm',
-        min: 8,
-        max: 24,
-        step: 1,
-        hint: 'Aciona após 12s sem esforço'
-      }
-    };
-  }
-
-  const HAMILTON_MODE_NAMES = {
-    VCV: '(S)CMV+',
-    PCV: 'PCV+',
-    PSV: 'SPONT'
-  };
-  let selectedDialSlot = 'primary';
-  let hamLocked = false;
-  let hamKnobAngle = 0;
-
-  function syncVentControlsUI() {
-    const v = engine.vent;
-    const schema = getModeControlSchema(v.mode);
-
-    // Tabs de modo
-    document.querySelectorAll('.mode-tab').forEach((btn) => {
-      const active = btn.dataset.mode === v.mode;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-selected', String(active));
-    });
-
-    const modeTitleBtn = document.getElementById('hamModeTitleBtn');
-    if (modeTitleBtn) modeTitleBtn.textContent = HAMILTON_MODE_NAMES[v.mode] || v.mode;
-
-    const mapSlot = (slot, cfg, lblId, unitId, valId, rangeId, hintId) => {
-      const val = v[cfg.key];
-      document.getElementById(lblId).textContent = cfg.label;
-      document.getElementById(unitId).textContent = cfg.unit;
-      document.getElementById(valId).textContent = cfg.step < 1 ? Number(val).toFixed(1) : Math.round(val);
-      const range = document.getElementById(rangeId);
-      range.min = cfg.min;
-      range.max = cfg.max;
-      range.step = cfg.step;
-      range.value = val;
-      document.getElementById(hintId).textContent = cfg.hint;
-    };
-
-    mapSlot('primary', schema.primary, 'lblPrimaryParam', 'unitPrimaryParam', 'valPrimaryParam', 'rangePrimaryParam', 'hintPrimaryParam');
-    mapSlot('secondary', schema.secondary, 'lblSecondaryParam', 'unitSecondaryParam', 'valSecondaryParam', 'rangeSecondaryParam', 'hintSecondaryParam');
-    mapSlot('timing', schema.timing, 'lblTimingParam', 'unitTimingParam', 'valTimingParam', 'rangeTimingParam', 'hintTimingParam');
-    mapSlot('extra', schema.extra, 'lblExtraParam', 'unitExtraParam', 'valExtraParam', 'rangeExtraParam', 'hintExtraParam');
-
-    document.getElementById('valPeep').textContent = Math.round(v.peepSet);
-    document.getElementById('rangePeep').value = v.peepSet;
-
-    const effFio2 = v.o2FlushTimer > 0 ? 100 : v.fio2Set;
-    document.getElementById('valFio2').textContent = Math.round(effFio2);
-    document.getElementById('rangeFio2').value = v.fio2Set;
-
-    // Dials circulares da tela Hamilton-T1
-    const primVal = v[schema.primary.key];
-    document.getElementById('hamDialPrimaryVal').textContent = schema.primary.step < 1 ? Number(primVal).toFixed(1) : Math.round(primVal);
-    document.getElementById('hamDialPrimaryUnit').textContent = schema.primary.unit;
-    document.getElementById('hamDialPrimaryLbl').textContent = v.mode === 'VCV' ? 'Vt' : v.mode === 'PCV' ? 'ΔPcontrol' : 'ΔPsupp';
-    document.getElementById('hamDialPeepVal').textContent = Math.round(v.peepSet);
-    document.getElementById('hamDialFio2Val').textContent = Math.round(effFio2);
-
-    const targetMap = {
-      primary: v.mode === 'VCV' ? 'Vt' : v.mode === 'PCV' ? 'ΔP' : 'PS',
-      peep: 'PEEP',
-      fio2: 'O₂%'
-    };
-    const targetEl = document.getElementById('hamKnobTarget');
-    if (targetEl) targetEl.textContent = targetMap[selectedDialSlot] || 'Vt';
-
-    // Relação Inspiração / Expiração (I:E) em Ajustes Completos do Ventilador
-    const ieTiming = computeVentIeTiming(v);
-    const valIeEl = document.getElementById('valIeRatio');
-    const rangeIeEl = document.getElementById('rangeIeRatio');
-    const hintIeEl = document.getElementById('hintIeRatio');
-    if (valIeEl) valIeEl.textContent = ieTiming.ieLabel;
-    if (rangeIeEl) rangeIeEl.value = ieTiming.ieExp.toFixed(1);
-    if (hintIeEl) {
-      hintIeEl.textContent =
-        v.mode === 'PSV'
-          ? `Ciclagem a fluxo (ETS ${v.etsPct}%) • Ti≈${ieTiming.ti.toFixed(2)}s / Te≈${ieTiming.te.toFixed(2)}s`
-          : `Ti: ${ieTiming.ti.toFixed(2)}s • Te: ${ieTiming.te.toFixed(2)}s (Ajusta ${v.mode === 'VCV' ? 'Fluxo Insp.' : 'Ti'})`;
-    }
-  }
-
-  function formatIeString(ieExp) {
-    if (ieExp < 0.99) {
-      return `${(1 / Math.max(0.4, ieExp)).toFixed(1)}:1`;
-    }
-    return `1:${ieExp.toFixed(1)}`;
-  }
-
-  function computeVentIeTiming(v) {
-    const rr = Math.max(6, v.rrSet || 14);
-    const cycleSec = 60 / rr;
-    let ti = 1.0;
-    if (v.mode === 'VCV') {
-      const vtL = (v.vtSet || 450) / 1000;
-      const flowLs = Math.max(0.2, (v.flowSet || 45) / 60);
-      const tiFlow = vtL / flowLs;
-      const pauseFrac = (v.inspPausePct || 0) / 100;
-      const tiPause = tiFlow * (pauseFrac / Math.max(0.4, 1 - pauseFrac));
-      ti = tiFlow + tiPause;
-    } else if (v.mode === 'PCV') {
-      ti = v.tiSet || 1.0;
-    } else {
-      const b = engine.breath;
-      const estRr = Math.max(6, b.lastRrTotal || engine.patient.intrinsicDrive || 14);
-      const estCycle = 60 / estRr;
-      const estRatio = Math.max(0.8, Math.min(4.5, 1.0 + (v.etsPct - 15) * 0.065));
-      const estTi = estCycle / (1 + estRatio);
-      return { ti: estTi, te: Math.max(0.2, estCycle - estTi), ieExp: estRatio, ieLabel: formatIeString(estRatio) };
-    }
-    const te = Math.max(0.15, cycleSec - ti);
-    const ieExp = Math.max(0.5, Math.min(5.0, te / Math.max(0.2, ti)));
-    return { ti, te, ieExp, ieLabel: formatIeString(ieExp) };
-  }
-
-  function applyVentParamChange(slot, newValue) {
-    const v = engine.vent;
-    if (slot === 'ie') {
-      const targetIeExp = Math.max(0.5, Math.min(5.0, Number(newValue) || 2.0));
-      const rr = Math.max(6, v.rrSet || 14);
-      const cycleSec = 60 / rr;
-      const targetTi = cycleSec / (1 + targetIeExp);
-      if (v.mode === 'PCV') {
-        v.tiSet = Number(Math.max(0.5, Math.min(2.5, targetTi)).toFixed(1));
-      } else if (v.mode === 'VCV') {
-        const vtL = (v.vtSet || 450) / 1000;
-        const pauseFrac = (v.inspPausePct || 0) / 100;
-        const pauseMult = 1 + pauseFrac / Math.max(0.4, 1 - pauseFrac);
-        const tiFlowTarget = Math.max(0.22, targetTi / pauseMult);
-        const flowTarget = (vtL / tiFlowTarget) * 60;
-        v.flowSet = Math.max(15, Math.min(90, Math.round(flowTarget)));
-      } else {
-        v.etsPct = Math.max(15, Math.min(50, Math.round(15 + (targetIeExp - 1.0) / 0.065)));
-      }
-      syncVentControlsUI();
-      return;
-    }
-
-    const schema = getModeControlSchema(v.mode);
-    let key, min, max, step;
-
-    if (slot === 'peep') {
-      key = 'peepSet'; min = 0; max = 24; step = 1;
-    } else if (slot === 'fio2') {
-      key = 'fio2Set'; min = 21; max = 100; step = 1;
-      v.o2FlushTimer = 0;
-    } else {
-      const cfg = schema[slot];
-      key = cfg.key; min = cfg.min; max = cfg.max; step = cfg.step;
-    }
-
-    const clamped = Math.max(min, Math.min(max, Number(newValue)));
-    v[key] = step < 1 ? Number(clamped.toFixed(1)) : Math.round(clamped);
-    syncVentControlsUI();
-  }
-
-  // Eventos nos sliders e botões -/+ do ventilador
-  const rangeMap = {
-    primary: 'rangePrimaryParam',
-    secondary: 'rangeSecondaryParam',
-    timing: 'rangeTimingParam',
-    extra: 'rangeExtraParam',
-    peep: 'rangePeep',
-    fio2: 'rangeFio2',
-    ie: 'rangeIeRatio'
-  };
-
-  Object.entries(rangeMap).forEach(([slot, id]) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('input', (e) => {
-      applyVentParamChange(slot, e.target.value);
-    });
-  });
-
-  document.querySelectorAll('.step-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const slot = btn.dataset.param;
-      const dir = Number(btn.dataset.dir);
-      const range = document.getElementById(rangeMap[slot]);
-      if (!range) return;
-      const step = Number(range.step) || 1;
-      applyVentParamChange(slot, Number(range.value) + dir * step);
-    });
-  });
-
-  function closeAllHamOverlays() {
-    ['hamModesOverlay', 'hamControlsOverlay', 'hamToolsOverlay'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('hidden');
-    });
-  }
-
-  function toggleHamOverlay(id) {
-    if (hamLocked) return;
-    const target = document.getElementById(id);
-    const wasHidden = target.classList.contains('hidden');
-    closeAllHamOverlays();
-    if (wasHidden) target.classList.remove('hidden');
-  }
-
-  function setVentView(view) {
-    document.getElementById('ventWavesContainer').classList.toggle('hidden', view !== 'waves');
-    document.getElementById('ventLoopsContainer').classList.toggle('hidden', view !== 'loops');
-    document.querySelectorAll('.ham-bottom-tab').forEach((b) => {
-      b.classList.toggle('active', b.dataset.hamTab === view);
-    });
-    ventDisplay.setView(view);
-  }
-
-  function stepSelectedDial(dir) {
-    if (hamStandby) return;
-    const range = document.getElementById(rangeMap[selectedDialSlot]);
-    if (!range) return;
-    const step = Number(range.step) || 1;
-    applyVentParamChange(selectedDialSlot, Number(range.value) + dir * step);
-    audio.playUiClick('knob');
-    hamKnobAngle += dir * 24;
-    const core = document.getElementById('hamRotaryCore');
-    if (core) core.style.transform = `rotate(${hamKnobAngle}deg)`;
-  }
-
+  // ================= CONTROLES DO VENTILADOR (HAMILTON-C1) & STANDBY =================
   let hamStandby = false;
   let mrStandby = false;
   let mrKnobAngle = 0;
 
+  function syncVentControlsUI() {
+    if (hamC1Panel) hamC1Panel.syncUI();
+  }
+
   function setHamStandby(next) {
-    hamStandby = next;
-    document.getElementById('hamStandbyOverlay').classList.toggle('hidden', !hamStandby);
-    document.getElementById('hamHwPower').classList.toggle('off', hamStandby);
+    hamStandby = Boolean(next);
+    if (engine.vent) engine.vent.standby = hamStandby;
     audio.playUiClick(hamStandby ? 'powerOff' : 'powerOn');
-    addLog(hamStandby ? 'Hamilton-T1 colocado em Standby' : 'Hamilton-T1 ligado e ventilando');
+    addLog(hamStandby ? 'HAMILTON-C1 colocado em Standby' : 'HAMILTON-C1 ligado e ventilando');
+    if (hamC1Panel) hamC1Panel.syncUI();
+    if (vivoGold) vivoGold.syncUI();
   }
 
   function setMrStandby(next) {
@@ -484,101 +166,6 @@
     addLog(mrStandby ? 'Mindray iMEC 15 em modo Standby' : 'Mindray iMEC 15 ligado');
   }
 
-  // Troca de Modo Ventilatório
-  document.querySelectorAll('.mode-tab').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (hamLocked || hamStandby) return;
-      audio.playUiClick('soft');
-      const newMode = btn.dataset.mode;
-      if (engine.vent.mode !== newMode) {
-        engine.vent.mode = newMode;
-        engine.vent.backupActive = false;
-        addLog(`Modo Hamilton-T1 alterado para ${HAMILTON_MODE_NAMES[newMode]} (${newMode})`);
-        syncVentControlsUI();
-      }
-      closeAllHamOverlays();
-    });
-  });
-
-  // Botões laterais da tela Hamilton-T1
-  document.getElementById('hamModeTitleBtn').addEventListener('click', () => {
-    audio.playUiClick('soft');
-    toggleHamOverlay('hamModesOverlay');
-  });
-  document.getElementById('hamBtnModes').addEventListener('click', () => {
-    audio.playUiClick('soft');
-    toggleHamOverlay('hamModesOverlay');
-  });
-  document.getElementById('hamBtnControls').addEventListener('click', () => {
-    audio.playUiClick('soft');
-    toggleHamOverlay('hamControlsOverlay');
-  });
-  document.getElementById('hamBtnAlarms').addEventListener('click', () => {
-    if (!hamLocked && !hamStandby) {
-      audio.playUiClick('soft');
-      document.getElementById('btnAlarmLimits').click();
-    }
-  });
-
-  document.querySelectorAll('[data-close-overlay]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      audio.playUiClick('soft');
-      closeAllHamOverlays();
-    });
-  });
-
-  // Seleção dos 3 Dials Circulares na tela
-  document.querySelectorAll('.ham-dial-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (hamLocked || hamStandby) return;
-      audio.playUiClick('soft');
-      selectedDialSlot = btn.dataset.dial;
-      document.querySelectorAll('.ham-dial-btn').forEach((b) => b.classList.toggle('selected', b === btn));
-      syncVentControlsUI();
-    });
-  });
-
-  // Botão Rotativo Verde (Press & Turn Knob)
-  document.getElementById('hamKnobMinus').addEventListener('click', () => stepSelectedDial(-1));
-  document.getElementById('hamKnobPlus').addEventListener('click', () => stepSelectedDial(1));
-  document.getElementById('hamRotaryKnob').addEventListener('wheel', (e) => {
-    e.preventDefault();
-    stepSelectedDial(e.deltaY < 0 ? 1 : -1);
-  }, { passive: false });
-
-  // Abas inferiores da tela Hamilton-T1
-  document.querySelectorAll('.ham-bottom-tab').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (hamLocked || hamStandby) return;
-      audio.playUiClick('soft');
-      const tab = btn.dataset.hamTab;
-      if (tab === 'waves' || tab === 'loops') {
-        closeAllHamOverlays();
-        setVentView(tab);
-      } else if (tab === 'tools') {
-        toggleHamOverlay('hamToolsOverlay');
-      } else if (tab === 'controls') {
-        toggleHamOverlay('hamControlsOverlay');
-      }
-    });
-  });
-
-  document.getElementById('hamFreezeBtn').addEventListener('click', () => {
-    if (hamStandby) return;
-    audio.playUiClick('soft');
-    const nextView = ventDisplay.activeView === 'waves' ? 'loops' : 'waves';
-    closeAllHamOverlays();
-    setVentView(nextView);
-  });
-
-  document.getElementById('btnToggleLoopsTool').addEventListener('click', () => {
-    audio.playUiClick('soft');
-    const nextView = ventDisplay.activeView === 'waves' ? 'loops' : 'waves';
-    closeAllHamOverlays();
-    setVentView(nextView);
-  });
-
-  // Manobras Especiais (tela + botões físicos do chassi Hamilton-T1)
   function triggerHoldInsp() {
     if (hamStandby) return;
     audio.playUiClick('maneuver');
@@ -598,42 +185,6 @@
     addLog('Enriquecimento O₂ a 100% ativado por 2 minutos');
     syncVentControlsUI();
   }
-
-  document.getElementById('btnHoldInsp').addEventListener('click', triggerHoldInsp);
-  document.getElementById('btnHoldExp').addEventListener('click', triggerHoldExp);
-  document.getElementById('btnO2Flush').addEventListener('click', triggerO2Flush);
-  document.getElementById('hamHwManualHold').addEventListener('click', triggerHoldInsp);
-  document.getElementById('hamHwExpHold').addEventListener('click', triggerHoldExp);
-  document.getElementById('hamHwO2').addEventListener('click', triggerO2Flush);
-
-  document.getElementById('hamHwNeb').addEventListener('click', () => {
-    if (hamStandby) return;
-    audio.playUiClick('maneuver');
-    engine.giveBronchodilator();
-  });
-
-  document.getElementById('hamHwSilence').addEventListener('click', () => {
-    audio.playUiClick('silence');
-    document.getElementById('btnSilenceAlarm').click();
-  });
-
-  document.getElementById('hamHwLock').addEventListener('click', () => {
-    if (hamStandby) return;
-    audio.playUiClick('lock');
-    hamLocked = !hamLocked;
-    document.getElementById('hamHwLock').textContent = hamLocked ? '🔒' : '🔓';
-    document.getElementById('hamLockBadge').classList.toggle('hidden', !hamLocked);
-    if (hamLocked) closeAllHamOverlays();
-    addLog(hamLocked ? 'Tela do Hamilton-T1 bloqueada' : 'Tela do Hamilton-T1 desbloqueada');
-  });
-
-  document.getElementById('hamHwDayNight').addEventListener('click', () => {
-    audio.playUiClick('hw');
-    document.getElementById('hamScreen').classList.toggle('dimmed');
-  });
-
-  document.getElementById('hamHwPower').addEventListener('click', () => setHamStandby(!hamStandby));
-  document.getElementById('hamWakeBtn').addEventListener('click', () => setHamStandby(false));
 
   // ================= CENÁRIOS & STATUS DO PACIENTE =================
   const SCENARIO_ICONS = [
@@ -780,8 +331,133 @@
       shortTitle: '24. SDRA Extr.',
       tag: 'Crítico',
       svg: _svg('<path class="sc-svg-primary" d="M12 3v7M12 10c-2 0-3.2 1.5-4.5 3-1.4 1.6-2.5 3.3-2.5 5.5A2.3 2.3 0 0 0 7.3 21H10V10M12 10c2 0 3.2 1.5 4.5 3 1.4 1.6 2.5 3.3 2.5 5.5a2.3 2.3 0 0 1-2.3 2.5H14V10"/><path class="sc-svg-accent" d="M6 14.5h3.5M14.5 14.5H18M6 17.5h3.5M14.5 17.5H18"/>',20,24,1.8)
+    },
+    {
+      id: 'stemi_anterior',
+      shortTitle: '25. IAMCSST',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M2 15h4l2-9 2.5 11 1.5-7h4.5c1.5 0 2.5 1.5 3 5H22"/><path class="sc-svg-accent" d="M12 5h5M14.5 3v4"/>',20,24,1.8)
+    },
+    {
+      id: 'torsades_qt',
+      shortTitle: '26. Torsades',
+      tag: 'PCR',
+      svg: _svg('<path class="sc-svg-primary" d="M2 12l2-3 2 6 2-9 2 12 2-6 2 3 2-8 2 11 2-6 2 2"/>',20,24,1.8)
+    },
+    {
+      id: 'wpw_preexcited',
+      shortTitle: '27. WPW',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M2 15h5l3-9 2 12 2-6 3 3h5"/><path class="sc-svg-accent" d="M7 15l3-4"/>',20,24,1.8)
+    },
+    {
+      id: 'tce_cushing',
+      shortTitle: '28. Cushing',
+      tag: 'Crítico',
+      svg: _svg('<path class="sc-svg-primary" d="M9 4a5 5 0 0 0-4 8 4 4 0 0 0 2 7h10a4 4 0 0 0 2-7 5 5 0 0 0-4-8z"/><path class="sc-svg-accent" d="M12 8v6M9.5 10.5L12 8l2.5 2.5"/>',20,24,1.8)
+    },
+    {
+      id: 'neurogenic_shock',
+      shortTitle: '29. Neurog.',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v18M8 7h8M8 12h8M8 17h8"/><path class="sc-svg-accent" d="M6 12l-2 2M18 12l2 2"/>',20,24,1.8)
+    },
+    {
+      id: 'betablocker_od',
+      shortTitle: '30. Intox. BB',
+      tag: 'Crítico',
+      svg: _svg('<rect class="sc-svg-primary" x="4" y="8" width="16" height="8" rx="4" transform="rotate(-30 12 12)"/><path class="sc-svg-accent" d="M10 8.5l4 7"/>',20,24,1.8)
+    },
+    {
+      id: 'thyroid_storm',
+      shortTitle: '31. Tireotóx.',
+      tag: 'Grave',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v10a4 4 0 1 0 4 4 4 4 0 0 0-4-4"/><path class="sc-svg-accent" d="M16 5l2-1M17 9h2.5M6 7l2 1"/>',20,24,1.8)
+    },
+    {
+      id: 'myasthenic_crisis',
+      shortTitle: '32. Miastên.',
+      tag: 'Mod.',
+      svg: _svg('<path class="sc-svg-primary" d="M4 17c2.5-3 5-4.5 8-4.5s5.5 1.5 8 4.5"/><path class="sc-svg-accent" d="M12 4v6M9.5 7.5L12 10l2.5-2.5"/>',20,24,1.8)
+    },
+    {
+      id: 'myxedema_coma',
+      shortTitle: '33. Mixedema',
+      tag: 'Endóc.',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v10a3.5 3.5 0 1 0 3.5 3.5A3.5 3.5 0 0 0 12 13"/><path class="sc-svg-accent" d="M16.5 6.5l3 3M19.5 6.5l-3 3M18 5v6"/>',20,24,1.8)
+    },
+    {
+      id: 'adrenal_crisis',
+      shortTitle: '34. Adrenal',
+      tag: 'Endóc.',
+      svg: _svg('<path class="sc-svg-primary" d="M8.5 7c-2.5 0-4.5 2.2-4.5 5s2 5 4.5 5c1.5 0 2.5-.8 2.5-2.5v-5C11 7.8 10 7 8.5 7zM15.5 7c2.5 0 4.5 2.2 4.5 5s-2 5-4.5 5c-1.5 0-2.5-.8-2.5-2.5v-5c0-1.7 1-2.5 2.5-2.5z"/><path class="sc-svg-accent" d="M6.5 5l2-2 2 2M13.5 5l2-2 2 2"/>',20,24,1.8)
+    },
+    {
+      id: 'hhs_hyperosmolar',
+      shortTitle: '35. EHH Osm.',
+      tag: 'Endóc.',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3s-5.5 6.4-5.5 10.5a5.5 5.5 0 0 0 11 0C17.5 9.4 12 3 12 3z"/><path class="sc-svg-accent" d="M9.5 13.5h5M12 11v5"/>',20,24,1.8)
+    },
+    {
+      id: 'pheochromocytoma_crisis',
+      shortTitle: '36. Feocrom.',
+      tag: 'Endóc.',
+      svg: _svg('<path class="sc-svg-primary" d="M13 2L4.5 13.5h6L9.5 22 19.5 10h-6z"/><path class="sc-svg-accent" d="M3 7h4M17 17h4"/>',20,24,1.8)
+    },
+    {
+      id: 'eclampsia_hellp',
+      shortTitle: '37. Eclâmps.',
+      tag: 'Obstet.',
+      svg: _svg('<circle class="sc-svg-primary" cx="12" cy="11" r="6"/><path class="sc-svg-primary" d="M12 17v4M9.5 19.5h5"/><path class="sc-svg-accent" d="M12.5 7.5L10 11.5h2.5L11.5 14.5"/>',20,24,1.8)
+    },
+    {
+      id: 'postpartum_hemorrhage',
+      shortTitle: '38. HPP Mac.',
+      tag: 'Obstet.',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3s-5 5.8-5 9.8a5 5 0 0 0 10 0C17 8.8 12 3 12 3z"/><path class="sc-svg-accent" d="M6 19.5c2 1.2 4 1.5 6 1.5s4-.3 6-1.5"/>',20,24,1.8)
+    },
+    {
+      id: 'amniotic_embolism',
+      shortTitle: '39. Emb. Amn.',
+      tag: 'Obstet.',
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v7M12 10c-2 0-3.2 1.5-4.5 3-1.4 1.6-2.5 3.3-2.5 5.5A2.3 2.3 0 0 0 7.3 21H10V10M12 10c2 0 3.2 1.5 4.5 3 1.4 1.6 2.5 3.3 2.5 5.5a2.3 2.3 0 0 1-2.3 2.5H14V10"/><circle class="sc-svg-accent" cx="12" cy="14.5" r="2.2"/>',20,24,1.8)
+    },
+    {
+      id: 'peripartum_cardiomyopathy',
+      shortTitle: '40. CM Perip.',
+      tag: 'Obstet.',
+      svg: _svg('<path class="sc-svg-primary" d="M12 20.5s-7-4.5-7-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7 3.3c0 5.7-7 10.2-7 10.2z"/><path class="sc-svg-accent" d="M8.5 13h2l1-2.5 1.5 4 1-1.5h1.5"/>',20,24,1.8)
     }
   ];
+
+  // Ícones SVG vetoriais médicos para os 18 botões de intervenção + Bolus EV (mesmo estilo dos cenários clínicos)
+  const INTERVENTION_ICONS = {
+    btnFluidBolus: _svg('<path class="sc-svg-primary" d="M7 5h10a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V7a2 2 0 0 1 2-2zM10 3h4M12 18v3"/><path class="sc-svg-accent" d="M12 8.5v5M9.5 11h5"/>',36,24,1.85),
+    btnBronchodilator: _svg('<path class="sc-svg-primary" d="M9 4h6v7.5L11.5 15H6v-3.5L9 9.5V4zM9 7.5h6"/><path class="sc-svg-accent" d="M16.5 12.5h2.5M17 15.5l2.2 1.2M17 9.5l2.2-1.2"/>',36,24,1.85),
+    btnSuctionRecruit: _svg('<path class="sc-svg-primary" d="M12 3v7M12 10c-2 0-3.2 1.5-4.5 3-1.4 1.6-2.5 3.3-2.5 5.5A2.3 2.3 0 0 0 7.3 21H10V10M12 10c2 0 3.2 1.5 4.5 3 1.4 1.6 2.5 3.3 2.5 5.5a2.3 2.3 0 0 1-2.3 2.5H14V10"/><path class="sc-svg-accent" d="M6.5 15.5l-2 0M17.5 15.5l2 0M12 5.5l-1.5 1.5M12 5.5l1.5 1.5"/>',36,24,1.85),
+    btnDecompress: _svg('<path class="sc-svg-primary" d="M5 7c0-2 2-3 4-3h6c2 0 4 1 4 3v10c0 2-2 3-4 3H9c-2 0-4-1-4-3V7z"/><path class="sc-svg-accent" d="M12 12l7-7M15.5 5H19v3.5M8.5 12h3"/>',36,24,1.85),
+    btnDefib: _svg('<path class="sc-svg-primary" d="M12 20.5s-7-4.5-7-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7 3.3c0 5.7-7 10.2-7 10.2z"/><path class="sc-svg-accent" d="M13 8.5L10 13h2.8l-1.3 4 3.5-4.8h-2.8z"/>',36,24,1.85),
+    btnCprToggle: _svg('<path class="sc-svg-primary" d="M12 20s-6.5-4.1-6.5-9.2A3.9 3.9 0 0 1 12 7.8a3.9 3.9 0 0 1 6.5 3c0 5.1-6.5 9.2-6.5 9.2z"/><path class="sc-svg-accent" d="M12 2.5v4.5M9.8 5.2L12 7.4l2.2-2.2"/>',36,24,1.85),
+    btnPericardiocentesis: _svg('<path class="sc-svg-primary" d="M12 19.5c-4.5-2.6-6.5-5.6-6.5-9a4 4 0 0 1 6.5-3 4 4 0 0 1 6.5 3c0 3.4-2 6.4-6.5 9z"/><path class="sc-svg-accent" d="M4.5 19.5l6.2-6.2M3.5 17.5l3 3"/>',36,24,1.85),
+    btnThrombolysis: _svg('<path class="sc-svg-primary" d="M3 9h18M3 15h18"/><circle class="sc-svg-accent" cx="12" cy="12" r="2.2"/><path class="sc-svg-accent" d="M7.5 12h1.5M15 12h1.5M12 6.5V4M12 20v-2.5"/>',36,24,1.85),
+    btnPronePosition: _svg('<path class="sc-svg-primary" d="M4 15.5h16M5.5 15.5v3M18.5 15.5v3M6 12.5h9.5a2 2 0 0 1 2 2v1H6z"/><path class="sc-svg-accent" d="M8 6.5a6.5 6.5 0 0 1 8.5 1M16.5 4.8v2.8h-2.8"/>',36,24,1.85),
+    btnActiveWarming: _svg('<path class="sc-svg-primary" d="M10 4a2 2 0 0 1 4 0v8.3a3.8 3.8 0 1 1-4 0V4z"/><path class="sc-svg-accent" d="M12 15.5v-5M17.5 7c1 1.2 1 2.4 0 3.6M20 5.5c1.2 1.7 1.2 3.5 0 5.2"/>',36,24,1.85),
+    btnSyncCardioversion: _svg('<path class="sc-svg-primary" d="M4.5 12a7.5 7.5 0 0 1 13.4-4.6M19.5 12a7.5 7.5 0 0 1-13.4 4.6"/><path class="sc-svg-primary" d="M18.2 4.5v3.2H15M5.8 19.5v-3.2H9"/><path class="sc-svg-accent" d="M8 12.5h2l1.2-3.5 1.8 6 1.2-2.5H16"/>',36,24,1.85),
+    btnTransfusion: _svg('<path class="sc-svg-primary" d="M12 3s-5.5 6.4-5.5 10.6a5.5 5.5 0 0 0 11 0C17.5 9.4 12 3 12 3z"/><path class="sc-svg-accent" d="M12 10.5v5M9.5 13h5"/>',36,24,1.85),
+    btnActiveCooling: _svg('<path class="sc-svg-primary" d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><path class="sc-svg-accent" d="M10 5l2 2 2-2M10 19l2-2 2 2M5.5 10.5l2.5-.5-.5-2.5M18.5 13.5l-2.5.5.5 2.5"/>',36,24,1.85),
+    btnTranscutPacer: _svg('<path class="sc-svg-primary" d="M2.5 14h4l1-9v12l2.5-6 1.5 3h3l1-9v12l2.5-6 1.5 3h2"/><circle class="sc-svg-accent" cx="7.5" cy="4.2" r="1.2"/><circle class="sc-svg-accent" cx="15.5" cy="4.2" r="1.2"/>',36,24,1.85),
+    btnOsmotherapy: _svg('<path class="sc-svg-primary" d="M9.5 4.5a4.5 4.5 0 0 0-4 6.6A3.8 3.8 0 0 0 8 18.5h8a3.8 3.8 0 0 0 2.5-7.4 4.5 4.5 0 0 0-4-6.6 3.5 3.5 0 0 0-5 0z"/><path class="sc-svg-accent" d="M12 14.5v-6M9.5 12l2.5 2.5 2.5-2.5"/>',36,24,1.85),
+    btnHydrocortisone: _svg('<rect class="sc-svg-primary" x="4.5" y="8" width="15" height="8" rx="4" transform="rotate(-35 12 12)"/><path class="sc-svg-accent" d="M9.8 9.2l4.4 5.6M17.5 4.5v3M16 6h3"/>',36,24,1.85),
+    btnInsulinDrip: _svg('<path class="sc-svg-primary" d="M18.5 3.5l2 2M15.5 4.5l4 4M7.5 12.5l8-8 4 4-8 8-4.5 1 0.5-5zM4 20l3-3"/><path class="sc-svg-accent" d="M11 9l2 2M9 11l2 2"/>',36,24,1.85),
+    btnUterotonic: _svg('<path class="sc-svg-primary" d="M12 19v-5.5c0-3.5-3-6.5-6.5-6.5C4.2 7 3.5 8 4 9.2M12 13.5c0-3.5 3-6.5 6.5-6.5 1.3 0 2 1 1.5 2.2M8.5 10.5a3.5 3.5 0 0 0 7 0"/><path class="sc-svg-accent" d="M6.5 14.5l2.5-1.5M17.5 14.5l-2.5-1.5"/>',36,24,1.85)
+  };
+
+  Object.entries(INTERVENTION_ICONS).forEach(([id, markup]) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const slot = btn.querySelector('.int-ico, .bolus-ico');
+    if (slot) slot.innerHTML = markup;
+  });
 
   const SEVERITY_STATUS_ICONS = {
     stable: _svg('<circle cx="8" cy="8" r="6"/><path d="M5.2 8.2l2 2 3.8-4"/>',12,16,2.0),
@@ -812,10 +488,13 @@
         btnFrz.title = 'Congelar traçados para inspeção';
       }
       monitor.setFrozen(false);
-      ventDisplay.setFrozen(false);
+    }
+    if (hamStandby) {
+      hamStandby = false;
+      if (engine.vent) engine.vent.standby = false;
     }
     monitor.clearBuffers();
-    ventDisplay.clearBuffers();
+    if (hamC1Panel && hamC1Panel.clearBuffers) hamC1Panel.clearBuffers();
     if (icatuPump && icatuPump.resetUI) icatuPump.resetUI();
     if (icatuPump2 && icatuPump2.resetUI) icatuPump2.resetUI();
     if (vivoGold && vivoGold.resetUI) vivoGold.resetUI();
@@ -849,8 +528,6 @@
         const btn = e.target.closest('[data-scenario-id]');
         if (!btn) return;
         audio.playUiClick('soft');
-        const bolusSel = document.getElementById('bolusDrugSelect');
-        if (bolusSel) delete bolusSel.dataset.userTouched;
         engine.loadScenario(btn.dataset.scenarioId);
         resetEquipmentOnScenarioChange();
         refreshScenarioUI();
@@ -875,8 +552,6 @@
       });
       if (!candidates.length) return;
       audio.playUiClick('soft');
-      const bolusSel = document.getElementById('bolusDrugSelect');
-      if (bolusSel) delete bolusSel.dataset.userTouched;
       engine.loadScenario(candidates[0].id);
       resetEquipmentOnScenarioChange();
       refreshScenarioUI();
@@ -886,7 +561,6 @@
   function refreshScenarioUI() {
     ensureScenarioGridRendered();
     const sc = engine.scenario;
-    if (scenarioSelect) scenarioSelect.value = sc.id;
     ['scenarioGrid', 'patientStatusBtns'].forEach((cid) => {
       const container = document.getElementById(cid);
       if (!container) return;
@@ -905,14 +579,17 @@
     if (scenarioGuidance) scenarioGuidance.textContent = sc.guidance;
 
     document.getElementById('fluidCount').textContent = engine.interventions.fluidBoluses;
-    document.getElementById('noraValue').textContent = engine.interventions.noraDose.toFixed(2);
+    const _noraEl = document.getElementById('noraValue');
+    if (_noraEl) _noraEl.textContent = engine.interventions.noraDose.toFixed(2);
     document.getElementById('metaPatient').textContent = engine.patient.label;
 
-    btnDecompress.classList.toggle('hidden', !engine.patient.pneumothoraxActive);
-    const showArrestBtns = engine.patient.arrested || sc.id === 'cardiac_arrest' || engine.cardiac.rhythm === 'vtach';
-    btnDefib.classList.toggle('hidden', !showArrestBtns || engine.interventions.roscAchieved);
-    btnCprToggle.classList.toggle('hidden', !showArrestBtns || engine.interventions.roscAchieved);
-    btnCprToggle.setAttribute('aria-pressed', String(engine.interventions.cprActive));
+    if (btnDecompress) btnDecompress.classList.toggle('urgent', Boolean(engine.patient.pneumothoraxActive));
+    const showArrestBtns = (engine.patient.arrested && !engine.interventions.roscAchieved) || engine.cardiac.rhythm === 'vtach';
+    if (btnDefib) btnDefib.classList.toggle('urgent', showArrestBtns);
+    if (btnCprToggle) {
+      btnCprToggle.classList.toggle('urgent', showArrestBtns);
+      btnCprToggle.setAttribute('aria-pressed', String(engine.interventions.cprActive));
+    }
 
     syncRhythmUI();
     syncPhysiologyModalInputs();
@@ -922,6 +599,7 @@
     if (icatuPump) icatuPump.syncUI();
     if (icatuPump2) icatuPump2.syncUI();
     if (sg1Analyzer) sg1Analyzer.syncUI();
+    if (hamC1Panel) hamC1Panel.syncUI();
     if (typeof syncAuscultationUI === 'function') syncAuscultationUI();
   }
 
@@ -929,39 +607,39 @@
   const O2_DEVICE_ICONS = {
     room_air: {
       badge: '21%',
-      svg: _svg('<path d="M12 3v7"/><path d="M12 10c-2 0-3 1.5-4.5 3C6 14.5 5 16 5 18.5A2.5 2.5 0 0 0 7.5 21H10c.8 0 1-.5 1-1.3V10"/><path d="M12 10c2 0 3 1.5 4.5 3 1.5 1.5 2.5 3 2.5 5.5a2.5 2.5 0 0 1-2.5 2.5H14c-.8 0-1-.5-1-1.3V10"/><path d="M3 7h4"/><path d="M17 7h4"/>',22,24,1.8)
+      svg: _svg('<path class="sc-svg-primary" d="M12 3v7M12 10c-2 0-3 1.5-4.5 3C6 14.5 5 16 5 18.5A2.5 2.5 0 0 0 7.5 21H10c.8 0 1-.5 1-1.3V10M12 10c2 0 3 1.5 4.5 3 1.5 1.5 2.5 3 2.5 5.5a2.5 2.5 0 0 1-2.5 2.5H14c-.8 0-1-.5-1-1.3V10"/><path class="sc-svg-accent" d="M3 7h4M17 7h4"/>',36,24,1.85)
     },
     nasal_cannula: {
       badge: '24–44%',
-      svg: _svg('<path d="M9 6v3a1.5 1.5 0 0 1-1.5 1.5H6"/><path d="M15 6v3a1.5 1.5 0 0 0 1.5 1.5H18"/><rect x="7" y="9.5" width="10" height="3" rx="1.5"/><path d="M7 11c-2.5 1-3 3-3 5.5 0 2 1.8 3.5 5 4.5l3 1"/><path d="M17 11c2.5 1 3 3 3 5.5 0 2-1.8 3.5-5 4.5l-3 1"/><path d="M12 22v-1"/>',22,24,1.8)
+      svg: _svg('<path class="sc-svg-primary" d="M7 11c-2.5 1-3 3-3 5.5 0 2 1.8 3.5 5 4.5l3 1M17 11c2.5 1 3 3 3 5.5 0 2-1.8 3.5-5 4.5l-3 1M12 22v-1"/><rect class="sc-svg-primary" x="7" y="9.5" width="10" height="3" rx="1.5"/><path class="sc-svg-accent" d="M9.5 5v4.5M14.5 5v4.5"/>',36,24,1.85)
     },
     venturi: {
       badge: '24–50%',
-      svg: _svg('<path d="M7 5c1-1.5 9-1.5 10 0l1.5 6c.2 1.8-2 3.2-6.5 3.2S5.3 12.8 5.5 11L7 5z"/><rect x="10" y="14.2" width="4" height="4.5" rx="1"/><path d="M9 16.5h1M14 16.5h1"/><path d="M12 18.7V22"/>',22,24,1.8)
+      svg: _svg('<path class="sc-svg-primary" d="M7 5c1-1.5 9-1.5 10 0l1.5 6c.2 1.8-2 3.2-6.5 3.2S5.3 12.8 5.5 11L7 5zM12 18.7V22"/><rect class="sc-svg-accent" x="10" y="14.2" width="4" height="4.5" rx="1"/><path class="sc-svg-accent" d="M8.5 16.5h1.5M14 16.5h1.5"/>',36,24,1.85)
     },
     hudson_mask: {
       badge: '40–60%',
-      svg: _svg('<path d="M6.5 6.5C8 4 16 4 17.5 6.5l1.3 5.8c.3 2.5-2.6 4.7-6.8 4.7s-7.1-2.2-6.8-4.7l1.3-5.8z"/><circle cx="9.2" cy="10.5" r="0.8" fill="currentColor"/><circle cx="14.8" cy="10.5" r="0.8" fill="currentColor"/><path d="M12 17v5"/><path d="M4.5 9.5L6 10M19.5 9.5L18 10"/>',22,24,1.8)
+      svg: _svg('<path class="sc-svg-primary" d="M6.5 6.5C8 4 16 4 17.5 6.5l1.3 5.8c.3 2.5-2.6 4.7-6.8 4.7s-7.1-2.2-6.8-4.7l1.3-5.8zM12 17v5"/><circle class="sc-svg-accent" cx="9.2" cy="10.5" r="1"/><circle class="sc-svg-accent" cx="14.8" cy="10.5" r="1"/><path class="sc-svg-accent" d="M4.2 9.5L6 10M19.8 9.5L18 10"/>',36,24,1.85)
     },
     non_rebreather: {
       badge: '85–95%',
-      svg: _svg('<path d="M7 4.5c1.5-1.5 8.5-1.5 10 0l1 4.5c.2 1.8-2.3 3-6 3s-6.2-1.2-6-3l1-4.5z"/><rect x="10.2" y="12" width="3.6" height="2.2" rx="0.6"/><path d="M12 14.2c2.8 0 4.8 1.8 4.8 4.2A3.6 3.6 0 0 1 13.2 22h-2.4a3.6 3.6 0 0 1-3.6-3.6c0-2.4 2-4.2 4.8-4.2z"/>',22,24,1.8)
+      svg: _svg('<path class="sc-svg-primary" d="M7 4.5c1.5-1.5 8.5-1.5 10 0l1 4.5c.2 1.8-2.3 3-6 3s-6.2-1.2-6-3l1-4.5zM12 14.2c2.8 0 4.8 1.8 4.8 4.2A3.6 3.6 0 0 1 13.2 22h-2.4a3.6 3.6 0 0 1-3.6-3.6c0-2.4 2-4.2 4.8-4.2z"/><rect class="sc-svg-accent" x="10.2" y="12" width="3.6" height="2.2" rx="0.6"/><path class="sc-svg-accent" d="M12 16.5v3.2M10.4 18.1h3.2"/>',36,24,1.85)
     },
     hfnc: {
       badge: 'CNAF',
-      svg: _svg('<path d="M9.5 4v3M14.5 4v3"/><rect x="7" y="7" width="10" height="3.2" rx="1.5"/><path d="M7 8.6C4.8 9.2 4.5 11.5 6 13.5L9 15.5"/><rect x="8.5" y="14.5" width="7" height="6.5" rx="1.4"/><path d="M9.5 18.2c.8-.7 1.7.7 2.5 0s1.7.7 2.5 0"/>',22,24,1.8)
+      svg: _svg('<rect class="sc-svg-primary" x="7" y="7" width="10" height="3.2" rx="1.5"/><path class="sc-svg-primary" d="M7 8.6C4.8 9.2 4.5 11.5 6 13.5L9 15.5"/><rect class="sc-svg-primary" x="8.5" y="14.5" width="7" height="6.5" rx="1.4"/><path class="sc-svg-accent" d="M9.5 3.5v3.5M14.5 3.5v3.5M9.5 18.2c.8-.7 1.7.7 2.5 0s1.7.7 2.5 0"/>',36,24,1.85)
     },
     niv: {
       badge: 'BiPAP',
-      svg: _svg('<rect x="6" y="4" width="12" height="12.5" rx="4.5"/><circle cx="12" cy="10.5" r="2.2"/><path d="M6 8H3M18 8h3M6 13H3.5M18 13h2.5"/><path d="M12 12.7v6.8a2 2 0 0 0 2 2h3"/>',22,24,1.8)
+      svg: _svg('<rect class="sc-svg-primary" x="6" y="4" width="12" height="12.5" rx="4.5"/><path class="sc-svg-primary" d="M6 8H3M18 8h3M6 13H3.5M18 13h2.5M12 12.7v6.8a2 2 0 0 0 2 2h3"/><circle class="sc-svg-accent" cx="12" cy="10.5" r="2.3"/>',36,24,1.85)
     },
     bvm: {
       badge: '100%',
-      svg: _svg('<path d="M3 10.5c1-2.5 3-3.5 4.5-2.5l1.5 2v4l-1.5 2C6 17 4 16 3 13.5z"/><rect x="9" y="10.2" width="2.5" height="3.6" rx="0.6"/><ellipse cx="15.8" cy="12" rx="4.3" ry="3.4"/><path d="M20.1 12H22"/>',22,24,1.8)
+      svg: _svg('<path class="sc-svg-primary" d="M3 10.5c1-2.5 3-3.5 4.5-2.5l1.5 2v4l-1.5 2C6 17 4 16 3 13.5zM20.1 12H22"/><ellipse class="sc-svg-primary" cx="15.8" cy="12" rx="4.3" ry="3.4"/><rect class="sc-svg-accent" x="9" y="10.2" width="2.5" height="3.6" rx="0.6"/><path class="sc-svg-accent" d="M14 12h3.6"/>',36,24,1.85)
     },
     ett_vm: {
       badge: 'VM TOT',
-      svg: _svg('<path d="M15 4v9a4 4 0 0 1-4 4H6"/><path d="M12 4v8a1.5 1.5 0 0 1-1.5 1.5H6"/><ellipse cx="13.5" cy="15.5" rx="2.6" ry="1.8"/><path d="M4 13.5v4.5"/><path d="M11 4h6"/>',22,24,1.8)
+      svg: _svg('<path class="sc-svg-primary" d="M15 4v9a4 4 0 0 1-4 4H6M12 4v8a1.5 1.5 0 0 1-1.5 1.5H6M11 4h6"/><ellipse class="sc-svg-accent" cx="13.5" cy="15.5" rx="2.6" ry="1.8"/><path class="sc-svg-accent" d="M4 13.5v4.5"/>',36,24,1.85)
     }
   };
 
@@ -978,7 +656,7 @@
           </span>
         </button>`;
     }).join('');
-    ['o2DeviceGrid', 'hamO2DeviceGrid'].forEach((id) => {
+    ['o2DeviceGrid', 'c1O2DeviceGrid'].forEach((id) => {
       const gridEl = document.getElementById(id);
       if (!gridEl) return;
       if (gridEl.children.length !== O2_DEVICES.length) {
@@ -1004,9 +682,9 @@
     const dev = O2_DEVICE_MAP && O2_DEVICE_MAP[engine.airway ? engine.airway.o2Device : 'room_air'];
 
     const badge = document.getElementById('airwayStatusBadge');
-    const hamBadge = document.getElementById('hamAirwayStatusBadge');
+    const c1Badge = document.getElementById('c1AirwayStatusBadge');
     const btnToggle = document.getElementById('btnVentConnectToggle');
-    const discOverlay = document.getElementById('hamDisconnectedOverlay');
+    const c1DiscOverlay = document.getElementById('c1DisconnectedOverlay');
     const o2Box = document.getElementById('o2TherapyBox');
 
     const airwayIcon = connected ? AIRWAY_BADGE_ICONS.on : AIRWAY_BADGE_ICONS.off;
@@ -1014,27 +692,32 @@
       badge.innerHTML = `<span class="airway-pill-icon" aria-hidden="true">${airwayIcon}</span><span>${connected ? 'EM VM (TOT)' : 'SEM VM'}</span>`;
       badge.className = `airway-pill ${connected ? 'on' : 'off'}`;
     }
-    if (hamBadge) {
-      hamBadge.innerHTML = `<span class="airway-pill-icon" aria-hidden="true">${airwayIcon}</span><span>${connected ? 'EM VM (TOT)' : 'SEM VM • FORA DA VM'}</span>`;
-      hamBadge.className = `airway-pill ${connected ? 'on' : 'off'}`;
+    if (c1Badge) {
+      c1Badge.innerHTML = `<span class="airway-pill-icon" aria-hidden="true">${airwayIcon}</span><span>${connected ? 'EM VM (TOT)' : 'SEM VM • FORA DA VM'}</span>`;
+      c1Badge.className = `airway-pill ${connected ? 'on' : 'off'}`;
     }
     if (btnToggle) {
       btnToggle.setAttribute('aria-pressed', String(connected));
-      btnToggle.textContent = connected ? '🔓 Extubar / Desacoplar da VM' : '🔌 Intubar & Acoplar à VM';
+      btnToggle.innerHTML = `<span class="o2-cta-ico" aria-hidden="true">${O2_DEVICE_ICONS.ett_vm.svg}</span><span>${connected ? 'Extubar / Desacoplar da VM' : 'Intubar & Acoplar à VM'}</span>`;
     }
-    if (discOverlay) discOverlay.classList.toggle('hidden', connected);
+    const c1ConnEl = document.getElementById('c1VentConnectBtn');
+    if (c1ConnEl) {
+      const ico = c1ConnEl.querySelector('.o2-cta-ico');
+      if (ico && !ico.innerHTML) ico.innerHTML = O2_DEVICE_ICONS.ett_vm.svg;
+    }
+    if (c1DiscOverlay) c1DiscOverlay.classList.toggle('hidden', connected);
     if (o2Box) o2Box.classList.toggle('vm-active', connected);
 
     const activeMeta = connected ? O2_DEVICE_ICONS.ett_vm : O2_DEVICE_ICONS[dev ? dev.id : 'room_air'] || O2_DEVICE_ICONS.room_air;
     if (activeMeta) {
-      ['o2ActiveIcon', 'hamO2ActiveIcon'].forEach((id) => {
+      ['o2ActiveIcon', 'c1O2ActiveIcon'].forEach((id) => {
         const iconEl = document.getElementById(id);
         if (iconEl) iconEl.innerHTML = activeMeta.svg;
       });
     }
 
     if (dev) {
-      ['o2DeviceGrid', 'hamO2DeviceGrid'].forEach((id) => {
+      ['o2DeviceGrid', 'c1O2DeviceGrid'].forEach((id) => {
         const gridEl = document.getElementById(id);
         if (!gridEl) return;
         gridEl.querySelectorAll('[data-o2-device]').forEach((tile) => {
@@ -1043,17 +726,15 @@
       });
 
       const hasRange = !connected && dev.flowMax > dev.flowMin;
-      const o2SelEl = document.getElementById('o2DeviceSelect');
-      if (o2SelEl && o2SelEl.value !== dev.id) o2SelEl.value = dev.id;
-      ['o2EffectiveFio2', 'hamO2EffectiveFio2'].forEach((id) => {
+      ['o2EffectiveFio2', 'c1O2EffectiveFio2'].forEach((id) => {
         const fio2El = document.getElementById(id);
         if (fio2El) fio2El.textContent = connected ? `VM: FiO₂ ${engine.vent.fio2Set}%` : `FiO₂ ${o2Info.fio2}%`;
       });
-      ['o2FlowRow', 'hamO2FlowRow'].forEach((id) => {
+      ['o2FlowRow', 'c1O2FlowRow'].forEach((id) => {
         const flowRowEl = document.getElementById(id);
         if (flowRowEl) flowRowEl.classList.toggle('hidden', !hasRange);
       });
-      ['o2FlowRange', 'hamO2FlowRange'].forEach((id) => {
+      ['o2FlowRange', 'c1O2FlowRange'].forEach((id) => {
         const rangeEl = document.getElementById(id);
         if (rangeEl && hasRange) {
           rangeEl.min = dev.flowMin;
@@ -1062,13 +743,13 @@
           rangeEl.value = engine.airway.o2Flow;
         }
       });
-      ['o2FlowVal', 'hamO2FlowVal'].forEach((id) => {
+      ['o2FlowVal', 'c1O2FlowVal'].forEach((id) => {
         const valEl = document.getElementById(id);
         if (valEl) valEl.textContent = `${engine.airway.o2Flow} ${dev.flowUnit}`;
       });
-      ['o2DeviceHint', 'hamO2DeviceHint'].forEach((id) => {
+      ['o2DeviceHint', 'c1O2DeviceHint'].forEach((id) => {
         const hintEl = document.getElementById(id);
-        if (hintEl) hintEl.textContent = connected ? 'Paciente acoplado à VM — FiO₂ controlada no HAMILTON-T1.' : dev.desc;
+        if (hintEl) hintEl.textContent = connected ? 'Paciente acoplado à VM — FiO₂ controlada no ventilador.' : dev.desc;
       });
     }
 
@@ -1078,7 +759,6 @@
       const bestEl = document.getElementById('pharmaBestDrugName');
       const ratEl = document.getElementById('pharmaBestRationale');
       const avoidEl = document.getElementById('pharmaAvoidHint');
-      const bolusSel = document.getElementById('bolusDrugSelect');
 
       let rhythmNote = '';
       const rId = engine.cardiac.rhythm;
@@ -1097,19 +777,6 @@
       if (bestEl) bestEl.textContent = adv.bestDrug;
       if (ratEl) ratEl.textContent = adv.rationale + rhythmNote;
       if (avoidEl) avoidEl.textContent = adv.avoid;
-
-      // Seleciona sugestão padrão no dropdown apenas quando troca de cenário/ritmo
-      if (bolusSel && !bolusSel.dataset.userTouched) {
-        const targetBolus =
-          rId === 'hyperkalemia'
-            ? 'gluconato_calcio'
-            : rId === 'svt'
-            ? 'adenosina'
-            : rId === 'sinus_brady'
-            ? 'atropina'
-            : adv.recommendedBolusId;
-        if (BOLUS_DRUG_MAP && BOLUS_DRUG_MAP[targetBolus]) bolusSel.value = targetBolus;
-      }
     }
   }
 
@@ -1122,19 +789,11 @@
   }
 
   const btnVentConnectToggle = document.getElementById('btnVentConnectToggle');
-  const hamVentConnectBtn = document.getElementById('hamVentConnectBtn');
+  const c1VentConnectBtn = document.getElementById('c1VentConnectBtn');
   if (btnVentConnectToggle) btnVentConnectToggle.addEventListener('click', toggleVentConnection);
-  if (hamVentConnectBtn) hamVentConnectBtn.addEventListener('click', toggleVentConnection);
+  if (c1VentConnectBtn) c1VentConnectBtn.addEventListener('click', toggleVentConnection);
 
-  const o2DeviceSelectEl = document.getElementById('o2DeviceSelect');
-  if (o2DeviceSelectEl) {
-    o2DeviceSelectEl.addEventListener('change', (e) => {
-      audio.playUiClick('soft');
-      engine.setO2Device(e.target.value);
-      syncAirwayO2AndPharmaUI();
-    });
-  }
-  ['o2FlowRange', 'hamO2FlowRange'].forEach((id) => {
+  ['o2FlowRange', 'c1O2FlowRange'].forEach((id) => {
     const rngEl = document.getElementById(id);
     if (!rngEl) return;
     rngEl.addEventListener('input', (e) => {
@@ -1142,25 +801,6 @@
       syncAirwayO2AndPharmaUI();
     });
   });
-
-  const bolusDrugSelectEl = document.getElementById('bolusDrugSelect');
-  if (bolusDrugSelectEl) {
-    bolusDrugSelectEl.addEventListener('change', () => {
-      bolusDrugSelectEl.dataset.userTouched = '1';
-    });
-  }
-
-  const btnGiveBolusDrug = document.getElementById('btnGiveBolusDrug');
-  if (btnGiveBolusDrug && bolusDrugSelectEl) {
-    btnGiveBolusDrug.addEventListener('click', () => {
-      audio.playUiClick('hw');
-      engine.administerBolusDrug(bolusDrugSelectEl.value);
-      syncPhysiologyModalInputs();
-      syncRhythmUI();
-      syncAirwayO2AndPharmaUI();
-      if (typeof syncAuscultationUI === 'function') syncAuscultationUI();
-    });
-  }
 
   const ecgRhythmSelect = document.getElementById('ecgRhythmSelect');
   const ecgRhythmCriteriaEl = document.getElementById('ecgRhythmCriteria');
@@ -1250,16 +890,6 @@
     });
   }
 
-  if (scenarioSelect) {
-    scenarioSelect.addEventListener('change', (e) => {
-      const bolusSel = document.getElementById('bolusDrugSelect');
-      if (bolusSel) delete bolusSel.dataset.userTouched;
-      engine.loadScenario(e.target.value);
-      resetEquipmentOnScenarioChange();
-      refreshScenarioUI();
-    });
-  }
-
   document.getElementById('btnResetScenario').addEventListener('click', () => {
     engine.loadScenario(engine.scenarioId);
     resetEquipmentOnScenarioChange();
@@ -1268,17 +898,7 @@
 
   document.getElementById('btnFluidBolus').addEventListener('click', () => {
     engine.giveFluidBolus();
-    document.getElementById('fluidCount').textContent = engine.interventions.fluidBoluses;
-  });
-
-  document.getElementById('btnNoraUp').addEventListener('click', () => {
-    engine.adjustNora(0.05);
-    document.getElementById('noraValue').textContent = engine.interventions.noraDose.toFixed(2);
-  });
-
-  document.getElementById('btnNoraDown').addEventListener('click', () => {
-    engine.adjustNora(-0.05);
-    document.getElementById('noraValue').textContent = engine.interventions.noraDose.toFixed(2);
+    $txt('fluidCount', engine.interventions.fluidBoluses);
   });
 
   document.getElementById('btnBronchodilator').addEventListener('click', () => {
@@ -1301,17 +921,108 @@
   });
 
   btnDefib.addEventListener('click', () => {
-    audio.playDefibChargeAndShock();
-    engine.defibrillate();
-    refreshScenarioUI();
+    const res = engine.defibrillate({ energyJ: 200, sync: false });
+    if (res && res.delivered) audio.playDefibChargeAndShock();
+    handleCrossDeviceShock(res, 200);
   });
+
+  if (btnPericardiocentesis) {
+    btnPericardiocentesis.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      engine.performPericardiocentesis();
+      refreshScenarioUI();
+    });
+  }
+  if (btnThrombolysis) {
+    btnThrombolysis.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      engine.giveThrombolysis();
+      refreshScenarioUI();
+    });
+  }
+  if (btnPronePosition) {
+    btnPronePosition.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      const on = engine.togglePronePosition();
+      btnPronePosition.setAttribute('aria-pressed', String(on));
+      refreshScenarioUI();
+    });
+  }
+  if (btnActiveWarming) {
+    btnActiveWarming.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      const on = engine.toggleActiveWarming();
+      btnActiveWarming.setAttribute('aria-pressed', String(on));
+      refreshScenarioUI();
+    });
+  }
+  if (btnSyncCardioversion) {
+    btnSyncCardioversion.addEventListener('click', () => {
+      const res = engine.defibrillate({ energyJ: 100, sync: true });
+      if (res && res.delivered) audio.playDefibChargeAndShock();
+      handleCrossDeviceShock(res, 100);
+    });
+  }
+  if (btnTransfusion) {
+    btnTransfusion.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      const count = engine.giveBloodTransfusion();
+      $txt('bloodCount', count);
+      refreshScenarioUI();
+    });
+  }
+  if (btnActiveCooling) {
+    btnActiveCooling.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      const on = engine.toggleActiveCooling();
+      btnActiveCooling.setAttribute('aria-pressed', String(on));
+      refreshScenarioUI();
+    });
+  }
+  if (btnTranscutPacer) {
+    btnTranscutPacer.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      const on = engine.toggleQuickPacer(70);
+      btnTranscutPacer.setAttribute('aria-pressed', String(on));
+      if (vivoGold && vivoGold.syncPacerFromEngine) vivoGold.syncPacerFromEngine();
+      refreshScenarioUI();
+    });
+  }
+  if (btnOsmotherapy) {
+    btnOsmotherapy.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      engine.giveOsmotherapy();
+      refreshScenarioUI();
+    });
+  }
+  if (btnHydrocortisone) {
+    btnHydrocortisone.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      engine.giveHydrocortisone();
+      refreshScenarioUI();
+    });
+  }
+  if (btnInsulinDrip) {
+    btnInsulinDrip.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      const on = engine.toggleInsulinTherapy();
+      btnInsulinDrip.setAttribute('aria-pressed', String(on));
+      refreshScenarioUI();
+    });
+  }
+  if (btnUterotonic) {
+    btnUterotonic.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      engine.giveUterotonicTxa();
+      refreshScenarioUI();
+    });
+  }
 
   // ================= CONTROLES GLOBAIS & MONITOR =================
   const btnFreeze = document.getElementById('btnFreeze');
   btnFreeze.addEventListener('click', () => {
     isFrozen = !isFrozen;
     monitor.setFrozen(isFrozen);
-    ventDisplay.setFrozen(isFrozen);
     btnFreeze.setAttribute('aria-pressed', String(isFrozen));
     btnFreeze.textContent = isFrozen ? '▶' : '❄';
     btnFreeze.title = isFrozen ? 'Retomar traçados em tempo real' : 'Congelar traçados para inspeção';
@@ -1813,14 +1524,22 @@
 
   const btnGasSg1 = document.getElementById('btnGasSg1');
   const sg1ChassisEl = document.getElementById('sg1Chassis');
+  const sideSectionSg1El = document.getElementById('sideSectionSg1');
   if (btnGasSg1 && sg1ChassisEl) {
     btnGasSg1.addEventListener('click', () => {
       audio.playUiClick('soft');
       const hidden = sg1ChassisEl.classList.toggle('hidden');
+      if (sideSectionSg1El) sideSectionSg1El.classList.toggle('hidden', hidden);
       btnGasSg1.classList.toggle('active', !hidden);
       if (hidden && icuGridEl && icuGridEl.classList.contains('only-sg1')) {
         setDeviceLayout('50-50');
       } else if (!hidden) {
+        const ws = document.getElementById('simWorkspace');
+        const tBtn = document.getElementById('btnToggleSidebar');
+        if (ws && ws.classList.contains('sidebar-collapsed')) {
+          ws.classList.remove('sidebar-collapsed');
+          if (tBtn) tBtn.setAttribute('aria-pressed', 'true');
+        }
         applyDeviceSizing();
         if (sg1Analyzer && sg1Analyzer.resize) sg1Analyzer.resize();
         sg1ChassisEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2162,24 +1881,741 @@
   // Referências fixas fora de ID único (cacheadas 1 única vez)
   const _mrChassisEl = document.querySelector('.mindray-chassis');
   const _mrPowerLedEl = document.querySelector('.mr-bottom-bezel .mr-led.green');
-  const _hamChassisEl = document.getElementById('hamChassis');
   const _vgChassisEl = document.getElementById('vgChassis');
+  const _c1ChassisEl = document.getElementById('hamC1Chassis');
 
   // Culling por Viewport (IntersectionObserver): pausa render GPU de aparelhos fora da tela
-  const _visState = { mon: true, vent: true, defib: true };
+  const _visState = { mon: true, defib: true, c1: true };
   if (typeof IntersectionObserver === 'function') {
     const _io = new IntersectionObserver((entries) => {
       for (let i = 0; i < entries.length; i++) {
         const e = entries[i];
         if (e.target === _mrChassisEl) _visState.mon = e.isIntersecting;
-        else if (e.target === _hamChassisEl) _visState.vent = e.isIntersecting;
         else if (e.target === _vgChassisEl) _visState.defib = e.isIntersecting;
+        else if (e.target === _c1ChassisEl) _visState.c1 = e.isIntersecting;
       }
     }, { rootMargin: '80px' });
     if (_mrChassisEl) _io.observe(_mrChassisEl);
-    if (_hamChassisEl) _io.observe(_hamChassisEl);
     if (_vgChassisEl) _io.observe(_vgChassisEl);
+    if (_c1ChassisEl) _io.observe(_c1ChassisEl);
   }
+
+  // ================= VENTILADOR HOSPITALAR HAMILTON-C1 & MINI PORTÁTEIS (APH / VNI) =================
+  var hamC1Panel = (() => {
+    const chassis = _c1ChassisEl;
+    if (!chassis) return null;
+    const canvas = document.getElementById('c1PawCanvas');
+    const ctx = canvas ? (canvas.getContext('2d', { alpha: false }) || canvas.getContext('2d')) : null;
+    const pawBuf = new Float32Array(180);
+    let bufHead = 0;
+    let sampleAccum = 0;
+    let currentModel = 'c1'; // 'c1' | 'mini-aph' | 'mini-vni'
+    let selectedSlot = 'main'; // 'main' | 'peep' | 'fio2' | 'rr'
+    let asvModeOn = true;
+    let activeMenu = null; // 'modes' | 'controls' | 'alarms' | 'monitoring' | 'tools' | 'events' | 'system' | null
+    let knobAngle = 0;
+    let o2CylBar = 185;
+    let battPct = 97;
+    let nebTimer = 0;
+    let actionBannerText = '';
+    let actionBannerTimer = 0;
+    let selfTestProgress = 0;
+    let selfTestRunning = false;
+    const c1Events = [];
+
+    const setEngineVentMode = (m) => {
+      engine.vent.mode = m;
+      engine.vent.backupActive = false;
+    };
+    const setEngineVentParam = (k, val) => {
+      engine.vent[k] = val;
+      if (k === 'fio2Set') engine.vent.o2FlushTimer = 0;
+    };
+
+    const pushC1Event = (msg) => {
+      const d = new Date();
+      const ts = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+      c1Events.unshift({ ts, msg });
+      if (c1Events.length > 24) c1Events.pop();
+      const ul = document.getElementById('c1EventsList');
+      if (ul) ul.innerHTML = c1Events.map((ev) => `<li><b>${ev.ts}</b>${escapeHtml(ev.msg)}</li>`).join('');
+    };
+
+    const showBanner = (text, sec = 5) => {
+      actionBannerText = text;
+      actionBannerTimer = sec;
+    };
+
+    const MENU_TITLES = {
+      modes: 'Modes • Seleção de Modo',
+      controls: 'Controls • Ajustes Completos',
+      alarms: 'Alarms • Limites & Ativos',
+      monitoring: 'Monitoring • Mecânica Respiratória',
+      tools: 'Tools • Manobras Clínicas',
+      events: 'Events • Registro do Ventilador',
+      system: 'System • Diagnóstico & Auto-Teste'
+    };
+
+    const openMenu = (name) => {
+      const ov = document.getElementById('c1MenuOverlay');
+      if (!ov) return;
+      if (!name || activeMenu === name) {
+        activeMenu = null;
+        ov.classList.add('hidden');
+      } else {
+        activeMenu = name;
+        ov.classList.remove('hidden');
+        $txt('c1MenuTitle', MENU_TITLES[name] || name);
+        ov.querySelectorAll('.c1-menu-pane').forEach((p) => {
+          p.classList.toggle('hidden', p.dataset.c1Pane !== name);
+        });
+      }
+      chassis.querySelectorAll('[data-c1-menu]').forEach((b) => {
+        b.classList.toggle('active', b.dataset.c1Menu === activeMenu);
+        b.classList.toggle('menu-open', b.dataset.c1Menu === activeMenu);
+      });
+      syncUI();
+    };
+
+    const setC1Mode = (modeKey) => {
+      if (hamStandby) return;
+      if (modeKey === 'ASV') {
+        asvModeOn = true;
+        applyAsvProtective();
+      } else if (modeKey === 'NIV') {
+        asvModeOn = false;
+        setEngineVentMode('PSV');
+        pushC1Event('Modo NIV (BiPAP/PSV) selecionado');
+        addLog('HAMILTON-C1: Modo NIV (BiPAP/PSV) selecionado');
+      } else {
+        asvModeOn = false;
+        setEngineVentMode(modeKey);
+        pushC1Event(`Modo ${modeKey === 'VCV' ? '(S)CMV+' : modeKey === 'PCV' ? 'PCV+' : 'SPONT'} selecionado`);
+        addLog(`HAMILTON-C1: Modo ${modeKey} selecionado`);
+      }
+      setSlot(selectedSlot);
+      openMenu(null);
+    };
+
+    const runSelfTest = () => {
+      if (selfTestRunning) return;
+      selfTestRunning = true;
+      selfTestProgress = 0;
+      pushC1Event('Auto-Teste & Calibração iniciados');
+      showBanner('AUTO-TESTE', 4.5);
+    };
+
+    const MODEL_META = {
+      c1: {
+        wordmark: 'HAMILTON-C1',
+        chin: 'UTI HOSPITALAR • TURBINA INTERNA',
+        plateTop: 'HAMILTON',
+        plateSub: 'MEDICAL',
+        miniBadge: 'HAMILTON-C1'
+      },
+      'mini-aph': {
+        wordmark: 'MINI-VENT P1 • APH',
+        chin: 'MINI VENTILADOR PORTÁTIL • RESGATE / TRANSPORTE',
+        plateTop: 'MINI-VENT',
+        plateSub: 'APH P1',
+        miniBadge: 'APH • TRANSPORTE'
+      },
+      'mini-vni': {
+        wordmark: 'MINI-VNI • BiPAP',
+        chin: 'MINI VENTILADOR PORTÁTIL • SUPORTE NÃO INVASIVO',
+        plateTop: 'MINI-VNI',
+        plateSub: 'BiPAP / CPAP',
+        miniBadge: 'VNI • PORTÁTIL'
+      }
+    };
+
+    const setSlot = (slot) => {
+      selectedSlot = slot;
+      ['c1DialMain', 'c1DialPeep', 'c1DialO2'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('active', el.dataset.c1Slot === slot);
+      });
+      const lblMap = {
+        main: currentModel === 'mini-vni' ? 'IPAP' : (asvModeOn && currentModel === 'c1' ? '%MinVol' : (engine.vent.mode === 'VCV' ? 'Vt' : 'Pinsp')),
+        peep: currentModel === 'mini-vni' ? 'EPAP' : 'PEEP',
+        fio2: 'Oxygen',
+        rr: 'FR'
+      };
+      $txt('c1RotaryLbl', lblMap[slot] || 'Vt');
+    };
+
+    const applyAsvProtective = () => {
+      const pbw = Math.max(35, engine.patient.weightKg || 70);
+      const targetVt = Math.round((pbw * 6) / 10) * 10;
+      const targetRr = engine.vitals && engine.vitals.ph < 7.30 ? 20 : 14;
+      setEngineVentMode('VCV');
+      setEngineVentParam('vtSet', targetVt);
+      setEngineVentParam('rrSet', targetRr);
+      asvModeOn = true;
+      showBanner('ASV AUTO ✓', 4);
+      pushC1Event(`ASV protetor: Vt ${targetVt} mL • FR ${targetRr}/min`);
+      addLog(`HAMILTON-C1 (ASV): autoajuste protetor aplicado (Vt ${targetVt} mL • FR ${targetRr}/min para IBW ${pbw} kg)`);
+      syncUI();
+    };
+
+    const adjustSlot = (dir) => {
+      if (hamStandby) return;
+      const v = engine.vent;
+      if (selectedSlot === 'peep') {
+        setEngineVentParam('peepSet', Math.max(0, Math.min(24, v.peepSet + dir)));
+      } else if (selectedSlot === 'fio2') {
+        setEngineVentParam('fio2Set', Math.max(21, Math.min(100, v.fio2Set + dir * 5)));
+      } else if (selectedSlot === 'rr') {
+        setEngineVentParam('rrSet', Math.max(6, Math.min(40, v.rrSet + dir)));
+      } else {
+        if (v.mode === 'VCV') {
+          setEngineVentParam('vtSet', Math.max(200, Math.min(800, v.vtSet + dir * 20)));
+        } else if (v.mode === 'PCV') {
+          setEngineVentParam('pcSet', Math.max(6, Math.min(35, v.pcSet + dir)));
+        } else {
+          setEngineVentParam('psSet', Math.max(4, Math.min(30, v.psSet + dir)));
+        }
+      }
+      audio.playUiClick('knob');
+      knobAngle += dir * 24;
+      const core = document.getElementById('c1RotaryCore');
+      if (core) core.style.transform = `rotate(${knobAngle}deg)`;
+      syncUI();
+    };
+
+    const setModel = (model) => {
+      if (!MODEL_META[model]) return;
+      currentModel = model;
+      chassis.setAttribute('data-vent-model', model);
+      chassis.querySelectorAll('.c1-model-tab').forEach((t) => {
+        const active = t.dataset.c1Model === model;
+        t.classList.toggle('active', active);
+        t.setAttribute('aria-selected', String(active));
+      });
+      const meta = MODEL_META[model];
+      $txt('c1ModelWordmark', meta.wordmark);
+      $txt('c1SysModel', meta.wordmark);
+      $txt('c1ChinTag', meta.chin);
+      $txt('c1MiniBadge', meta.miniBadge);
+      const plate = document.getElementById('c1BrandPlate');
+      if (plate) plate.innerHTML = `<strong>${meta.plateTop}</strong><span>${meta.plateSub}</span>`;
+      if (model === 'mini-vni' && engine.vent.mode !== 'PSV') {
+        asvModeOn = false;
+        setEngineVentMode('PSV');
+        pushC1Event('Modelo Mini Portátil VNI/BiPAP ativado');
+        addLog('Mini Ventilador Portátil VNI selecionado — modo PSV/BiPAP ativado');
+      } else if (model === 'mini-aph') {
+        asvModeOn = false;
+        pushC1Event('Modelo Mini Portátil APH ativado');
+        addLog('Mini Ventilador Portátil APH (Transporte/Resgate) selecionado');
+      } else if (model === 'c1') {
+        pushC1Event('Modelo HAMILTON-C1 Hospitalar ativo');
+        addLog('Ventilador Hospitalar HAMILTON-C1 selecionado');
+      }
+      setSlot(selectedSlot);
+      syncUI();
+    };
+
+    // Eventos de abas de modelo
+    chassis.querySelectorAll('.c1-model-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        audio.playUiClick('soft');
+        setModel(tab.dataset.c1Model);
+      });
+    });
+
+    // Eventos dos 7 Menus Touch + Fechar
+    chassis.querySelectorAll('[data-c1-menu]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        audio.playUiClick('soft');
+        openMenu(btn.dataset.c1Menu);
+      });
+    });
+    const closeBtn = document.getElementById('c1MenuClose');
+    if (closeBtn) closeBtn.addEventListener('click', () => { audio.playUiClick('soft'); openMenu(null); });
+
+    // Seleção de modo dentro do Menu Modes
+    chassis.querySelectorAll('[data-c1-setmode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        audio.playUiClick('hw');
+        setC1Mode(btn.dataset.c1Setmode);
+      });
+    });
+
+    // Sliders do Menu Controls
+    const wireC1Slider = (id, fn) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => { fn(Number(el.value)); syncUI(); });
+    };
+    wireC1Slider('c1SlMain', (val) => {
+      const m = engine.vent.mode;
+      if (m === 'VCV') setEngineVentParam('vtSet', val);
+      else if (m === 'PCV') setEngineVentParam('pcSet', val);
+      else setEngineVentParam('psSet', val);
+    });
+    wireC1Slider('c1SlRr', (val) => setEngineVentParam('rrSet', val));
+    wireC1Slider('c1SlPeep', (val) => setEngineVentParam('peepSet', val));
+    wireC1Slider('c1SlFio2', (val) => setEngineVentParam('fio2Set', val));
+    wireC1Slider('c1SlPause', (val) => setEngineVentParam('inspPausePct', val));
+
+    // Sliders de Limites no Menu Alarms
+    wireC1Slider('c1AlPpeak', (val) => { engine.alarms.ppeakHigh = val; });
+    wireC1Slider('c1AlSpo2', (val) => { engine.alarms.spo2Low = val; });
+    wireC1Slider('c1AlEtco2', (val) => { engine.alarms.etco2High = val; });
+
+    // Seleção + scroll nos botões circulares touch
+    chassis.querySelectorAll('[data-c1-slot]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        audio.playUiClick('soft');
+        setSlot(btn.dataset.c1Slot);
+      });
+      btn.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        setSlot(btn.dataset.c1Slot);
+        adjustSlot(e.deltaY < 0 ? 1 : -1);
+      }, { passive: false });
+    });
+
+    // Ações de hardware e menu Tools
+    chassis.querySelectorAll('[data-c1-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const act = btn.dataset.c1Action;
+        if (act === 'power') {
+          setHamStandby(!hamStandby);
+          pushC1Event(hamStandby ? 'Standby ativado' : 'Ventilação retomada');
+        } else if (act === 'cycleMode') {
+          if (hamStandby) return;
+          audio.playUiClick('soft');
+          if (asvModeOn && currentModel === 'c1') setC1Mode('PCV');
+          else if (engine.vent.mode === 'VCV') setC1Mode('PCV');
+          else if (engine.vent.mode === 'PCV') setC1Mode('PSV');
+          else setC1Mode(currentModel === 'c1' ? 'ASV' : 'VCV');
+        } else if (act === 'holdInsp' || act === 'manualBreath') {
+          triggerHoldInsp();
+          showBanner('HOLD INSP', 3.5);
+          pushC1Event('Pausa Inspiratória (Pplatô/Cstat)');
+        } else if (act === 'holdExp') {
+          triggerHoldExp();
+          showBanner('HOLD EXP', 3.5);
+          pushC1Event('Pausa Expiratória (Auto-PEEP)');
+        } else if (act === 'o2Flush') {
+          triggerO2Flush();
+          showBanner('O₂ 100% ATIVO', 6);
+          pushC1Event('Enriquecimento O₂ 100% acionado');
+        } else if (act === 'neb') {
+          if (hamStandby) return;
+          audio.playUiClick('maneuver');
+          engine.giveBronchodilator();
+          nebTimer = 8;
+          showBanner('NEBULIZANDO', 8);
+          pushC1Event('Nebulizador / Broncodilatador ativado');
+        } else if (act === 'recruit') {
+          if (hamStandby) return;
+          audio.playUiClick('maneuver');
+          engine.suctionAndRecruit();
+          showBanner('RECRUTAMENTO', 5);
+          pushC1Event('Aspiração & Recrutamento alveolar');
+        } else if (act === 'toggleConnect') {
+          toggleVentConnection();
+          pushC1Event(engine.airway.connectedToVent ? 'TOT acoplado à VM' : 'Paciente desacoplado da VM');
+        } else if (act === 'asvAuto') {
+          if (hamStandby) return;
+          audio.playUiClick('hw');
+          applyAsvProtective();
+        } else if (act === 'silence') {
+          audio.playUiClick('silence');
+          const silBtn = document.getElementById('btnSilenceAlarm');
+          if (silBtn) silBtn.click();
+          showBanner('AUDIO PAUSE 2m', 4);
+          pushC1Event('Alarmes silenciados por 2 min');
+        } else if (act === 'selfTest') {
+          audio.playUiClick('hw');
+          runSelfTest();
+        }
+        syncUI();
+      });
+    });
+
+    // Knob Rotativo Verde Neon (scroll, arraste ou teclado)
+    const knob = document.getElementById('c1RotaryKnob');
+    if (knob) {
+      knob.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        adjustSlot(e.deltaY < 0 ? 1 : -1);
+      }, { passive: false });
+      knob.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); adjustSlot(1); }
+        else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); adjustSlot(-1); }
+      });
+      let dragging = false, sy = 0, sx = 0;
+      knob.addEventListener('pointerdown', (e) => {
+        dragging = true; sy = e.clientY; sx = e.clientX;
+        knob.setPointerCapture(e.pointerId);
+      });
+      knob.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const dy = sy - e.clientY;
+        const dx = e.clientX - sx;
+        const delta = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
+        if (Math.abs(delta) >= 14) {
+          adjustSlot(delta > 0 ? 1 : -1);
+          sy = e.clientY; sx = e.clientX;
+        }
+      });
+      const stopDrag = () => { dragging = false; };
+      knob.addEventListener('pointerup', stopDrag);
+      knob.addEventListener('pointercancel', stopDrag);
+    }
+
+    // Botão da Topbar para exibir/ocultar HAMILTON-C1 & Mini Portáteis
+    const btnVentC1 = document.getElementById('btnVentC1');
+    if (btnVentC1) {
+      btnVentC1.addEventListener('click', () => {
+        audio.playUiClick('soft');
+        const hidden = chassis.classList.toggle('hidden');
+        btnVentC1.classList.toggle('active', !hidden);
+        if (!hidden) {
+          requestAnimationFrame(() => resize());
+          chassis.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+
+    let dirty = true;
+
+    function resize() {
+      if (!canvas || chassis.classList.contains('hidden')) return;
+      const Sweep = window.ICUSim && window.ICUSim.Sweep;
+      if (Sweep) {
+        Sweep.resizeCanvas(canvas);
+      } else {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = canvas.clientWidth || 180;
+        const h = canvas.clientHeight || 62;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+      }
+      dirty = true;
+    }
+
+    function onDefibShock(res, energyJ) {
+      const converted = Boolean(res && res.converted);
+      const label = converted ? `ROSC ✓ (${energyJ}J)` : `CHOQUE ${energyJ}J ⚡`;
+      showBanner(label, 4.5);
+      pushC1Event(converted
+        ? `Choque ${energyJ}J (Vivo Gold) → ROSC / Ritmo convertido`
+        : `Descarga elétrica ${energyJ}J registrada no tórax`);
+      dirty = true;
+      syncUI();
+    }
+
+    function step(dt) {
+      sampleAccum += dt;
+      if (sampleAccum >= 0.035) {
+        sampleAccum -= 0.035;
+        if (sampleAccum > 0.07) sampleAccum = 0;
+        const pawNow = (!hamStandby && engine.airway.connectedToVent) ? (engine.breath.paw || 0) : 0;
+        pawBuf[bufHead] = pawNow;
+        bufHead = (bufHead + 1) % pawBuf.length;
+        dirty = true;
+      }
+      if (nebTimer > 0) nebTimer = Math.max(0, nebTimer - dt);
+      if (actionBannerTimer > 0) actionBannerTimer = Math.max(0, actionBannerTimer - dt);
+      if (selfTestRunning) {
+        selfTestProgress = Math.min(100, selfTestProgress + dt * 26);
+        const fill = $id('c1SelfTestFill');
+        if (fill) fill.style.width = `${Math.round(selfTestProgress)}%`;
+        $txt('c1SelfTestPct', `${Math.round(selfTestProgress)}%`);
+        const phaseTxt = selfTestProgress < 35 ? 'Testando estanqueidade…'
+          : selfTestProgress < 70 ? 'Calibrando sensor de fluxo…'
+          : selfTestProgress < 100 ? 'Verificando célula O₂…'
+          : 'Auto-Teste APROVADO ✓';
+        $txt('c1SelfTestMsg', phaseTxt);
+        if (selfTestProgress >= 100) {
+          selfTestRunning = false;
+          pushC1Event('Auto-Teste concluído: APROVADO ✓');
+          showBanner('TESTE OK ✓', 3);
+        }
+      }
+      if (!hamStandby && currentModel !== 'c1') {
+        const fio2Frac = Math.max(0.21, (engine.vent.fio2Set || 40) / 100);
+        o2CylBar = Math.max(15, o2CylBar - dt * 0.045 * fio2Frac);
+        battPct = Math.max(12, battPct - dt * 0.008);
+      }
+    }
+
+    function render() {
+      if (!dirty || !ctx || !canvas || chassis.classList.contains('hidden')) return;
+      if (!canvas.width || !canvas.height) resize();
+      if (!canvas.width || !canvas.height) return;
+      dirty = false;
+
+      const Sweep = window.ICUSim && window.ICUSim.Sweep;
+      const dpr = Sweep ? Sweep.getDpr() : Math.min(window.devicePixelRatio || 1, 2);
+      const cw = canvas.width;
+      const ch = canvas.height;
+
+      // Fundo opaco + grade em cache offscreen (zero reflow clientWidth/clientHeight por frame!)
+      if (Sweep) {
+        const gridBg = Sweep.getCachedGridCanvas(canvas, cw, ch, dpr, 1, 4, 'rgba(148, 163, 184, 0.14)', '#0d1318', null);
+        ctx.drawImage(gridBg, 0, 0);
+      } else {
+        ctx.fillStyle = '#0d1318';
+        ctx.fillRect(0, 0, cw, ch);
+      }
+
+      const len = pawBuf.length;
+      const maxPaw = 42;
+      const highPress = (engine.breath.lastPeakPaw || 0) > (engine.alarms.ppeakHigh || 35);
+      const strokeCol = highPress ? '#f87171' : (currentModel === 'mini-vni' ? '#38bdf8' : '#fde047');
+      const fillCol = highPress ? 'rgba(248, 113, 113, 0.18)' : (currentModel === 'mini-vni' ? 'rgba(56, 189, 248, 0.18)' : 'rgba(250, 204, 21, 0.16)');
+      const padB = 3 * dpr;
+      const spanH = ch - 7 * dpr;
+      const invLen = cw / (len - 1);
+      const invPaw = spanH / maxPaw;
+
+      let lastX = 0, lastY = ch - padB;
+      ctx.beginPath();
+      for (let i = 0; i < len; i++) {
+        const idx = (bufHead + i) % len;
+        let val = pawBuf[idx];
+        if (val < 0) val = 0;
+        else if (val > maxPaw) val = maxPaw;
+        const x = i * invLen;
+        const y = ch - padB - val * invPaw;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        lastX = x; lastY = y;
+      }
+      ctx.strokeStyle = strokeCol;
+      ctx.lineWidth = 1.8 * dpr;
+      ctx.stroke();
+
+      ctx.lineTo(cw, ch);
+      ctx.lineTo(0, ch);
+      ctx.closePath();
+      ctx.fillStyle = fillCol;
+      ctx.fill();
+
+      // Ponto luminoso na ponta da onda (sweep head)
+      ctx.beginPath();
+      ctx.arc(lastX - dpr, lastY, 2.6 * dpr, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    }
+
+    function syncUI() {
+      if (chassis.classList.contains('hidden')) return;
+      const b = engine.breath;
+      const v = engine.vent;
+      const p = engine.patient;
+      const vit = engine.vitals;
+      const ventOn = !hamStandby && engine.airway.connectedToVent;
+      const alarms = engine.activeAlarms || [];
+      const hasCrit = alarms.some((a) => a.level === 'critical');
+      const hasWarn = alarms.length > 0;
+
+      const modeLabel = currentModel === 'mini-vni'
+        ? 'NIV'
+        : (currentModel === 'mini-aph' ? (v.mode === 'PSV' ? 'CPAP' : 'VC-CMV') : (asvModeOn && v.mode === 'VCV' ? 'ASV' : v.mode));
+
+      $txt('c1ModeBadge', modeLabel);
+      $txt('c1FooterMode', `${modeLabel}`);
+      $txt('c1ValPpeak', ventOn ? Math.round(b.lastPeakPaw) : '--');
+      $txt('c1ValMve', ventOn ? b.lastVeLmin.toFixed(1) : '--');
+      $txt('c1ValVte', ventOn ? Math.round(b.lastVteMl) : '--');
+      $txt('c1ValRr', Math.round(b.lastRrTotal));
+      $txt('c1WavePplat', ventOn ? `Pplat ${Math.round(b.lastPlatPaw)}` : 'OFF');
+
+      // Controles circulares touch
+      if (currentModel === 'mini-vni') {
+        $txt('c1DialMainVal', Math.round(v.peepSet + v.psSet));
+        $txt('c1DialMainUnit', 'IPAP');
+        $txt('c1DialPeepUnit', 'EPAP');
+      } else if (asvModeOn && currentModel === 'c1' && v.mode === 'VCV') {
+        const pbw = Math.max(40, p.weightKg || 70);
+        const pctMv = Math.round(((v.vtSet * v.rrSet) / (pbw * 100)) * 100);
+        $txt('c1DialMainVal', pctMv);
+        $txt('c1DialMainUnit', '%MinVol');
+        $txt('c1DialPeepUnit', 'PEEP');
+      } else if (v.mode === 'VCV') {
+        $txt('c1DialMainVal', Math.round(v.vtSet));
+        $txt('c1DialMainUnit', 'Vt ml');
+        $txt('c1DialPeepUnit', 'PEEP');
+      } else if (v.mode === 'PCV') {
+        $txt('c1DialMainVal', Math.round(v.pcSet));
+        $txt('c1DialMainUnit', 'Pinsp');
+        $txt('c1DialPeepUnit', 'PEEP');
+      } else {
+        $txt('c1DialMainVal', Math.round(v.psSet));
+        $txt('c1DialMainUnit', 'Psup');
+        $txt('c1DialPeepUnit', 'PEEP');
+      }
+      $txt('c1DialPeepVal', Math.round(v.peepSet));
+      $txt('c1DialO2Val', Math.round(v.fio2Set));
+
+      // Dynamic Lung em 4 camadas + Turbina RPM
+      const dp = ventOn ? Math.max(0, Math.round(b.lastPlatPaw - (v.peepSet + b.lastAutoPeep))) : 0;
+      const turbRpm = ventOn ? Math.round(14500 + (b.paw || 0) * 340 + (b.flowLs > 0 ? b.flowLs * 4200 : 0)) : 0;
+      $txt('c1DlungPbw', `IBW ${Math.round(p.weightKg || 70)} kg`);
+      $txt('c1DlungLeak', currentModel === 'mini-vni' ? 'Fuga 6 L/m' : 'Fuga 0%');
+      $txt('c1DlungIe', ventOn ? (b.lastIeString || '1:2.0') : '--');
+      $txt('c1DlungDp', `ΔP ${dp}`);
+      $txt('c1DlungTurb', ventOn ? `${(turbRpm / 1000).toFixed(1)}k rpm` : '0 rpm');
+      $txt('c1SysTurb', `${turbRpm.toLocaleString('pt-BR')} RPM`);
+      $txt('c1SysBatt', `${Math.round(battPct)}% ${currentModel === 'c1' ? 'AC' : 'BAT'}`);
+      $txt('c1StatR', Math.round(p.resistance));
+      $txt('c1StatC', Math.round(p.compliance));
+      $txt('c1StatCo2', Math.round(vit.etco2));
+      $txt('c1StatSpo2', Math.round(vit.spo2));
+      $txt('c1StatHr', Math.round(vit.hr));
+
+      // Banner de ação temporária no Dynamic Lung (via cache $id)
+      const bannerEl = $id('c1ActionBanner');
+      if (bannerEl) {
+        bannerEl.classList.toggle('hidden', actionBannerTimer <= 0);
+        if (actionBannerTimer > 0 && bannerEl.textContent !== actionBannerText) bannerEl.textContent = actionBannerText;
+      }
+
+      // Telemetria dos Mini Ventiladores Portáteis
+      $txt('c1MiniO2Bar', currentModel === 'mini-vni' ? 'Fuga 6 L/m' : `O₂ ${Math.round(o2CylBar)} bar`);
+      $txt('c1MiniBatt', `BAT ${Math.round(battPct)}%`);
+
+      // Bargraph Paw + Animação Dynamic Lung (Pulmões, Brônquios, Diafragma, Coração, Nebulização)
+      const pawFill = $id('c1PawBarFill');
+      if (pawFill) {
+        const pct = ventOn ? Math.max(4, Math.min(100, (b.paw / 42) * 100)) : 0;
+        pawFill.style.width = `${pct.toFixed(0)}%`;
+      }
+      const lungsG = $id('c1LungsGroup');
+      if (lungsG) {
+        const vtNorm = Math.max(0, Math.min(1, (b.volumeL || 0) / 0.65));
+        const sc = ventOn ? (0.94 + vtNorm * 0.22) : 0.92;
+        lungsG.style.transform = `scale(${sc.toFixed(3)})`;
+      }
+      const dlungPanel = $id('c1DlungPanel');
+      if (dlungPanel) {
+        dlungPanel.classList.toggle('critical', vit.spo2 < 82);
+        dlungPanel.classList.toggle('hypoxia', vit.spo2 >= 82 && vit.spo2 < 90);
+        dlungPanel.classList.toggle('bronchospasm', p.resistance >= 16);
+        dlungPanel.classList.toggle('stiff', p.compliance <= 32);
+        dlungPanel.classList.toggle('spont-trigger', ventOn && (b.phase === 'TRIGGER' || (b.lastBreathWasSpont && b.phase === 'INSP')));
+        dlungPanel.classList.toggle('nebulizing', nebTimer > 0);
+      }
+      const heartEl = $id('c1HeartIcon');
+      if (heartEl) {
+        const arrested = vit.hr <= 0 || p.arrested;
+        heartEl.classList.toggle('arrested', arrested);
+      }
+
+      // Lâmpada 360° da Alça + Anel do Knob P&T + LEDs + Standby
+      const lamp = $id('c1AlarmLamp');
+      if (lamp) {
+        lamp.classList.toggle('crit', hasCrit);
+        lamp.classList.toggle('warn', !hasCrit && hasWarn);
+      }
+      chassis.classList.toggle('c1-ventilating', ventOn);
+      chassis.classList.toggle('c1-alarm-crit', hasCrit);
+      chassis.classList.toggle('c1-alarm-warn', !hasCrit && hasWarn);
+      const ledInsp = $id('c1LedInsp');
+      if (ledInsp) ledInsp.classList.toggle('active', ventOn && (b.phase === 'INSP' || b.phase === 'PAUSE'));
+      const btnPwr = $id('c1BtnPower');
+      if (btnPwr) btnPwr.classList.toggle('off', hamStandby);
+      const ovStandby = $id('c1StandbyOverlay');
+      if (ovStandby) ovStandby.classList.toggle('hidden', !hamStandby);
+
+      // Atualiza conteúdo do Menu Touch ativo (com diffing de assinatura — zero GC desnecessário!)
+      if (activeMenu === 'modes') {
+        const curKey = (currentModel === 'mini-vni') ? 'NIV' : (asvModeOn && v.mode === 'VCV' ? 'ASV' : v.mode);
+        chassis.querySelectorAll('.c1-mode-card').forEach((c) => {
+          c.classList.toggle('active', c.dataset.c1Setmode === curKey);
+        });
+      } else if (activeMenu === 'controls') {
+        const slM = $id('c1SlMain');
+        if (slM) {
+          if (v.mode === 'VCV') {
+            slM.min = 200; slM.max = 800; slM.step = 10; slM.value = Math.round(v.vtSet);
+            $txt('c1SlMainLbl', 'Vt (Volume Corrente)'); $txt('c1SlMainVal', `${Math.round(v.vtSet)} ml`);
+          } else if (v.mode === 'PCV') {
+            slM.min = 6; slM.max = 35; slM.step = 1; slM.value = Math.round(v.pcSet);
+            $txt('c1SlMainLbl', 'Pinsp (Pressão Controlada)'); $txt('c1SlMainVal', `${Math.round(v.pcSet)} cmH2O`);
+          } else {
+            slM.min = 4; slM.max = 30; slM.step = 1; slM.value = Math.round(v.psSet);
+            $txt('c1SlMainLbl', 'Psup (Pressão de Suporte)'); $txt('c1SlMainVal', `${Math.round(v.psSet)} cmH2O`);
+          }
+        }
+        const setSl = (id, val, txtId, txt) => {
+          const el = $id(id);
+          if (el) el.value = val;
+          $txt(txtId, txt);
+        };
+        setSl('c1SlRr', Math.round(v.rrSet), 'c1SlRrVal', `${Math.round(v.rrSet)} b/min`);
+        setSl('c1SlPeep', Math.round(v.peepSet), 'c1SlPeepVal', `${Math.round(v.peepSet)} cmH2O`);
+        setSl('c1SlFio2', Math.round(v.fio2Set), 'c1SlFio2Val', `${Math.round(v.fio2Set)}%`);
+        setSl('c1SlPause', Math.round(v.inspPausePct), 'c1SlPauseVal', `${Math.round(v.inspPausePct)}%`);
+      } else if (activeMenu === 'alarms') {
+        const listEl = $id('c1AlarmList');
+        if (listEl) {
+          const alSig = alarms.map((a) => `${a.level}:${a.msg || a.text || ''}`).join('|');
+          if (listEl.dataset.sig !== alSig) {
+            listEl.dataset.sig = alSig;
+            listEl.innerHTML = alarms.length
+              ? alarms.map((a) => `<div class="c1-alarm-item ${a.level === 'critical' ? 'crit' : 'warn'}">${a.level === 'critical' ? '🚨' : '⚠'} ${escapeHtml(a.msg || a.text || '')}</div>`).join('')
+              : '<div class="c1-alarm-ok">✓ Sem alarmes ativos no momento</div>';
+          }
+        }
+        const alPpeak = Math.round(engine.alarms.ppeakHigh || 35);
+        const alSpo2 = Math.round(engine.alarms.spo2Low || 90);
+        const alEtco2 = Math.round(engine.alarms.etco2High || 50);
+        const elPpeak = $id('c1AlPpeak'); if (elPpeak) elPpeak.value = alPpeak;
+        const elSpo2 = $id('c1AlSpo2'); if (elSpo2) elSpo2.value = alSpo2;
+        const elEtco2 = $id('c1AlEtco2'); if (elEtco2) elEtco2.value = alEtco2;
+        $txt('c1AlPpeakVal', `${alPpeak} cmH2O`);
+        $txt('c1AlSpo2Val', `${alSpo2}%`);
+        $txt('c1AlEtco2Val', `${alEtco2} mmHg`);
+      } else if (activeMenu === 'monitoring') {
+        const grid = $id('c1MonGrid');
+        if (grid) {
+          const o2 = engine.getEffectiveO2Info();
+          const pf = Math.round(vit.pao2 / Math.max(0.21, o2.fio2 / 100));
+          const cells = [
+            ['Ppeak', `${Math.round(b.lastPeakPaw)}`, b.lastPeakPaw > 35 ? 'crit' : ''],
+            ['Pplat', `${Math.round(b.lastPlatPaw)}`, b.lastPlatPaw > 30 ? 'crit' : ''],
+            ['Pmean', `${Math.round(b.lastMeanPaw)}`, ''],
+            ['PEEPtot', `${Math.round(v.peepSet + b.lastAutoPeep)}`, ''],
+            ['AutoPEEP', `${b.lastAutoPeep.toFixed(1)}`, b.lastAutoPeep > 3 ? 'warn' : ''],
+            ['ΔP', `${dp}`, dp > 15 ? 'crit' : ''],
+            ['Cstat', `${Math.round(p.compliance)}`, p.compliance < 30 ? 'warn' : ''],
+            ['Rinsp', `${Math.round(p.resistance)}`, p.resistance >= 18 ? 'warn' : ''],
+            ['Vte', `${Math.round(b.lastVteMl)} ml`, ''],
+            ['ExpMinVol', `${b.lastVeLmin.toFixed(1)} L`, ''],
+            ['PaO2/FiO2', `${pf}`, pf < 150 ? 'crit' : pf < 300 ? 'warn' : ''],
+            ['EtCO2', `${Math.round(vit.etco2)}`, vit.etco2 > 50 ? 'warn' : '']
+          ];
+          const mSig = cells.map((c) => c[1] + c[2]).join(',');
+          if (grid.dataset.sig !== mSig) {
+            grid.dataset.sig = mSig;
+            grid.innerHTML = cells.map(([k, val, cls]) => `<div class="c1-mon-cell ${cls}"><span>${k}</span><strong>${val}</strong></div>`).join('');
+          }
+        }
+      } else if (activeMenu === 'tools') {
+        $txt('c1ToolConnLbl', engine.airway.connectedToVent ? 'Desacoplar VM' : 'Acoplar VM');
+      }
+    }
+
+    function clearBuffers() {
+      pawBuf.fill(0);
+      bufHead = 0;
+      sampleAccum = 0;
+      dirty = true;
+    }
+
+    pushC1Event('HAMILTON-C1 inicializado • ASV pronto');
+    setSlot('main');
+    return { step, render, resize, syncUI, setModel, openMenu, clearBuffers, onDefibShock };
+  })();
 
   // Pausa limpa de áudio e prevenção de salto de dt ao trocar de aba
   document.addEventListener('visibilitychange', () => {
@@ -2225,128 +2661,29 @@
     $id('cardIBP').classList.toggle('alarming', v.map < a.mapLow);
     $id('cardEtCO2').classList.toggle('alarming', v.etco2 > a.etco2High || v.etco2 < a.etco2Low);
 
-    // Ventilador Readouts (HAMILTON-T1)
+    // Estado Ventilatório + Relógio Mindray + Sincronia dos Dispositivos
     const ventConnected = Boolean(engine.airway && engine.airway.connectedToVent);
     const o2Info = engine.getEffectiveO2Info();
-    if (!ventConnected) {
-      $txt('roPpeak', '--');
-      $txt('roPplat', '--');
-      $txt('roDP', '--');
-      $id('roDpBox').classList.remove('alarming');
-      $txt('roPeepTot', o2Info.peep > 0 ? o2Info.peep.toFixed(1) : '--');
-      $txt('roAutoPeepHint', 'Fora da VM');
-      $txt('roVte', '--');
-      $txt('roVe', '--');
-      $txt('roRRTot', '--');
-      $txt('roIE', 'I:E --');
-    } else {
-      const totalPeep = vent.peepSet + b.lastAutoPeep;
-      const dp = Math.max(0, b.lastPlatPaw - totalPeep);
-      $txt('roPpeak', Math.round(b.lastPeakPaw));
-      $txt('roPplat', Math.round(b.lastPlatPaw));
-      $txt('roDP', Math.round(dp));
-      $id('roDpBox').classList.toggle('alarming', dp > a.dpHigh);
-      $txt('roPeepTot', totalPeep.toFixed(1));
-      $txt('roAutoPeepHint', `Auto-PEEP: ${b.lastAutoPeep.toFixed(1)}`);
-      $txt('roVte', Math.round(b.lastVteMl));
-      $txt('roVe', b.lastVeLmin.toFixed(1));
-      $txt('roRRTot', Number(b.lastRrTotal).toFixed(1));
-      $txt('roIE', `I:E ${b.lastIeString}`);
-    }
-    $txt('roMechanics', `${Math.round(p.compliance)} / ${Math.round(p.resistance)}`);
 
-    // Relógios (só escrevem no DOM 1x/s graças ao $txt diffing)
     const nowDt = new Date();
     const dStr = `${nowDt.getFullYear()}-${String(nowDt.getMonth() + 1).padStart(2, '0')}-${String(nowDt.getDate()).padStart(2, '0')}`;
     const tStr = `${String(nowDt.getHours()).padStart(2, '0')}:${String(nowDt.getMinutes()).padStart(2, '0')}:${String(nowDt.getSeconds()).padStart(2, '0')}`;
-    $txt('hamClock', tStr);
     $txt('mindrayClock', `${dStr} ${tStr}`);
     $txt('noraValue', engine.interventions.noraDose.toFixed(2));
     if (vivoGold) vivoGold.syncUI();
     if (icatuPump) icatuPump.syncUI();
     if (icatuPump2) icatuPump2.syncUI();
     if (sg1Analyzer) sg1Analyzer.syncUI();
-
-    // Indicador de Fase e Tipo de Ciclo do Ventilador
-    const badge = $id('breathTypeBadge');
-    let badgeText, badgeCls;
-    if (!ventConnected) {
-      badgeText = b.lastRrTotal <= 0 ? 'APNEIA' : 'SEM VM';
-      badgeCls = b.lastRrTotal <= 0 ? 'breath-badge apnea' : 'breath-badge spont';
-    } else if (vent.mode === 'PSV' && p.intrinsicDrive <= 0) {
-      badgeText = vent.backupActive ? 'BACKUP APNEIA' : 'APNEIA';
-      badgeCls = 'breath-badge apnea';
-    } else if (b.lastBreathWasSpont) {
-      badgeText = 'ESPONTÂNEA / ASSIST.';
-      badgeCls = 'breath-badge spont';
-    } else {
-      badgeText = 'MANDATÓRIA';
-      badgeCls = 'breath-badge mand';
-    }
-    if (badge) {
-      if (badge.textContent !== badgeText) badge.textContent = badgeText;
-      if (badge.className !== badgeCls) badge.className = badgeCls;
-    }
-
-    const phaseNames = {
-      TRIGGER: 'Disparo Paciente',
-      INSP: vent.holdInspTimer > 0 ? 'Hold Inspiratório' : 'Inspiração',
-      PAUSE: 'Pausa Inspiratória (Pplatô)',
-      EXP: vent.holdExpTimer > 0 ? 'Hold Expiratório (Auto-PEEP)' : 'Expiração'
-    };
-    const shortO2Name = o2Info.deviceId === 'room_air' ? 'Ar' : String(o2Info.deviceName || 'O₂').replace(/\s*\(.*?\)/g, '');
-    $txt('breathPhaseLabel', ventConnected ? (phaseNames[b.phase] || b.phase) : `${shortO2Name} ${o2Info.fio2}%`);
-
-    // Indicador LED inspiratório pulsante & animações operacionais Mindray + Hamilton-T1
-    const isInspPhase = ventConnected && !hamStandby && (b.phase === 'INSP' || b.phase === 'PAUSE' || b.phase === 'TRIGGER');
-    const inspLed = $id('hamInspLed');
-    if (inspLed) inspLed.classList.toggle('active', isInspPhase);
+    if (hamC1Panel) hamC1Panel.syncUI();
 
     const mrLiveDotEl = $id('mrLiveDot');
     if (_mrChassisEl) _mrChassisEl.classList.toggle('mr-operating', !mrStandby && !isFrozen);
     if (mrLiveDotEl) mrLiveDotEl.classList.toggle('live', !mrStandby && !isFrozen);
     if (_mrPowerLedEl) _mrPowerLedEl.classList.toggle('operating', !mrStandby);
 
-    const hamMiniLungEl = $id('hamMiniLung');
-    const hamPawFillEl = $id('hamPawLiveFill');
-    const hamTurbineBadgeEl = $id('hamTurbineBadge');
-    const hamRotaryRingEl = $id('hamRotaryKnob');
-    const hamRunning = ventConnected && !hamStandby;
-    if (_hamChassisEl) {
-      _hamChassisEl.classList.toggle('ham-ventilating', hamRunning);
-      _hamChassisEl.classList.toggle('ham-insp', isInspPhase);
-      _hamChassisEl.classList.toggle('ham-exp', hamRunning && !isInspPhase);
-    }
-    if (hamMiniLungEl) {
-      const volMl = (b.volumeL || 0) * 1000;
-      const vtNorm = Math.max(0, Math.min(1.25, volMl / Math.max(250, vent.vtSet || 450)));
-      const lungScale = hamRunning ? (1 + 0.28 * vtNorm) : 0.96;
-      hamMiniLungEl.style.transform = `scale(${lungScale.toFixed(3)})`;
-      hamMiniLungEl.classList.toggle('insp', isInspPhase);
-      hamMiniLungEl.classList.toggle('ventilating', hamRunning);
-    }
-    if (hamPawFillEl) {
-      const pawSpan = Math.max(0.06, Math.min(1, ((b.paw || 0) - (vent.peepSet || 0)) / 28));
-      hamPawFillEl.style.width = `${hamRunning ? Math.round(pawSpan * 100) : 8}%`;
-      hamPawFillEl.classList.toggle('insp', isInspPhase);
-    }
-    if (hamTurbineBadgeEl) hamTurbineBadgeEl.classList.toggle('active', hamRunning);
-    if (hamRotaryRingEl) hamRotaryRingEl.classList.toggle('ventilating', hamRunning);
-
-    // Botões de manobra ativos (tela + chassi físico)
-    $id('btnHoldInsp').classList.toggle('active', vent.holdInspTimer > 0);
-    $id('btnHoldExp').classList.toggle('active', vent.holdExpTimer > 0);
-    $id('btnO2Flush').classList.toggle('active', vent.o2FlushTimer > 0);
-    $id('hamHwManualHold').classList.toggle('active', vent.holdInspTimer > 0);
-    $id('hamHwExpHold').classList.toggle('active', vent.holdExpTimer > 0);
-    $id('hamHwO2').classList.toggle('active', vent.o2FlushTimer > 0);
-    $id('hamHwSilence').classList.toggle('active', audio.isSilenced());
-
     // Meta Strip
     const vtKg = b.lastVteMl / Math.max(30, p.weightKg);
-    const ventFio2 = vent.o2FlushTimer > 0 ? 100 : vent.fio2Set;
     const effFio2 = o2Info.fio2 / 100;
-    $txt('hamDialFio2Val', Math.round(ventFio2));
     const pf = Math.round(v.pao2 / Math.max(0.21, effFio2));
     $txt('metaVtKg', ventConnected ? `${vtKg.toFixed(1)} mL/kg` : `Espont. ${vtKg.toFixed(1)}`);
     $txt('metaPF', pf);
@@ -2365,6 +2702,99 @@
     setMetaChipState('metaChipPF', pf < 150 ? 'crit' : pf < 250 ? 'warn' : 'ok');
     setMetaChipState('metaChipPH', (v.ph < 7.20 || v.ph > 7.55) ? 'crit' : (v.ph < 7.32 || v.ph > 7.48) ? 'warn' : 'ok');
 
+    // Estabilidade Clínica / Risco Progressivo de Parada Cardíaca (5H/5T) + Interações Medicamentosas
+    const det = engine.deterioration || { risk: 0, causes: [], stage: 'stable' };
+    const riskPct = Math.round(det.risk || 0);
+    const inArrestNow = Boolean(p.arrested && !engine.interventions.roscAchieved);
+    $txt('metaArrestRisk', inArrestNow ? 'EM PCR' : riskPct > 0 ? `${riskPct}%` : 'Estável');
+    setMetaChipState('metaChipArrestRisk', (inArrestNow || riskPct >= 65) ? 'crit' : riskPct >= 25 ? 'warn' : 'ok');
+    const riskChipEl = $id('metaChipArrestRisk');
+    if (riskChipEl) {
+      const tipParts = [];
+      if (inArrestNow && det.lastArrestReason) tipParts.push(`Causa da PCR: ${det.lastArrestReason}`);
+      else if (det.causes && det.causes.length) tipParts.push(`Fatores de risco ativos: ${det.causes.join(' • ')}`);
+      else tipParts.push('Estável — sem critérios ativos de deterioração para PCR');
+      if (engine.drugInteractions && engine.drugInteractions.length) {
+        tipParts.push(`Interações: ${engine.drugInteractions.map((ix) => ix.tag).join(', ')}`);
+      }
+      const nextTitle = tipParts.join(' | ');
+      if (riskChipEl.title !== nextTitle) riskChipEl.title = nextTitle;
+    }
+
+    // Faixa compacta de interações medicamentosas ativas na sidebar
+    const ixStripEl = $id('drugInteractionsStrip');
+    if (ixStripEl) {
+      const ixs = engine.drugInteractions || [];
+      const ixSig = ixs.map((ix) => `${ix.level}:${ix.tag}`).join('|');
+      if (ixStripEl.dataset.sig !== ixSig) {
+        ixStripEl.dataset.sig = ixSig;
+        ixStripEl.classList.toggle('hidden', ixs.length === 0);
+        ixStripEl.innerHTML = ixs
+          .map((ix) => `<span class="drug-ix-pill ${ix.level === 'critical' ? 'crit' : 'warn'}" title="${escapeHtml(ix.msg)}">💊 ${escapeHtml(ix.tag)}</span>`)
+          .join('');
+      }
+    }
+
+    // Destaca botões de emergência quando indicados (sempre visíveis no Menu Clínico)
+    const showArrestNow = inArrestNow || engine.cardiac.rhythm === 'vtach';
+    const ivNow = engine.interventions;
+    const isTamponadeNow = engine.scenarioId === 'cardiac_tamponade' && !ivNow.pericardiocentesisDone;
+    const isThrombIndicated = (engine.scenarioId === 'pulmonary_embolism' || v.rhythm === 'stemi' || v.rhythm === 'de_winter') && !ivNow.thrombolysisGiven;
+    const isProneIndicated = (pf < 150 || p.shunt >= 0.28) && !ivNow.proneActive;
+    const isWarmIndicated = p.temp < 34.5 && !ivNow.warmingActive;
+    const isSyncCardioIndicated = !inArrestNow && (v.rhythm === 'vtach' || v.rhythm === 'svt' || (v.rhythm === 'wpw' && v.hr >= 135) || (v.rhythm === 'afib_rvr' && (v.hr >= 150 || v.map < 78)) || (v.rhythm === 'aflutter' && v.map < 75));
+    const isBloodIndicated = (engine.scenarioId === 'hemorrhagic_shock' || engine.scenarioId === 'postpartum_hemorrhage' || engine.scenarioId === 'amniotic_embolism' || (engine.cardiac.preload < 0.72 && v.map < 65)) && (ivNow.bloodUnits || 0) < 3;
+
+    if (btnDecompress) btnDecompress.classList.toggle('urgent', Boolean(p.pneumothoraxActive));
+    if (btnDefib) btnDefib.classList.toggle('urgent', showArrestNow);
+    if (btnCprToggle) {
+      btnCprToggle.classList.toggle('urgent', showArrestNow);
+      btnCprToggle.setAttribute('aria-pressed', String(ivNow.cprActive));
+    }
+    if (btnPericardiocentesis) btnPericardiocentesis.classList.toggle('urgent', isTamponadeNow);
+    if (btnThrombolysis) btnThrombolysis.classList.toggle('urgent', isThrombIndicated);
+    if (btnPronePosition) {
+      btnPronePosition.classList.toggle('urgent', isProneIndicated);
+      btnPronePosition.setAttribute('aria-pressed', String(Boolean(ivNow.proneActive)));
+    }
+    if (btnActiveWarming) {
+      btnActiveWarming.classList.toggle('urgent', isWarmIndicated);
+      btnActiveWarming.setAttribute('aria-pressed', String(Boolean(ivNow.warmingActive)));
+    }
+    if (btnSyncCardioversion) btnSyncCardioversion.classList.toggle('urgent', isSyncCardioIndicated);
+    if (btnTransfusion) {
+      btnTransfusion.classList.toggle('urgent', isBloodIndicated);
+      $txt('bloodCount', ivNow.bloodUnits || 0);
+    }
+
+    const pacerOnNow = Boolean(engine.externalPacer && engine.externalPacer.active);
+    const isCoolIndicated = p.temp >= 39.2 && !ivNow.coolingActive;
+    const isPacerIndicated = !inArrestNow && !pacerOnNow && (v.rhythm === 'av_block_3' || v.rhythm === 'av_block_2_m2' || (v.hr > 0 && v.hr < 48 && v.map < 68));
+    const isOsmoIndicated = engine.scenarioId === 'tce_cushing' && !ivNow.osmotherapyGiven;
+    const isSteroidIndicated = (engine.scenarioId === 'adrenal_crisis' || engine.scenarioId === 'myxedema_coma' || engine.scenarioId === 'anaphylaxis' || (engine.scenarioId === 'septic_shock' && v.map < 65)) && !ivNow.hydrocortisoneGiven;
+    const isInsulinIndicated = (engine.scenarioId === 'dka_acidosis' || engine.scenarioId === 'hhs_hyperosmolar' || v.rhythm === 'hyperkalemia') && !ivNow.insulinActive;
+    const isUterotonicIndicated = engine.scenarioId === 'postpartum_hemorrhage' && !ivNow.uterotonicGiven;
+
+    if (btnActiveCooling) {
+      btnActiveCooling.classList.toggle('urgent', isCoolIndicated);
+      btnActiveCooling.setAttribute('aria-pressed', String(Boolean(ivNow.coolingActive)));
+    }
+    if (btnTranscutPacer) {
+      btnTranscutPacer.classList.toggle('urgent', isPacerIndicated);
+      btnTranscutPacer.setAttribute('aria-pressed', String(pacerOnNow));
+    }
+    if (btnOsmotherapy) btnOsmotherapy.classList.toggle('urgent', isOsmoIndicated);
+    if (btnHydrocortisone) btnHydrocortisone.classList.toggle('urgent', isSteroidIndicated);
+    if (btnInsulinDrip) {
+      btnInsulinDrip.classList.toggle('urgent', isInsulinIndicated);
+      btnInsulinDrip.setAttribute('aria-pressed', String(Boolean(ivNow.insulinActive)));
+    }
+    if (btnUterotonic) btnUterotonic.classList.toggle('urgent', isUterotonicIndicated);
+    if (updateNumericUI._lastRhythm !== v.rhythm) {
+      updateNumericUI._lastRhythm = v.rhythm;
+      syncRhythmUI();
+    }
+
     // Faixa de Alarmes & Som
     const alarms = engine.activeAlarms;
     let highest = null;
@@ -2372,14 +2802,9 @@
     else if (alarms.length > 0) highest = 'warning';
 
     const mrAlarmLampEl = $id('mrAlarmLamp');
-    const hamAlarmLampEl = $id('hamAlarmLamp');
     if (mrAlarmLampEl) {
       mrAlarmLampEl.classList.toggle('warning', highest === 'warning');
       mrAlarmLampEl.classList.toggle('critical', highest === 'critical');
-    }
-    if (hamAlarmLampEl) {
-      hamAlarmLampEl.classList.toggle('warning', highest === 'warning');
-      hamAlarmLampEl.classList.toggle('critical', highest === 'critical');
     }
 
     const alarmIconKey = p.arrested ? 'arrest' : (highest || 'ok');
@@ -2460,8 +2885,8 @@
       if (!isFrozen) {
         engine.step(dt);
         monitor.step(dt);
-        ventDisplay.step(dt);
         if (vivoGold) vivoGold.step(dt);
+        if (hamC1Panel) hamC1Panel.step(dt);
       }
       if (superpowers) superpowers.step(dt, isFrozen);
 
@@ -2472,8 +2897,8 @@
 
       // Renderiza somente dispositivos visíveis no viewport (zero GPU desperdiçada fora da tela)
       if (_visState.mon) monitor.render();
-      if (_visState.vent) ventDisplay.render();
       if (vivoGold && _visState.defib && !isFrozen) vivoGold.render();
+      if (hamC1Panel && _visState.c1 && !isFrozen) hamC1Panel.render();
 
       if (now - lastUiUpdate >= 120) {
         lastUiUpdate = now;
@@ -2589,7 +3014,7 @@
     if (simulatorActive) {
       requestAnimationFrame(() => {
         monitor.resizeAll();
-        ventDisplay.resizeAll();
+        if (hamC1Panel && hamC1Panel.resize) hamC1Panel.resize();
         if (vivoGold) vivoGold.resize();
         if (sg1Analyzer && sg1Analyzer.resize) sg1Analyzer.resize();
       });
@@ -2610,6 +3035,13 @@
       b.classList.toggle('active', b.dataset.layout === layoutKey);
     });
 
+    if (layoutKey === 'only-vent') {
+      if (_c1ChassisEl && _c1ChassisEl.classList.contains('hidden')) {
+        _c1ChassisEl.classList.remove('hidden');
+        const btnC1 = document.getElementById('btnVentC1');
+        if (btnC1) btnC1.classList.add('active');
+      }
+    }
     if (layoutKey === 'only-pump') {
       if (icatuChassisEl && icatuChassisEl.classList.contains('hidden')) {
         icatuChassisEl.classList.remove('hidden');
@@ -2659,7 +3091,7 @@
     requestAnimationFrame(() => {
       applyDeviceSizing();
       monitor.resizeAll();
-      ventDisplay.resizeAll();
+      if (hamC1Panel && hamC1Panel.resize) hamC1Panel.resize();
       if (vivoGold) vivoGold.resize();
       if (sg1Analyzer && sg1Analyzer.resize) sg1Analyzer.resize();
     });
@@ -2815,7 +3247,7 @@
 
   wireSplitterDrag(document.getElementById('icuSplitter'), icuGridEl, '--split-left', '--split-right', () => {
     monitor.resizeAll();
-    ventDisplay.resizeAll();
+    if (hamC1Panel && hamC1Panel.resize) hamC1Panel.resize();
     if (vivoGold) vivoGold.resize();
   });
 
@@ -2860,7 +3292,6 @@
       setFrozen: (f) => {
         isFrozen = Boolean(f);
         monitor.setFrozen(isFrozen);
-        ventDisplay.setFrozen(isFrozen);
       }
     });
   }
@@ -2889,6 +3320,24 @@
     }
     showSimulator('stable');
   }
+  // API interna limpa para módulos extras (POCUS, Plantão Cego, Debriefing & Carrinho de Parada)
+  window.__uticomed = {
+    engine,
+    audio,
+    SCENARIOS,
+    BOLUS_DRUGS,
+    addLog,
+    refreshScenarioUI,
+    syncAirwayO2AndPharmaUI,
+    syncPhysiologyModalInputs,
+    syncRhythmUI,
+    resetEquipmentOnScenarioChange,
+    onScenarioChange: []
+  };
+  if (typeof window.ICUSim.initBedsideTools === 'function') {
+    window.ICUSim.initBedsideTools(window.__uticomed);
+  }
+
   addLog('UTICoMed v2 Otimizado — Modo offline pronto');
   requestAnimationFrame(frameLoop);
 
