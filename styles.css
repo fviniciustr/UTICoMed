@@ -635,20 +635,20 @@ html, body { background: #060907; }
 #simSidebar .pbw-apply-btn:active,
 #simSidebar .phys-knob-step:active,
 #simSidebar .o2-dev-tile:active { transform: scale(0.96); }
-.phys-knobs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.phys-knob-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 6px; border-radius: 9px; background: #0d1624; border: 1px solid #243652; }
-.phys-knob-lbl { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-align: center; line-height: 1.15; }
-.phys-knob-ctrl { display: flex; align-items: center; justify-content: center; gap: 5px; }
-.phys-knob-step { width: 33px; height: 33px; border-radius: 7px; border: 1px solid var(--border-strong); background: #1c2a44; color: var(--text-main); font-size: 1.15rem; font-weight: 800; cursor: pointer; display: grid; place-items: center; transition: background 0.14s ease, border-color 0.14s ease; }
+.phys-knobs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.phys-knob-card { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 4px; border-radius: 8px; background: #0d1624; border: 1px solid #243652; }
+.phys-knob-lbl { font-size: 0.90rem; font-weight: 700; color: var(--text-muted); text-align: center; line-height: 1.1; }
+.phys-knob-ctrl { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.phys-knob-step { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--border-strong); background: #1c2a44; color: var(--text-main); font-size: 0.95rem; font-weight: 800; cursor: pointer; display: grid; place-items: center; transition: background 0.14s ease, border-color 0.14s ease; }
 .phys-knob-step:hover { background: #283b5f; border-color: var(--flow-sky); }
-.phys-knob-dial { position: relative; width: min(112px, 100%); height: auto; aspect-ratio: 1 / 1; border-radius: 50%; cursor: ns-resize; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none; }
+.phys-knob-dial { position: relative; width: 112px; height: 112px; aspect-ratio: 1 / 1; border-radius: 50%; cursor: ns-resize; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: none; flex-shrink: 0; }
 .phys-knob-svg { width: 100%; height: 100%; display: block; }
 .phys-knob-track { fill: none; stroke: #1e293b; stroke-width: 5; stroke-linecap: round; }
 .phys-knob-arc { fill: none; stroke: #22c55e; stroke-width: 5; stroke-linecap: round; transition: stroke-dasharray 0.08s linear; }
 .phys-knob-dial.dragging .phys-knob-arc { stroke: #38bdf8; }
 .phys-knob-cap { position: absolute; width: 60.7%; height: 60.7%; border-radius: 50%; background: #182334; border: 2px solid #475569; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15); transition: transform 0.06s linear; }
 .phys-knob-notch { position: absolute; top: 8px; left: 50%; width: 7px; height: 18px; transform: translateX(-50%); border-radius: 4px; background: #4ade80; }
-.phys-knob-val { font-size: 0.74rem; font-weight: 800; color: #4ade80; text-align: center; }
+.phys-knob-val { font-size: 0.94rem; font-weight: 800; color: #4ade80; text-align: center; line-height: 1.1; }
 body.theme-light .sim-sidebar-title { background: #fff3e4; border-color: #e6cdb1; }
 body.theme-light .sim-sidebar-title h2 { color: #291d14; }
 body.theme-light .phys-knob-card { background: #fff9f2; border-color: #e6cdb1; }
@@ -749,7 +749,11 @@ body:not(.theme-light) .px-orb-peach { background: #9a3412; opacity: 0.18; }
 .pbw-results-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem; background: #0a0f0c; padding: 4px 7px; border-radius: 5px; border: 1px solid rgba(163, 184, 170, 0.16); }
 .pbw-results-row strong { color: #4ade80; }
 .pbw-range-hint { font-size: 0.65rem; color: #8f9e95; }
-.pbw-apply-btn { justify-content: center !important; background: #15803d !important; border-color: #4ade80 !important; color: #ffffff !important; font-size: 0.73rem !important; padding: 5px 8px !important; }
+.pbw-apply-btn { display: flex !important; align-items: center !important; justify-content: center !important; gap: 10px !important; background: linear-gradient(180deg, #fde047 0%, #facc15 65%, #eab308 100%) !important; border: 2px solid #a16207 !important; border-radius: 11px !important; color: #0f172a !important; font-size: 0.96rem !important; font-weight: 900 !important; padding: 6px 12px !important; box-shadow: 0 4px 12px rgba(161, 98, 7, 0.35), inset 0 1px 0 #fef9c3 !important; }
+.pbw-estop-svg { width: 52px; height: 52px; flex-shrink: 0; display: block; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.32)); }
+.pbw-apply-btn:hover .reset-estop-arrows { transform: rotate(45deg); }
+.pbw-apply-btn:active .reset-estop-arrows { transform: rotate(120deg); }
+.pbw-apply-lbl { text-align: left; line-height: 1.15; }
 body.theme-light .pbw-calc-box { background: #faeedc; border-color: #e2c5a3; }
 body.theme-light .pbw-calc-title { color: #6b4f3d; }
 body.theme-light .pbw-sex-btn { background: #fffdf9; color: #6b4f3d; border-color: #dec3a2; }
@@ -758,7 +762,7 @@ body.theme-light .pbw-height-slider { accent-color: #ea580c; }
 body.theme-light .pbw-height-num, body.theme-light .pbw-results-row { background: #fffdf9; color: #291d14; border-color: #e2c5a3; }
 body.theme-light .pbw-results-row strong { color: #c2410c; }
 body.theme-light .pbw-range-hint { color: #6b4f3d; }
-body.theme-light .pbw-apply-btn { background: #ea580c !important; border-color: #c2410c !important; color: #ffffff !important; }
+body.theme-light .pbw-apply-btn { background: linear-gradient(180deg, #fde047 0%, #facc15 65%, #eab308 100%) !important; border-color: #a16207 !important; color: #0f172a !important; }
 .modal-card.wide { max-width: 940px; max-height: 90vh; overflow-y: auto; }
 .prot-pillars-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
 .prot-pillar-mini { background: #111814; border: 1px solid rgba(163, 184, 170, 0.25); border-top: 3px solid #22c55e; border-radius: 7px; padding: 7px 8px; display: flex; flex-direction: column; gap: 3px; }
@@ -1053,7 +1057,13 @@ body.theme-light .ecg-tile-wave { background: #0c1713; border-color: #1f3b30; }
 .topbar-controls .ctrl-btn.accent { background: #0f766e; border-color: #14b8a6; color: #ffffff; }
 .topbar-controls .ctrl-btn.accent:hover { background: #0d9488; }
 .topbar-controls .ctrl-btn[aria-pressed="true"] { background: #0284c7; border-color: #38bdf8; color: #ffffff; }
-.topbar-controls .ctrl-btn#btnResetScenario { background: #475569; border-color: #64748b; color: #ffffff; }
+.topbar-controls .ctrl-btn#btnResetScenario { width: 72px; height: 72px; padding: 2px; background: transparent !important; border-color: transparent !important; box-shadow: none; flex-shrink: 0; }
+.topbar-controls .ctrl-btn#btnResetScenario:hover { background: transparent !important; transform: scale(1.22); }
+.topbar-controls .ctrl-btn#btnResetScenario:active { transform: scale(1.12); }
+.reset-estop-svg { width: 68px; height: 68px; display: block; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.38)); }
+.reset-estop-arrows { transform-origin: 24px 24px; transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+.topbar-controls .ctrl-btn#btnResetScenario:hover .reset-estop-arrows { transform: rotate(45deg); }
+.topbar-controls .ctrl-btn#btnResetScenario:active .reset-estop-arrows { transform: rotate(120deg); }
 .topbar-controls .ctrl-btn#btnThemeSim { background: #3b2f63; border-color: #6d28d9; color: #ffffff; }
 body.theme-light .topbar-controls .ctrl-btn { background: #faebd7; border-color: #d97706; color: #291d14; }
 body.theme-light .topbar-controls .ctrl-btn:hover { background: #fed7aa; }
@@ -1943,12 +1953,15 @@ body.theme-light #sideSectionInterventions .int-ico { background: transparent; }
 #sideSectionInterventions .action-btn.steroid .int-ico { color: #fb923c; }
 #sideSectionInterventions .action-btn.insulin .int-ico { color: #2dd4bf; }
 #sideSectionInterventions .action-btn.uterotonic .int-ico { color: #fb7185; }
+#sideSectionInterventions .action-btn.bicarb .int-ico { color: #c084fc; }
+#sideSectionInterventions .action-btn.ringer .int-ico { color: #34d399; }
 
 body.theme-light #sideSectionInterventions .action-btn.fluid .int-ico,
 body.theme-light #sideSectionInterventions .action-btn.prone .int-ico,
 body.theme-light #sideSectionInterventions .action-btn.cooling .int-ico { color: #0284c7; }
 body.theme-light #sideSectionInterventions .action-btn.broncho .int-ico,
-body.theme-light #sideSectionInterventions .action-btn.insulin .int-ico { color: #0f766e; }
+body.theme-light #sideSectionInterventions .action-btn.insulin .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.ringer .int-ico { color: #0f766e; }
 body.theme-light #sideSectionInterventions .action-btn.recruit .int-ico { color: #0e7490; }
 body.theme-light #sideSectionInterventions .action-btn.critical .int-ico,
 body.theme-light #sideSectionInterventions .action-btn.blood .int-ico,
@@ -1958,7 +1971,8 @@ body.theme-light #sideSectionInterventions .action-btn.cpr .int-ico,
 body.theme-light #sideSectionInterventions .action-btn.pacer .int-ico { color: #b45309; }
 body.theme-light #sideSectionInterventions .action-btn.warm .int-ico,
 body.theme-light #sideSectionInterventions .action-btn.steroid .int-ico { color: #c2410c; }
-body.theme-light #sideSectionInterventions .action-btn.osmo .int-ico { color: #6d28d9; }
+body.theme-light #sideSectionInterventions .action-btn.osmo .int-ico,
+body.theme-light #sideSectionInterventions .action-btn.bicarb .int-ico { color: #6d28d9; }
 
 /* Neutro em repouso: botões de emergência só ficam coloridos quando indicados (.urgent) ou ativos */
 #sideSectionInterventions .action-btn.critical:not(.urgent),
@@ -2012,13 +2026,17 @@ body.theme-light #sideSectionInterventions .side-interventions-grid .action-btn 
   box-shadow: 0 3px 9px rgba(41, 29, 20, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
-/* Badges & Destaques inteligentes das 12 intervenções adicionais */
-#sideSectionInterventions .action-btn.blood .action-badge {
+/* Badges & Destaques inteligentes das intervenções adicionais */
+#sideSectionInterventions .action-btn.blood .action-badge,
+#sideSectionInterventions .action-btn.bicarb .action-badge,
+#sideSectionInterventions .action-btn.ringer .action-badge {
   position: absolute; top: 3px; right: 4px; min-width: 15px; height: 15px; padding: 0 3px;
   border-radius: 999px; background: #b91c1c; color: #ffffff; font-size: 0.58rem; font-weight: 900;
   display: inline-flex; align-items: center; justify-content: center;
   box-shadow: 0 2px 6px rgba(185, 28, 28, 0.45);
 }
+#sideSectionInterventions .action-btn.bicarb .action-badge { background: #7c3aed; box-shadow: 0 2px 6px rgba(124, 58, 237, 0.45); }
+#sideSectionInterventions .action-btn.ringer .action-badge { background: #0f766e; box-shadow: 0 2px 6px rgba(15, 118, 110, 0.45); }
 #sideSectionInterventions .action-btn.prone.urgent,
 body.theme-light #sideSectionInterventions .action-btn.prone.urgent,
 #sideSectionInterventions .action-btn.cooling.urgent,
@@ -2088,9 +2106,22 @@ body.theme-light #sideSectionInterventions .action-btn.uterotonic.urgent {
   box-shadow: 0 4px 14px rgba(190, 18, 60, 0.55) !important;
   animation: intUrgentScale 1.05s ease-in-out infinite !important;
 }
+#sideSectionInterventions .action-btn.bicarb.urgent,
+body.theme-light #sideSectionInterventions .action-btn.bicarb.urgent {
+  background: #7c3aed !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.52) !important;
+  animation: intUrgentScale 1.1s ease-in-out infinite !important;
+}
+#sideSectionInterventions .action-btn.ringer.urgent,
+body.theme-light #sideSectionInterventions .action-btn.ringer.urgent {
+  background: #0f766e !important; color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.50) !important;
+  animation: intUrgentScale 1.15s ease-in-out infinite !important;
+}
 
 /* === Animações GPU-Otimizadas (100% compositor: apenas transform + opacity, 6 keyframes enxutos) === */
 #sideSectionInterventions #btnFluidBolus .int-ico svg,
+#sideSectionInterventions #btnRingerLactate .int-ico svg,
 #sideSectionInterventions #btnTransfusion .int-ico svg,
 #sideSectionInterventions #btnActiveWarming .int-ico svg { animation: intSvgBob 2.4s ease-in-out infinite; }
 
@@ -2099,7 +2130,8 @@ body.theme-light #sideSectionInterventions .action-btn.uterotonic.urgent {
 #sideSectionInterventions #btnPronePosition .int-ico svg,
 #sideSectionInterventions #btnHydrocortisone .int-ico svg,
 #sideSectionInterventions #btnInsulinDrip .int-ico svg,
-#sideSectionInterventions #btnUterotonic .int-ico svg { animation: intSvgSway 2.8s ease-in-out infinite; }
+#sideSectionInterventions #btnUterotonic .int-ico svg,
+#sideSectionInterventions #btnSodiumBicarb .int-ico svg { animation: intSvgSway 2.8s ease-in-out infinite; }
 
 #sideSectionInterventions #btnSuctionRecruit .int-ico svg,
 #sideSectionInterventions #btnThrombolysis .int-ico svg,
@@ -2445,13 +2477,13 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   border: 1px solid rgba(71, 85, 105, 0.35);
   background: rgba(255, 255, 255, 0.72);
   color: #334155;
-  font-size: 0.70rem;
+  font-size: 0.80rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: background 0.16s ease, color 0.16s ease, transform 0.14s ease;
+  transition: background 0.16s ease, color 0.16s ease, scale 0.14s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.c1-model-tab:hover { background: #ffffff; transform: translateY(-1px); }
+.c1-model-tab:hover { background: #ffffff; }
 .c1-model-tab.active {
   background: #4b626b;
   border-color: #334850;
@@ -2474,7 +2506,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
 }
 .c1-screen-wrap { display: flex; flex-direction: column; gap: 5px; min-width: 0; min-height: 0; height: 100%; }
 .c1-model-wordmark {
-  font-size: 0.86rem;
+  font-size: 0.98rem;
   font-weight: 900;
   letter-spacing: 0.04em;
   color: #f8fafc;
@@ -2488,7 +2520,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) 74px;
+  grid-template-columns: 84px minmax(0, 1fr) 82px;
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 4px;
   padding: 5px;
@@ -2514,7 +2546,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   border: 1px solid #38bdf8;
   background: rgba(14, 165, 233, 0.18);
   color: #e0f2fe;
-  font-size: 0.72rem;
+  font-size: 0.84rem;
   font-weight: 900;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -2528,9 +2560,9 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   padding-bottom: 2px;
 }
 .c1-num-item:last-child { border-bottom: none; }
-.c1-num-item strong { font-size: 1.38rem; font-weight: 900; line-height: 0.98; color: #ffffff; }
-.c1-num-item span { font-size: 0.56rem; color: #94a3b8; font-weight: 700; display: flex; gap: 3px; }
-.c1-num-item small { opacity: 0.78; font-size: 0.50rem; }
+.c1-num-item strong { font-size: 1.62rem; font-weight: 900; line-height: 0.98; color: #ffffff; }
+.c1-num-item span { font-size: 0.68rem; color: #94a3b8; font-weight: 700; display: flex; gap: 3px; }
+.c1-num-item small { opacity: 0.78; font-size: 0.60rem; }
 
 /* Coluna Central: Curva Paw + Dynamic Lung */
 .c1-center-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -2543,7 +2575,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   border-radius: 4px;
   background: #16202a;
   border: 1px solid rgba(250, 204, 21, 0.35);
-  font-size: 0.60rem;
+  font-size: 0.70rem;
   font-weight: 800;
 }
 .c1-mini-badge { color: #facc15; }
@@ -2564,7 +2596,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  font-size: 0.58rem;
+  font-size: 0.70rem;
   font-weight: 800;
   color: #fde047;
   margin-bottom: 2px;
@@ -2600,7 +2632,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
 }
 .c1-dlung-top {
   display: grid;
-  grid-template-columns: 60px minmax(0, 1fr) 52px;
+  grid-template-columns: 72px minmax(0, 1fr) 64px;
   align-items: center;
   gap: 4px;
 }
@@ -2608,10 +2640,10 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 0.56rem;
+  font-size: 0.68rem;
   color: #bae6fd;
 }
-.c1-dlung-meta strong, .c1-dlung-right strong { font-size: 0.70rem; color: #ffffff; }
+.c1-dlung-meta strong, .c1-dlung-right strong { font-size: 0.84rem; color: #ffffff; }
 .c1-dlung-right { align-items: flex-end; text-align: right; }
 .c1-dlung-svg-wrap { display: flex; align-items: center; justify-content: center; }
 .c1-dlung-svg { width: 100%; max-width: 112px; height: auto; overflow: visible; }
@@ -2633,8 +2665,8 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   text-align: center;
 }
 .c1-dlung-stats div { display: flex; flex-direction: column; line-height: 1.05; }
-.c1-dlung-stats span { font-size: 0.48rem; color: #bae6fd; opacity: 0.85; }
-.c1-dlung-stats strong { font-size: 0.72rem; color: #ffffff; font-weight: 900; }
+.c1-dlung-stats span { font-size: 0.60rem; color: #bae6fd; opacity: 0.85; }
+.c1-dlung-stats strong { font-size: 0.88rem; color: #ffffff; font-weight: 900; }
 
 /* Coluna Direita da Tela: Modes + 3 Círculos Touch */
 .c1-ctrl-col {
@@ -2654,7 +2686,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   border: 1px solid #334155;
   background: #1a232d;
   color: #e2e8f0;
-  font-size: 0.60rem;
+  font-size: 0.70rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -2662,8 +2694,8 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
 .c1-screen-btn.active { background: #0369a1; border-color: #38bdf8; color: #ffffff; }
 .c1-screen-btn.alarm { border-color: rgba(239, 68, 68, 0.55); color: #fca5a5; }
 .c1-dial-circle {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   border: 2px solid #cbd5e1;
   background: #0d131a;
@@ -2674,16 +2706,16 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   justify-content: center;
   cursor: pointer;
   padding: 2px;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.14s ease;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, scale 0.14s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.c1-dial-circle:hover { border-color: #4ade80; transform: scale(1.05); }
+.c1-dial-circle:hover { border-color: #4ade80; }
 .c1-dial-circle.active {
   border-color: #4ade80;
   background: #11241a;
   box-shadow: 0 0 10px rgba(74, 222, 128, 0.45);
 }
-.c1-dial-circle strong { font-size: 0.94rem; font-weight: 900; line-height: 1; }
-.c1-dial-circle small { font-size: 0.48rem; color: #94a3b8; font-weight: 700; margin-top: 2px; }
+.c1-dial-circle strong { font-size: 1.12rem; font-weight: 900; line-height: 1; }
+.c1-dial-circle small { font-size: 0.58rem; color: #94a3b8; font-weight: 700; margin-top: 2px; }
 
 .c1-screen-footer {
   grid-column: 1 / -1;
@@ -2693,7 +2725,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   padding: 3px 6px;
   background: #141c24;
   border-top: 1px solid #22303e;
-  font-size: 0.56rem;
+  font-size: 0.68rem;
   color: #94a3b8;
   font-weight: 700;
 }
@@ -2713,7 +2745,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   padding: 16px;
 }
 .c1-standby-overlay.hidden { display: none !important; }
-.c1-standby-overlay p { font-size: 0.72rem; color: #94a3b8; }
+.c1-standby-overlay p { font-size: 0.86rem; color: #94a3b8; }
 
 /* Painel Lateral Direito de Hardware (Power + Grade 2x3 + Knob Verde Neon) */
 .c1-hw-col {
@@ -2759,7 +2791,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   border: 1px solid #475569;
   background: #18212a;
   color: #f1f5f9;
-  font-size: 0.62rem;
+  font-size: 0.74rem;
   font-weight: 900;
   cursor: pointer;
   display: inline-flex;
@@ -2821,7 +2853,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   border-radius: 999px;
   background: #4ade80;
 }
-.c1-rotary-lbl { font-size: 0.56rem; font-weight: 800; color: #e2e8f0; }
+.c1-rotary-lbl { font-size: 0.68rem; font-weight: 800; color: #e2e8f0; }
 
 /* Rodapé Branco + Placa Metálica HAMILTON MEDICAL */
 .c1-bottom-chin {
@@ -2830,7 +2862,7 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   justify-content: space-between;
   padding: 8px 6px 2px;
 }
-.c1-chin-tag { font-size: 0.58rem; font-weight: 800; color: #64748b; letter-spacing: 0.04em; }
+.c1-chin-tag { font-size: 0.70rem; font-weight: 800; color: #64748b; letter-spacing: 0.04em; }
 .c1-brand-plate {
   display: inline-flex;
   flex-direction: column;
@@ -2842,8 +2874,8 @@ body.theme-light .scenario-tile.active .scenario-tile-icon {
   box-shadow: inset 0 1px 0 #f1f5f9;
   line-height: 1;
 }
-.c1-brand-plate strong { font-size: 0.68rem; font-weight: 900; color: #0f172a; letter-spacing: 0.06em; }
-.c1-brand-plate span { font-size: 0.50rem; font-weight: 800; color: #334155; letter-spacing: 0.14em; }
+.c1-brand-plate strong { font-size: 0.80rem; font-weight: 900; color: #0f172a; letter-spacing: 0.06em; }
+.c1-brand-plate span { font-size: 0.60rem; font-weight: 800; color: #334155; letter-spacing: 0.14em; }
 
 /* === TEMA 2: MINI VENTILADOR PORTÁTIL APH / TRANSPORTE (Compacto Grafite + Amarelo Resgate) === */
 .c1-chassis[data-vent-model="mini-aph"] {
@@ -3091,10 +3123,10 @@ body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
   border: 1px solid #263545;
   background: #18222c;
   color: #cbd5e1;
-  font-size: 0.56rem;
+  font-size: 0.68rem;
   font-weight: 800;
   cursor: pointer;
-  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, scale 0.14s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .c1-foot-tab:hover { background: #223242; border-color: #38bdf8; color: #ffffff; }
 .c1-foot-tab.active, .c1-screen-btn.menu-open { background: #0284c7 !important; border-color: #38bdf8 !important; color: #ffffff !important; }
@@ -3104,8 +3136,8 @@ body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
   position: absolute;
   top: 4px;
   bottom: 28px;
-  left: 82px;
-  right: 80px;
+  left: 88px;
+  right: 86px;
   z-index: 12;
   display: flex;
   flex-direction: column;
@@ -3125,20 +3157,20 @@ body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
   padding: 5px 8px;
   background: #142230;
   border-bottom: 1px solid #253b52;
-  font-size: 0.70rem;
+  font-size: 0.82rem;
   font-weight: 900;
   color: #7dd3fc;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 .c1-menu-close {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 4px;
   border: 1px solid #334155;
   background: #1e293b;
   color: #f8fafc;
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -3162,17 +3194,17 @@ body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
   background: #131e29;
   color: #e2e8f0;
   cursor: pointer;
-  transition: background 0.14s ease, border-color 0.14s ease;
+  transition: background 0.14s ease, border-color 0.14s ease, scale 0.14s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.c1-mode-card strong { font-size: 0.74rem; font-weight: 900; color: #ffffff; }
-.c1-mode-card small { font-size: 0.56rem; color: #94a3b8; }
+.c1-mode-card strong { font-size: 0.88rem; font-weight: 900; color: #ffffff; }
+.c1-mode-card small { font-size: 0.68rem; color: #94a3b8; }
 .c1-mode-card:hover { background: #1b2d3e; border-color: #38bdf8; }
 .c1-mode-card.active { background: #0369a1; border-color: #38bdf8; }
 .c1-mode-card.active small { color: #e0f2fe; }
 
 /* Menu 2 & 3: Controls & Alarms Sliders */
 .c1-ctrl-sliders { display: flex; flex-direction: column; gap: 5px; }
-.c1-ctrl-sliders label { display: flex; flex-direction: column; gap: 2px; font-size: 0.60rem; color: #cbd5e1; }
+.c1-ctrl-sliders label { display: flex; flex-direction: column; gap: 2px; font-size: 0.72rem; color: #cbd5e1; }
 .c1-ctrl-sliders label span { display: flex; justify-content: space-between; align-items: center; }
 .c1-ctrl-sliders label i { font-style: normal; font-weight: 900; color: #4ade80; }
 .c1-ctrl-sliders input[type="range"] { width: 100%; height: 4px; accent-color: #38bdf8; cursor: pointer; }
@@ -3182,7 +3214,7 @@ body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
   border: 1px solid #0284c7;
   background: #0369a1;
   color: #ffffff;
-  font-size: 0.62rem;
+  font-size: 0.74rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -3190,16 +3222,16 @@ body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
 .c1-action-pill.warn { background: #b45309; border-color: #f59e0b; }
 
 .c1-alarm-list { display: flex; flex-direction: column; gap: 3px; max-height: 64px; overflow-y: auto; }
-.c1-alarm-ok { padding: 4px 6px; border-radius: 4px; background: rgba(22, 163, 74, 0.16); color: #86efac; font-size: 0.58rem; font-weight: 800; }
-.c1-alarm-item { padding: 3px 6px; border-radius: 4px; font-size: 0.58rem; font-weight: 800; }
+.c1-alarm-ok { padding: 4px 6px; border-radius: 4px; background: rgba(22, 163, 74, 0.16); color: #86efac; font-size: 0.70rem; font-weight: 800; }
+.c1-alarm-item { padding: 3px 6px; border-radius: 4px; font-size: 0.70rem; font-weight: 800; }
 .c1-alarm-item.crit { background: rgba(220, 38, 38, 0.28); color: #fecaca; border-left: 3px solid #ef4444; }
 .c1-alarm-item.warn { background: rgba(217, 119, 6, 0.25); color: #fde68a; border-left: 3px solid #f59e0b; }
 
 /* Menu 4: Monitoring */
 .c1-mon-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
 .c1-mon-cell { display: flex; flex-direction: column; padding: 4px 5px; border-radius: 5px; background: #121d27; border: 1px solid #223446; }
-.c1-mon-cell span { font-size: 0.50rem; color: #94a3b8; }
-.c1-mon-cell strong { font-size: 0.74rem; color: #f8fafc; font-weight: 900; }
+.c1-mon-cell span { font-size: 0.62rem; color: #94a3b8; }
+.c1-mon-cell strong { font-size: 0.88rem; color: #f8fafc; font-weight: 900; }
 .c1-mon-cell.warn strong { color: #facc15; }
 .c1-mon-cell.crit strong { color: #f87171; }
 
@@ -3216,28 +3248,28 @@ body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
   color: #f1f5f9;
   cursor: pointer;
   text-align: left;
-  transition: background 0.14s ease, border-color 0.14s ease;
+  transition: background 0.14s ease, border-color 0.14s ease, scale 0.14s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.c1-tool-btn strong { font-size: 0.64rem; font-weight: 900; }
-.c1-tool-btn small { font-size: 0.52rem; color: #94a3b8; }
+.c1-tool-btn strong { font-size: 0.76rem; font-weight: 900; }
+.c1-tool-btn small { font-size: 0.64rem; color: #94a3b8; }
 .c1-tool-btn:hover { background: #1e3245; border-color: #38bdf8; }
 .c1-tool-btn.accent { background: #0c4a6e; border-color: #38bdf8; }
 
 /* Menu 6: Events */
-.c1-events-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 0.56rem; color: #cbd5e1; }
+.c1-events-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 0.68rem; color: #cbd5e1; }
 .c1-events-list li { padding: 3px 5px; border-radius: 4px; background: #121c26; border-left: 2px solid #38bdf8; line-height: 1.25; }
 .c1-events-list li b { color: #7dd3fc; margin-right: 4px; }
 
 /* Menu 7: System & Auto-Teste */
-.c1-sys-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; font-size: 0.56rem; }
+.c1-sys-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; font-size: 0.68rem; }
 .c1-sys-info div { display: flex; flex-direction: column; padding: 4px 5px; border-radius: 5px; background: #121d27; border: 1px solid #223446; }
-.c1-sys-info span { color: #94a3b8; font-size: 0.50rem; }
-.c1-sys-info strong { color: #f8fafc; font-size: 0.64rem; }
+.c1-sys-info span { color: #94a3b8; font-size: 0.62rem; }
+.c1-sys-info strong { color: #f8fafc; font-size: 0.76rem; }
 .c1-sys-info strong.ok { color: #4ade80; }
 .c1-selftest-box { display: flex; flex-direction: column; gap: 3px; }
 .c1-selftest-bar { height: 7px; border-radius: 999px; background: #1e293b; overflow: hidden; }
 .c1-selftest-bar span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #0284c7, #22c55e); transition: width 0.25s ease; }
-.c1-selftest-meta { display: flex; justify-content: space-between; font-size: 0.54rem; color: #94a3b8; }
+.c1-selftest-meta { display: flex; justify-content: space-between; font-size: 0.66rem; color: #94a3b8; }
 
 /* === Overlay de Vias Aéreas (device-disconnected-overlay) no Visor do HAMILTON-C1 === */
 .c1-disconnected-overlay {
@@ -3247,49 +3279,117 @@ body.theme-light .ham-screen .o2-dev-tile.active .o2-tile-icon {
   gap: 5px !important;
   border-radius: 6px !important;
 }
-.c1-disconnected-overlay .ham-disc-title h3 { font-size: 0.78rem !important; }
-.c1-disconnected-overlay .airway-pill { font-size: 0.62rem !important; padding: 2px 7px !important; }
-.c1-disconnected-overlay .ham-connect-cta { padding: 4px 9px !important; font-size: 0.68rem !important; }
+.c1-disconnected-overlay .ham-disc-title h3 { font-size: 0.94rem !important; }
+.c1-disconnected-overlay .airway-pill { font-size: 0.72rem !important; padding: 2px 7px !important; }
+.c1-disconnected-overlay .ham-connect-cta { padding: 3px 10px !important; font-size: 0.80rem !important; gap: 6px !important; }
+.c1-disconnected-overlay .o2-cta-ico { width: 32px !important; height: 32px !important; flex-shrink: 0 !important; }
 .c1-disconnected-overlay .o2-therapy-box,
 body.theme-light .c1-disconnected-overlay .o2-therapy-box {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
   background: #0f172a !important;
   border-color: rgba(56, 189, 248, 0.42) !important;
   color: #f8fafc !important;
-  padding: 5px 6px !important;
-  gap: 5px !important;
+  padding: 6px 7px !important;
+  gap: 6px !important;
+  min-height: 0 !important;
 }
 .c1-disconnected-overlay .o2-head-row,
 .c1-disconnected-overlay .o2-flow-lbl,
 body.theme-light .c1-disconnected-overlay .o2-head-row,
 body.theme-light .c1-disconnected-overlay .o2-flow-lbl {
   color: #e2e8f0 !important;
-  font-size: 0.68rem !important;
+  font-size: 0.80rem !important;
 }
 .c1-disconnected-overlay .o2-active-icon,
 body.theme-light .c1-disconnected-overlay .o2-active-icon {
-  width: 24px !important;
-  height: 24px !important;
+  width: 32px !important;
+  height: 32px !important;
   background: #082f49 !important;
   border-color: #0284c7 !important;
   color: #38bdf8 !important;
 }
+.c1-disconnected-overlay .o2-active-icon svg { width: 92% !important; height: 92% !important; }
 .c1-disconnected-overlay .o2-fio2-chip,
 body.theme-light .c1-disconnected-overlay .o2-fio2-chip {
   background: #082f49 !important;
   border-color: #0284c7 !important;
   color: #7dd3fc !important;
-  font-size: 0.68rem !important;
+  font-size: 0.80rem !important;
   padding: 2px 6px !important;
 }
 .c1-disconnected-overlay .ham-o2-device-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 5px !important;
+  gap: 7px !important;
+  padding: 2px 1px !important;
+  margin: auto 0 !important;
+}
+/* Botões de Vias Aéreas ampliados com proporção altura/comprimento = 3/4 (aspect-ratio: 4/3) + ícones SVG 2× */
+.c1-disconnected-overlay .ham-o2-device-grid .o2-dev-tile {
+  aspect-ratio: 4 / 3 !important;
+  padding: 4px 3px !important;
+  gap: 2px !important;
+  justify-content: center !important;
+}
+.c1-disconnected-overlay .ham-o2-device-grid .o2-tile-icon {
+  height: 66% !important;
+  width: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  flex: 1 0 auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+.c1-disconnected-overlay .ham-o2-device-grid .o2-tile-icon svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+.c1-disconnected-overlay .ham-o2-device-grid .o2-tile-text {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  width: 100% !important;
+  padding: 0 2px !important;
+  line-height: 0.98 !important;
+  flex-shrink: 0 !important;
+}
+.c1-disconnected-overlay .ham-o2-device-grid .o2-tile-text strong {
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.c1-disconnected-overlay .ham-o2-device-grid .o2-tile-text small {
+  font-size: 0.64rem !important;
+  font-weight: 800 !important;
+  opacity: 0.88 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 .c1-disconnected-overlay .o2-hint-lg,
 body.theme-light .c1-disconnected-overlay .o2-hint-lg {
-  font-size: 0.64rem !important;
+  font-size: 0.76rem !important;
   color: #cbd5e1 !important;
   line-height: 1.2 !important;
+}
+
+/* Ampliação uniforme de 1.3× ao passar o mouse sobre qualquer botão do ventilador C1 */
+.c1-chassis button {
+  position: relative;
+  transform-origin: center center;
+  transition: scale 0.14s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
+}
+.c1-chassis button:hover:not(:active),
+.c1-chassis .o2-dev-tile:hover:not(:active),
+.c1-chassis .ham-connect-cta:hover:not(:active) {
+  scale: 1.3 !important;
+  transform: none !important;
+  z-index: 30 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

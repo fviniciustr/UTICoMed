@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uticomed-v2-14d5ef51dc';
+const CACHE_NAME = 'uticomed-v2-212214dd8b';
 const ASSETS = [
   './',
   './index.html',

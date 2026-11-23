@@ -138,6 +138,8 @@
   const btnHydrocortisone = document.getElementById('btnHydrocortisone');
   const btnInsulinDrip = document.getElementById('btnInsulinDrip');
   const btnUterotonic = document.getElementById('btnUterotonic');
+  const btnSodiumBicarb = document.getElementById('btnSodiumBicarb');
+  const btnRingerLactate = document.getElementById('btnRingerLactate');
 
   // ================= CONTROLES DO VENTILADOR (HAMILTON-C1) & STANDBY =================
   let hamStandby = false;
@@ -449,7 +451,9 @@
     btnOsmotherapy: _svg('<path class="sc-svg-primary" d="M9.5 4.5a4.5 4.5 0 0 0-4 6.6A3.8 3.8 0 0 0 8 18.5h8a3.8 3.8 0 0 0 2.5-7.4 4.5 4.5 0 0 0-4-6.6 3.5 3.5 0 0 0-5 0z"/><path class="sc-svg-accent" d="M12 14.5v-6M9.5 12l2.5 2.5 2.5-2.5"/>',36,24,1.85),
     btnHydrocortisone: _svg('<rect class="sc-svg-primary" x="4.5" y="8" width="15" height="8" rx="4" transform="rotate(-35 12 12)"/><path class="sc-svg-accent" d="M9.8 9.2l4.4 5.6M17.5 4.5v3M16 6h3"/>',36,24,1.85),
     btnInsulinDrip: _svg('<path class="sc-svg-primary" d="M18.5 3.5l2 2M15.5 4.5l4 4M7.5 12.5l8-8 4 4-8 8-4.5 1 0.5-5zM4 20l3-3"/><path class="sc-svg-accent" d="M11 9l2 2M9 11l2 2"/>',36,24,1.85),
-    btnUterotonic: _svg('<path class="sc-svg-primary" d="M12 19v-5.5c0-3.5-3-6.5-6.5-6.5C4.2 7 3.5 8 4 9.2M12 13.5c0-3.5 3-6.5 6.5-6.5 1.3 0 2 1 1.5 2.2M8.5 10.5a3.5 3.5 0 0 0 7 0"/><path class="sc-svg-accent" d="M6.5 14.5l2.5-1.5M17.5 14.5l-2.5-1.5"/>',36,24,1.85)
+    btnUterotonic: _svg('<path class="sc-svg-primary" d="M12 19v-5.5c0-3.5-3-6.5-6.5-6.5C4.2 7 3.5 8 4 9.2M12 13.5c0-3.5 3-6.5 6.5-6.5 1.3 0 2 1 1.5 2.2M8.5 10.5a3.5 3.5 0 0 0 7 0"/><path class="sc-svg-accent" d="M6.5 14.5l2.5-1.5M17.5 14.5l-2.5-1.5"/>',36,24,1.85),
+    btnSodiumBicarb: _svg('<path class="sc-svg-primary" d="M9.5 3.5h5M10 3.5v4.5L5.8 16a2.8 2.8 0 0 0 2.5 4h7.4a2.8 2.8 0 0 0 2.5-4L14 8V3.5"/><path class="sc-svg-accent" d="M8.5 15.5h7M12 14.2v-4.2M10.2 11.8L12 10l1.8 1.8"/>',36,24,1.85),
+    btnRingerLactate: _svg('<path class="sc-svg-primary" d="M7 5h10a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V7a2 2 0 0 1 2-2zM10 3h4M12 18v3"/><path class="sc-svg-accent" d="M7.5 12c1.5-1.4 3 1.4 4.5 0s3 1.4 4.5 0"/><circle class="sc-svg-accent" cx="12" cy="8.5" r="1.2"/>',36,24,1.85)
   };
 
   Object.entries(INTERVENTION_ICONS).forEach(([id, markup]) => {
@@ -579,6 +583,8 @@
     if (scenarioGuidance) scenarioGuidance.textContent = sc.guidance;
 
     document.getElementById('fluidCount').textContent = engine.interventions.fluidBoluses;
+    $txt('bicarbCount', engine.interventions.bicarbDoses || 0);
+    $txt('ringerCount', engine.interventions.ringerBoluses || 0);
     const _noraEl = document.getElementById('noraValue');
     if (_noraEl) _noraEl.textContent = engine.interventions.noraDose.toFixed(2);
     document.getElementById('metaPatient').textContent = engine.patient.label;
@@ -1014,6 +1020,22 @@
     btnUterotonic.addEventListener('click', () => {
       audio.playUiClick('hw');
       engine.giveUterotonicTxa();
+      refreshScenarioUI();
+    });
+  }
+  if (btnSodiumBicarb) {
+    btnSodiumBicarb.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      const count = engine.giveSodiumBicarbonate();
+      $txt('bicarbCount', count);
+      refreshScenarioUI();
+    });
+  }
+  if (btnRingerLactate) {
+    btnRingerLactate.addEventListener('click', () => {
+      audio.playUiClick('hw');
+      const count = engine.giveRingerLactateBolus();
+      $txt('ringerCount', count);
       refreshScenarioUI();
     });
   }
@@ -1566,8 +1588,11 @@
     const arc = dial.querySelector('.phys-knob-arc');
     if (arc) arc.setAttribute('stroke-dasharray', `${(frac * PHYS_KNOB_ARC_LEN).toFixed(2)} 157.08`);
     const unit = dial.dataset.unit || '';
+    const labels = dial.dataset.labels ? dial.dataset.labels.split('|') : null;
+    const valText = labels ? (labels[clamped] || `${clamped}${unit}`) : `${clamped}${unit}`;
+    if (labels) dial.setAttribute('aria-valuetext', valText);
     const valEl = document.getElementById(`${id}Val`);
-    if (valEl) valEl.textContent = `${clamped}${unit}`;
+    if (valEl) valEl.textContent = valText;
   }
 
   function syncPhysiologyModalInputs() {
@@ -1749,11 +1774,9 @@
     syncVentControlsUI();
   });
 
-  // Calculadora de Peso Predito (ARDSNet / Devine: Homem e Mulher)
+  // Calculadora de Peso Predito (ARDSNet / Devine: Homem e Mulher em Knobs)
   let pbwSex = 'M';
   let pbwHeightCm = 175;
-  const pbwHeightRange = document.getElementById('pbwHeightRange');
-  const pbwHeightInput = document.getElementById('pbwHeightInput');
 
   function calcPredictedBodyWeight(sex, heightCm) {
     const base = sex === 'F' ? 45.5 : 50.0;
@@ -1771,28 +1794,35 @@
     return pbw;
   }
 
-  document.querySelectorAll('.pbw-sex-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      audio.playUiClick('soft');
-      pbwSex = btn.dataset.sex === 'F' ? 'F' : 'M';
-      document.querySelectorAll('.pbw-sex-btn').forEach((b) => {
-        const active = b === btn;
-        b.classList.toggle('active', active);
-        b.setAttribute('aria-pressed', String(active));
-      });
-      updatePbwPreview();
-    });
-  });
-
-  function setPbwHeight(val) {
-    pbwHeightCm = Math.max(140, Math.min(210, Math.round(Number(val) || 175)));
-    if (pbwHeightRange) pbwHeightRange.value = pbwHeightCm;
-    if (pbwHeightInput) pbwHeightInput.value = pbwHeightCm;
+  function setPbwSex(idx) {
+    pbwSex = Number(idx) >= 1 ? 'F' : 'M';
     updatePbwPreview();
   }
 
-  if (pbwHeightRange) pbwHeightRange.addEventListener('input', (e) => setPbwHeight(e.target.value));
-  if (pbwHeightInput) pbwHeightInput.addEventListener('input', (e) => setPbwHeight(e.target.value));
+  function setPbwHeight(val) {
+    pbwHeightCm = Math.max(140, Math.min(210, Math.round(Number(val) || 175)));
+    updatePbwPreview();
+  }
+
+  bindPhys('pbwSexKnob', 'pbwSexKnobVal', '', setPbwSex);
+  bindPhys('pbwHeightKnob', 'pbwHeightKnobVal', ' cm', setPbwHeight);
+
+  const pbwSexKnobEl = document.getElementById('pbwSexKnob');
+  if (pbwSexKnobEl) {
+    let downY = 0;
+    pbwSexKnobEl.addEventListener('pointerdown', (e) => { downY = e.clientY; });
+    pbwSexKnobEl.addEventListener('pointerup', (e) => {
+      if (Math.abs(e.clientY - downY) < 4) {
+        const nextIdx = pbwSex === 'M' ? 1 : 0;
+        renderPhysKnob('pbwSexKnob', nextIdx);
+        setPbwSex(nextIdx);
+        audio.playUiClick('knob');
+      }
+    });
+  }
+
+  renderPhysKnob('pbwSexKnob', 0);
+  renderPhysKnob('pbwHeightKnob', pbwHeightCm);
 
   document.getElementById('btnApplyPbw').addEventListener('click', () => {
     audio.playUiClick('soft');
@@ -2774,6 +2804,11 @@
     const isSteroidIndicated = (engine.scenarioId === 'adrenal_crisis' || engine.scenarioId === 'myxedema_coma' || engine.scenarioId === 'anaphylaxis' || (engine.scenarioId === 'septic_shock' && v.map < 65)) && !ivNow.hydrocortisoneGiven;
     const isInsulinIndicated = (engine.scenarioId === 'dka_acidosis' || engine.scenarioId === 'hhs_hyperosmolar' || v.rhythm === 'hyperkalemia') && !ivNow.insulinActive;
     const isUterotonicIndicated = engine.scenarioId === 'postpartum_hemorrhage' && !ivNow.uterotonicGiven;
+    const isBicarbIndicated = ((v.ph < 7.15 && p.baseExcess <= -8) || v.rhythm === 'hyperkalemia') && (ivNow.bicarbDoses || 0) < 2;
+    const isRingerIndicated =
+      (engine.scenarioId === 'septic_shock' || engine.scenarioId === 'hemorrhagic_shock' || engine.scenarioId === 'dka_acidosis' || engine.scenarioId === 'hhs_hyperosmolar' || engine.scenarioId === 'anaphylaxis' || engine.scenarioId === 'adrenal_crisis' || engine.scenarioId === 'postpartum_hemorrhage') &&
+      ((ivNow.ringerBoluses || 0) + (ivNow.fluidBoluses || 0)) < 2 &&
+      v.map < 72;
 
     if (btnActiveCooling) {
       btnActiveCooling.classList.toggle('urgent', isCoolIndicated);
@@ -2790,6 +2825,14 @@
       btnInsulinDrip.setAttribute('aria-pressed', String(Boolean(ivNow.insulinActive)));
     }
     if (btnUterotonic) btnUterotonic.classList.toggle('urgent', isUterotonicIndicated);
+    if (btnSodiumBicarb) {
+      btnSodiumBicarb.classList.toggle('urgent', isBicarbIndicated);
+      $txt('bicarbCount', ivNow.bicarbDoses || 0);
+    }
+    if (btnRingerLactate) {
+      btnRingerLactate.classList.toggle('urgent', isRingerIndicated);
+      $txt('ringerCount', ivNow.ringerBoluses || 0);
+    }
     if (updateNumericUI._lastRhythm !== v.rhythm) {
       updateNumericUI._lastRhythm = v.rhythm;
       syncRhythmUI();

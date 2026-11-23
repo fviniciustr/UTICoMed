@@ -1132,6 +1132,8 @@
       // Intervenções ativas
       this.interventions = {
         fluidBoluses: 0,
+        ringerBoluses: 0,
+        bicarbDoses: 0,
         fluidBoost: 0,
         noraDose: 0, // ug/kg/min
         bronchodilatorTargetRes: null,
@@ -2898,7 +2900,7 @@
           const o2Info = this.getEffectiveO2Info();
           const airwayOk = (this.airway && this.airway.connectedToVent && o2Info.fio2 >= 50) || o2Info.fio2 >= 80;
           const noTensionPneumo = !p.pneumothoraxActive;
-          const drugSupport = (iv.adrenalineBolusTimer || 0) > 0 || iv.noraDose >= 0.1 || iv.fluidBoluses > 0 || (iv.calciumProtectionTimer || 0) > 0 || vit.ph >= 7.12;
+          const drugSupport = (iv.adrenalineBolusTimer || 0) > 0 || iv.noraDose >= 0.1 || iv.fluidBoluses > 0 || (iv.ringerBoluses || 0) > 0 || (iv.bicarbDoses || 0) > 0 || (iv.calciumProtectionTimer || 0) > 0 || vit.ph >= 7.12;
           if (airwayOk && noTensionPneumo && drugSupport) {
             det.cprRecoveryProgress = Math.min(100, (det.cprRecoveryProgress || 0) + dt * 5.2);
             if (det.cprRecoveryProgress >= 100) {
@@ -3298,8 +3300,85 @@
     // ================= INTERVENÇÕES CLÍNICAS =================
     giveFluidBolus() {
       this.interventions.fluidBoluses += 1;
-      this.interventions.fluidBoost = Math.min(0.42, this.interventions.fluidBoost + 0.14);
+      this.interventions.fluidBoost = Math.min(0.45, this.interventions.fluidBoost + 0.14);
+      if (this.interventions.fluidBoluses >= 4) {
+        // Excesso de SF 0,9% (> 2 L) promove discreta acidose metabólica hiperclorêmica
+        this.patient.baseExcess = clamp(Number((this.patient.baseExcess - 0.7).toFixed(1)), -24, 15);
+      }
       if (this.onLog) this.onLog(`Infusão: Bolus SF 0,9% 500 mL (#${this.interventions.fluidBoluses})`);
+    }
+
+    giveRingerLactateBolus() {
+      const iv = this.interventions;
+      iv.ringerBoluses = (iv.ringerBoluses || 0) + 1;
+      const overloaded = this.scenarioId === 'pulmonary_edema' || (this.cardiac.preload + (iv.fluidBoost || 0)) >= 1.18;
+      iv.fluidBoost = Math.min(0.46, (iv.fluidBoost || 0) + 0.15);
+
+      if (overloaded) {
+        this.patient.shunt = clamp(Number((this.patient.shunt + 0.03).toFixed(2)), 0.04, 0.72);
+        if (this.onLog) this.onLog(`⚠ Bolus Ringer Lactato 500 mL (#${iv.ringerBoluses}): paciente congesto — risco de sobrecarga volêmica / piora do edema pulmonar!`);
+        return iv.ringerBoluses;
+      }
+
+      // Cristaloide balanceado: restaura pré-carga sem acidose hiperclorêmica e auxilia tamponamento (lactato -> bicarbonato hepático)
+      if (this.patient.baseExcess < -2) {
+        this.patient.baseExcess = clamp(Number((this.patient.baseExcess + 0.8).toFixed(1)), -24, 14);
+      }
+      if (this.patient.lactate > 2.2) {
+        this.patient.lactate = Math.max(1.2, Number((this.patient.lactate - 0.4).toFixed(1)));
+      }
+      if (this.deterioration && this.cardiac.preload < 0.88) {
+        this.deterioration.risk = Math.max(0, this.deterioration.risk - 12);
+      }
+      if (this.scenarioId === 'tce_cushing') {
+        if (this.onLog) this.onLog(`Bolus Ringer Lactato 500 mL (#${iv.ringerBoluses}) — atenção: em TCE com HIC prefira solução isotônica/hipertônica (SF 0,9% / NaCl 3%).`);
+      } else {
+        if (this.onLog) this.onLog(`Infusão: Bolus Ringer Lactato 500 mL (#${iv.ringerBoluses}) — expansão volêmica balanceada (evita acidose hiperclorêmica).`);
+      }
+      return iv.ringerBoluses;
+    }
+
+    giveSodiumBicarbonate() {
+      const iv = this.interventions;
+      iv.bicarbDoses = (iv.bicarbDoses || 0) + 1;
+      const prevPh = this.vitals.ph || 7.4;
+
+      if (prevPh > 7.46) {
+        this.patient.baseExcess = clamp(Number((this.patient.baseExcess + 3.0).toFixed(1)), -24, 16);
+        if (this.onLog) this.onLog(`⚠ Bicarbonato de Sódio 8,4% (#${iv.bicarbDoses}) em paciente alcalótico (pH ${prevPh.toFixed(2)}) — risco de alcalose metabólica e hipocalemia!`);
+        return iv.bicarbDoses;
+      }
+
+      // Tamponamento imediato da acidose metabólica (+3,8 mEq/L no BE) + geração transitória de CO2 (requer ventilação adequada)
+      this.patient.baseExcess = clamp(Number((this.patient.baseExcess + 3.8).toFixed(1)), -24, 14);
+      this.vitals.paco2 = clamp(Number((this.vitals.paco2 + 2.2).toFixed(1)), 16, 110);
+
+      if (prevPh < 7.22) {
+        // Melhora sensibilidade vascular às catecolaminas na acidemia grave
+        this.cardiac.svr = Math.min(1.18, Number((this.cardiac.svr + 0.08).toFixed(2)));
+        this.cardiac.contractility = Math.min(1.1, Number((this.cardiac.contractility + 0.05).toFixed(2)));
+        if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 18);
+      }
+
+      if (this.cardiac.rhythm === 'hyperkalemia') {
+        if (this.deterioration) this.deterioration.risk = Math.max(0, this.deterioration.risk - 16);
+        if (iv.bicarbDoses >= 2 || (iv.calciumProtectionTimer || 0) > 0) {
+          this.setRhythm('sinus', true);
+          if (this.onLog) this.onLog(`SUCESSO: Bicarbonato de Sódio 8,4% 1 mEq/kg (#${iv.bicarbDoses}) promoveu shift de K⁺ e reverteu hipercalemia para Ritmo Sinusal!`);
+          return iv.bicarbDoses;
+        }
+        if (this.onLog) this.onLog(`Bicarbonato de Sódio 8,4% 1 mEq/kg EV (#${iv.bicarbDoses}) — tamponamento + shift intracelular de K⁺ na hipercalemia!`);
+        return iv.bicarbDoses;
+      }
+
+      if (this.onLog) {
+        this.onLog(
+          prevPh < 7.20
+            ? `SUCESSO: Bicarbonato de Sódio 8,4% 1 mEq/kg EV (#${iv.bicarbDoses}) — acidemia grave tamponada (BE ${this.patient.baseExcess >= 0 ? '+' : ''}${this.patient.baseExcess.toFixed(1)} mEq/L, melhor resposta vasopressora)!`
+            : `Bicarbonato de Sódio 8,4% 50 mEq EV (#${iv.bicarbDoses}) administrado (BE ${this.patient.baseExcess >= 0 ? '+' : ''}${this.patient.baseExcess.toFixed(1)} mEq/L — atenção à eliminação de CO₂ na VM).`
+        );
+      }
+      return iv.bicarbDoses;
     }
 
     setExternalPacer(active, rateBpm = 70) {

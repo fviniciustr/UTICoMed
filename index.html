@@ -113,7 +113,47 @@
       <button class="ctrl-btn accent" id="btnEcgAtlas" aria-label="Ritmos ECG" title="Selecionar e estudar ritmos e traçados eletrocardiográficos (BAV, BRD/BRE, FA, Flutter, PCR, Supra ST)">📈</button>
       <button class="ctrl-btn accent" id="btnProtectiveGuide" aria-label="Guia de Ventilação Protetora" title="Guia de Ventilação Mecânica Protetora e Indicações por Patologia">📘</button>
       <button class="ctrl-btn theme-toggle-btn" id="btnThemeSim" aria-label="Alternar Modo Claro e Escuro" title="Alternar entre Modo Claro e Modo Escuro">🌙</button>
-      <button class="ctrl-btn ghost" id="btnResetScenario" aria-label="Reiniciar cenário" title="Reiniciar cenário atual">↺</button>
+      <button class="ctrl-btn reset-estop-btn" id="btnResetScenario" aria-label="Reiniciar cenário" title="Reiniciar cenário atual">
+        <svg class="reset-estop-svg" viewBox="0 0 48 48" width="68" height="68" aria-hidden="true">
+          <defs>
+            <linearGradient id="estopBoxGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#fde047"/>
+              <stop offset="65%" stop-color="#facc15"/>
+              <stop offset="100%" stop-color="#eab308"/>
+            </linearGradient>
+            <radialGradient id="estopCapGrad" cx="42%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#ef4444"/>
+              <stop offset="62%" stop-color="#dc2626"/>
+              <stop offset="100%" stop-color="#991b1b"/>
+            </radialGradient>
+          </defs>
+          <!-- Caixa amarela industrial com 4 parafusos -->
+          <rect x="2" y="2" width="44" height="44" rx="8" fill="url(#estopBoxGrad)" stroke="#a16207" stroke-width="1.6"/>
+          <rect x="4.5" y="4.5" width="39" height="39" rx="6" fill="none" stroke="#fef9c3" stroke-width="0.9" opacity="0.7"/>
+          <line x1="4" y1="34" x2="44" y2="34" stroke="#ca8a04" stroke-width="1.2" opacity="0.65"/>
+          <g fill="#cbd5e1" stroke="#475569" stroke-width="0.8">
+            <circle cx="8" cy="8" r="2.4"/><path d="M6.8 8h2.4M8 6.8v2.4" stroke="#334155" stroke-width="0.8"/>
+            <circle cx="40" cy="8" r="2.4"/><path d="M38.8 8h2.4M40 6.8v2.4" stroke="#334155" stroke-width="0.8"/>
+            <circle cx="8" cy="40" r="2.4"/><path d="M6.8 40h2.4M8 38.8v2.4" stroke="#334155" stroke-width="0.8"/>
+            <circle cx="40" cy="40" r="2.4"/><path d="M38.8 40h2.4M40 38.8v2.4" stroke="#334155" stroke-width="0.8"/>
+          </g>
+          <!-- Plaqueta preta superior + base -->
+          <rect x="14" y="6" width="20" height="7" rx="1.2" fill="#0f172a"/>
+          <rect x="14" y="36.5" width="20" height="5" rx="1" fill="none" stroke="#a16207" stroke-width="0.9" opacity="0.8"/>
+          <!-- Cogumelo vermelho com sombra e 3 setas de giro -->
+          <circle cx="24" cy="25.8" r="14.2" fill="rgba(15,23,42,0.34)"/>
+          <circle cx="24" cy="24" r="14" fill="url(#estopCapGrad)" stroke="#7f1d1d" stroke-width="1.4"/>
+          <circle cx="24" cy="24" r="12" fill="none" stroke="#fca5a5" stroke-width="0.7" opacity="0.35"/>
+          <g class="reset-estop-arrows" fill="none" stroke="#7f1d1d" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19.2 16.5 A8.5 8.5 0 0 1 28.8 16.5"/>
+            <path d="M27.2 14.3 L29.5 16.8 L26.5 17.8"/>
+            <path d="M31.6 22.8 A8.5 8.5 0 0 1 26.8 31.2"/>
+            <path d="M29.2 31.3 L26.2 31.6 L27.3 28.7"/>
+            <path d="M18.2 30.2 A8.5 8.5 0 0 1 16.8 20.6"/>
+            <path d="M15.2 22.3 L16.9 19.8 L18.4 22.5"/>
+          </g>
+        </svg>
+      </button>
     </div>
   </header>
 
@@ -206,6 +246,16 @@
           <button class="action-btn uterotonic" id="btnUterotonic" title="Ocitocina + Ácido Tranexâmico 1g EV (Hemorragia Pós-Parto Maciça / CIVD)">
             <span class="int-ico" aria-hidden="true"></span>
             <span class="int-lbl">Uterotônico<small>+ TXA 1g</small></span>
+          </button>
+          <button class="action-btn bicarb" id="btnSodiumBicarb" title="Bicarbonato de Sódio 8,4% (1 mEq/kg EV — Acidose Metabólica Grave pH < 7,15 / Hipercalemia)">
+            <span class="action-badge" id="bicarbCount">0</span>
+            <span class="int-ico" aria-hidden="true"></span>
+            <span class="int-lbl">Bicarbonato<small>NaHCO₃ 8,4%</small></span>
+          </button>
+          <button class="action-btn ringer" id="btnRingerLactate" title="Infundir Bolus de Ringer Lactato 500 mL EV (Cristaloide Balanceado)">
+            <span class="action-badge" id="ringerCount">0</span>
+            <span class="int-ico" aria-hidden="true"></span>
+            <span class="int-lbl">Bolus RL<small>500 mL</small></span>
           </button>
         </div>
         <div class="side-icatu-dock" id="sidePump1Dock" aria-label="Visor Completo Bomba de Infusão 1">
@@ -483,15 +533,35 @@
         <div class="pbw-calc-box" aria-label="Calculadora de Peso Predito (PBW)">
           <div class="pbw-calc-title">
             <span>Calculadora Peso Predito (PBW)</span>
-            <div class="pbw-sex-group" role="group" aria-label="Sexo biológico para cálculo PBW">
-              <button type="button" class="pbw-sex-btn active" id="pbwSexMale" data-sex="M" aria-pressed="true">♂ Homem</button>
-              <button type="button" class="pbw-sex-btn" id="pbwSexFemale" data-sex="F" aria-pressed="false">♀ Mulher</button>
-            </div>
           </div>
-          <div class="pbw-height-row">
-            <label for="pbwHeightInput">Altura (cm):</label>
-            <input type="range" id="pbwHeightRange" min="140" max="210" step="1" value="175" class="pbw-height-slider" aria-label="Altura em centímetros" />
-            <input type="number" id="pbwHeightInput" min="140" max="210" step="1" value="175" class="pbw-height-num mono" />
+          <div class="phys-knobs-grid pbw-knobs-grid" role="group" aria-label="Knobs da Calculadora de Peso Predito">
+            <div class="phys-knob-card">
+              <span class="phys-knob-lbl">Sexo Biológico</span>
+              <div class="phys-knob-ctrl">
+                <div class="phys-knob-dial" id="pbwSexKnob" role="slider" tabindex="0" aria-label="Sexo biológico para cálculo PBW" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0" aria-valuetext="Homem" data-min="0" data-max="1" data-step="1" data-value="0" data-labels="♂ Homem|♀ Mulher">
+                  <svg class="phys-knob-svg" viewBox="0 0 64 64" aria-hidden="true">
+                    <circle class="phys-knob-track" cx="32" cy="32" r="25" stroke-dasharray="117.81 157.08" transform="rotate(135 32 32)" />
+                    <circle class="phys-knob-arc" cx="32" cy="32" r="25" stroke-dasharray="0.00 157.08" transform="rotate(135 32 32)" />
+                  </svg>
+                  <div class="phys-knob-cap"><span class="phys-knob-notch"></span></div>
+                </div>
+              </div>
+              <strong id="pbwSexKnobVal" class="phys-knob-val mono">♂ Homem</strong>
+            </div>
+
+            <div class="phys-knob-card">
+              <span class="phys-knob-lbl">Altura (cm)</span>
+              <div class="phys-knob-ctrl">
+                <div class="phys-knob-dial" id="pbwHeightKnob" role="slider" tabindex="0" aria-label="Altura em centímetros" aria-valuemin="140" aria-valuemax="210" aria-valuenow="175" data-min="140" data-max="210" data-step="1" data-value="175" data-unit=" cm">
+                  <svg class="phys-knob-svg" viewBox="0 0 64 64" aria-hidden="true">
+                    <circle class="phys-knob-track" cx="32" cy="32" r="25" stroke-dasharray="117.81 157.08" transform="rotate(135 32 32)" />
+                    <circle class="phys-knob-arc" cx="32" cy="32" r="25" stroke-dasharray="58.91 157.08" transform="rotate(135 32 32)" />
+                  </svg>
+                  <div class="phys-knob-cap"><span class="phys-knob-notch"></span></div>
+                </div>
+              </div>
+              <strong id="pbwHeightKnobVal" class="phys-knob-val mono">175 cm</strong>
+            </div>
           </div>
           <div class="pbw-results-row">
             <div>PBW: <strong id="pbwResultVal" class="mono">70.6 kg</strong></div>
@@ -499,7 +569,43 @@
           </div>
           <div class="pbw-range-hint mono" id="pbwVtRangeVal">Faixa protetora (4–8 mL/kg): 282–565 mL</div>
           <button type="button" class="action-btn pbw-apply-btn" id="btnApplyPbw" title="Aplicar Peso Predito ao paciente e ajustar Vt protetor (6 mL/kg)">
-            ✓ Aplicar PBW &amp; Vt 6 mL/kg
+            <svg class="pbw-estop-svg" viewBox="0 0 48 48" width="52" height="52" aria-hidden="true">
+              <defs>
+                <linearGradient id="pbwBoxGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fde047"/>
+                  <stop offset="65%" stop-color="#facc15"/>
+                  <stop offset="100%" stop-color="#eab308"/>
+                </linearGradient>
+                <radialGradient id="pbwCapGrad" cx="42%" cy="35%" r="65%">
+                  <stop offset="0%" stop-color="#ef4444"/>
+                  <stop offset="62%" stop-color="#dc2626"/>
+                  <stop offset="100%" stop-color="#991b1b"/>
+                </radialGradient>
+              </defs>
+              <rect x="2" y="2" width="44" height="44" rx="8" fill="url(#pbwBoxGrad)" stroke="#a16207" stroke-width="1.6"/>
+              <rect x="4.5" y="4.5" width="39" height="39" rx="6" fill="none" stroke="#fef9c3" stroke-width="0.9" opacity="0.7"/>
+              <line x1="4" y1="34" x2="44" y2="34" stroke="#ca8a04" stroke-width="1.2" opacity="0.65"/>
+              <g fill="#cbd5e1" stroke="#475569" stroke-width="0.8">
+                <circle cx="8" cy="8" r="2.4"/><path d="M6.8 8h2.4M8 6.8v2.4" stroke="#334155" stroke-width="0.8"/>
+                <circle cx="40" cy="8" r="2.4"/><path d="M38.8 8h2.4M40 6.8v2.4" stroke="#334155" stroke-width="0.8"/>
+                <circle cx="8" cy="40" r="2.4"/><path d="M6.8 40h2.4M8 38.8v2.4" stroke="#334155" stroke-width="0.8"/>
+                <circle cx="40" cy="40" r="2.4"/><path d="M38.8 40h2.4M40 38.8v2.4" stroke="#334155" stroke-width="0.8"/>
+              </g>
+              <rect x="14" y="6" width="20" height="7" rx="1.2" fill="#0f172a"/>
+              <rect x="14" y="36.5" width="20" height="5" rx="1" fill="none" stroke="#a16207" stroke-width="0.9" opacity="0.8"/>
+              <circle cx="24" cy="25.8" r="14.2" fill="rgba(15,23,42,0.34)"/>
+              <circle cx="24" cy="24" r="14" fill="url(#pbwCapGrad)" stroke="#7f1d1d" stroke-width="1.4"/>
+              <circle cx="24" cy="24" r="12" fill="none" stroke="#fca5a5" stroke-width="0.7" opacity="0.35"/>
+              <g class="reset-estop-arrows" fill="none" stroke="#7f1d1d" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19.2 16.5 A8.5 8.5 0 0 1 28.8 16.5"/>
+                <path d="M27.2 14.3 L29.5 16.8 L26.5 17.8"/>
+                <path d="M31.6 22.8 A8.5 8.5 0 0 1 26.8 31.2"/>
+                <path d="M29.2 31.3 L26.2 31.6 L27.3 28.7"/>
+                <path d="M18.2 30.2 A8.5 8.5 0 0 1 16.8 20.6"/>
+                <path d="M15.2 22.3 L16.9 19.8 L18.4 22.5"/>
+              </g>
+            </svg>
+            <span class="pbw-apply-lbl">Aplicar peso predito para 6ml/kg</span>
           </button>
         </div>
 
